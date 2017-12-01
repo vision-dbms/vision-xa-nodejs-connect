@@ -1,33 +1,33 @@
-// hello.cc
-#include <node_api.h>
-
-#include <node_api.h>
-#include <assert.h>
+#include <node.h>
+#include <v8.h>
+#include <uv.h>
 
 #include "Vk.h"
-#include "V_VString.h"
 
-#include "Vca_VActivity.h"
-#include "Vca_IDirectory.h"
-#include "Vca_VcaGofer.h"
+#include "Vision_Evaluation_Gofer.h"
 
-napi_value Method(napi_env env, napi_callback_info info) {
-  napi_status status;
-  napi_value world;
-  status = napi_create_string_utf8(env, "world", 5, &world);
-  assert(status == napi_ok);
-  return world;
-}
+namespace {
 
-#define DECLARE_NAPI_METHOD(name, func)                          \
-  { name, 0, func, 0, 0, 0, napi_default, 0 }
+    using v8::FunctionCallbackInfo;
+    using v8::Isolate;
+    using v8::Local;
+    using v8::Object;
+    using v8::String;
+    using v8::Value;
 
-napi_value Init(napi_env env, napi_value exports) {
-  napi_status status;
-  napi_property_descriptor desc = DECLARE_NAPI_METHOD("hello", Method);
-  status = napi_define_properties(env, exports, 1, &desc);
-  assert(status == napi_ok);
-  return exports;
-}
+    void Evaluate(const FunctionCallbackInfo<Value>& args) {
+        Isolate* isolate = args.GetIsolate();
 
-NAPI_MODULE(hello, Init)
+        Local<Object> obj = Object::New(isolate);
+        obj->Set(String::NewFromUtf8(isolate, "msg"), args[0]->ToString());
+
+        args.GetReturnValue().Set(obj);
+    }
+
+    void Init(Local<Object> exports, Local<Object> module) {
+        NODE_SET_METHOD(module, "exports", Evaluate);
+    }
+
+    NODE_MODULE(NODE_GYP_MODULE_NAME, Init)
+
+}  // anonymous namespace

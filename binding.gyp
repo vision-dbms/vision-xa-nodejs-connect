@@ -1,12 +1,15 @@
 {
   'targets': [
     {
-      'target_name': 'vxa-node',
-      'sources': [ 'vxa-node.cc' ],
+      'target_name': 'vxanode',
+      'sources': [
+        'vxa-node.cc',
+      ],
       'include_dirs': [
         'vision/kernel',
       ],
       'libraries': [
+        '-Wl,-rpath=./vision/lib',
         '-L$(srcdir)/vision/lib',
         '-lVxa',
         '-lVca',
@@ -22,13 +25,13 @@
             'include_dirs': [
               'vision/M_Linux'
             ],
-            'cflags_cc!': [
-              '-fno-rtti',
-            ],
             'cflags': [
               '-U_FORTIFY_SOURCE -frtti',
               '-Wno-delete-non-virtual-dtor',
               '-Wno-reorder',
+            ],
+            'cflags_cc!': [
+              '-fno-rtti',
             ],
             'ldflags': [
             ],
