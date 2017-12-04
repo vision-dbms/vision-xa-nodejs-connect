@@ -16,6 +16,8 @@ namespace {
     using v8::Value;
 
     void Evaluate(const FunctionCallbackInfo<Value>& args) {
+        Vca::VCohortClaim cohortClaim;
+
         Isolate* isolate = args.GetIsolate();
 
         Local<Object> obj = Object::New(isolate);

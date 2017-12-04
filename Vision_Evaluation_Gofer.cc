@@ -102,16 +102,13 @@ void Vision::Evaluation::Gofer::EvaluatorClient::OnResult_(Vsa::IEvaluationResul
 
 namespace {
     Vision::Evaluation::Gofer::evaluator_gofer_t *DefaultEvaluator () {
-        Vca::VCohortClaim cohortClaim;	// ... give the gofer a home.
-    //    if (bUsingDirectory)
-    //        return new Vca::Gofer::Named<IEvaluator,Vca::IDirectory> ("Default");
+    //  return new Vca::Gofer::Named<IEvaluator,Vca::IDirectory> ("Default");
         return new Vca::Gofer::Named<Vsa::IEvaluator,Vca::IPipeFactory> ("8765");
     }
 }
 
 void Vision::Evaluation::Gofer::Evaluate (VString const &rExpression) {
     static evaluator_gofer_t::Reference const pGofer (DefaultEvaluator ());
-    Vca::VCohortClaim cohortClaim (pGofer, false);
     ThisClass::Reference pEvaluation (new ThisClass (pGofer, rExpression));
     pEvaluation->onNeed ();
 }
