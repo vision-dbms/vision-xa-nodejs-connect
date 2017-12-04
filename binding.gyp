@@ -4,6 +4,7 @@
       'target_name': 'vxanode',
       'sources': [
         'vxa-node.cc',
+        'Vision_Evaluation_Gofer.cc'
       ],
       'include_dirs': [
         'vision/kernel',
@@ -12,6 +13,7 @@
         '-Wl,-rpath=./vision/lib',
         '-L$(srcdir)/vision/lib',
         '-lVxa',
+        '-lVsa',
         '-lVca',
         '-lV',
         '-lpthread',

@@ -19,7 +19,11 @@ namespace {
         Isolate* isolate = args.GetIsolate();
 
         Local<Object> obj = Object::New(isolate);
-        obj->Set(String::NewFromUtf8(isolate, "msg"), args[0]->ToString());
+        Local<String> str = args[0]->ToString ();
+        obj->Set(String::NewFromUtf8(isolate, "msg"), str);
+
+        String::Utf8Value pExpression(str);
+        Vision::Evaluation::Gofer::Evaluate (*pExpression);
 
         args.GetReturnValue().Set(obj);
     }
