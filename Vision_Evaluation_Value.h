@@ -26,7 +26,7 @@ namespace Vision {
 
         //  Construction / Destruction
         public:
-            Value (IEvaluationResult *pResult, VString const &rOutput) : m_pResult (pResult), m_iOutput (rOutput) {
+            Value (IEvaluationResult *pObject, VString const &rOutput) : m_pObject (pObject), m_iOutput (rOutput) {
             }
             Value (ThisClass const &rOther) {
                 setTo (rOther);
@@ -37,16 +37,25 @@ namespace Vision {
             ~Value () {
             }
 
+        //  Access
+        public:
+            IEvaluationResult *object () const {
+                return m_pObject;
+            }
+            VString const &output () const {
+                return m_iOutput;
+            }
+
         //  Query
         public:
             bool operator== (ThisClass const &rOther) const {
-                return m_pResult == rOther.m_pResult && m_iOutput == rOther.m_iOutput;
+                return m_pObject == rOther.m_pObject && m_iOutput == rOther.m_iOutput;
             }
 
         //  Update
         public:
             void setTo (ThisClass const &rOther) {
-                m_pResult.setTo (rOther.m_pResult);
+                m_pObject.setTo (rOther.m_pObject);
                 m_iOutput.setTo (rOther.m_iOutput);
             }
 
@@ -57,8 +66,8 @@ namespace Vision {
 
         //  State
         private:
-            Vsa::IEvaluationResult::Reference m_pResult;
-            VString                           m_iOutput;
+            IEvaluationResult::Reference m_pObject;
+            VString                      m_iOutput;
         };
     } // namespace Evaluation
 } // namespace Vision

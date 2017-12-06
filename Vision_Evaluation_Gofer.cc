@@ -12,8 +12,6 @@
 
 #include "Vk.h"
 
-#include <iostream>
-
 /******************
  *****  Self  *****
  ******************/
@@ -25,11 +23,6 @@
  ************************/
 
 #include "Vsa_VEvaluatorClient.h"
-
-#include "Vca_VcaGofer.h"
-
-#include "Vca_IDirectory.h"
-#include "Vca_IPipeFactory.h"
 
 
 /********************************************************
@@ -86,7 +79,6 @@ void Vision::Evaluation::Gofer::EvaluatorClient::OnError_(Vca::IError *pInterfac
 }
 
 void Vision::Evaluation::Gofer::EvaluatorClient::OnResult_(Vsa::IEvaluationResult *pInterface, VString const &rOutput) {
-    std::cerr << "Got Result !!!" << std::endl << rOutput;
     Value const iResult (pInterface, rOutput);
     m_pGofer->setTo (iResult);
 }
@@ -99,19 +91,6 @@ void Vision::Evaluation::Gofer::EvaluatorClient::OnResult_(Vsa::IEvaluationResul
  *****                             *****
  ***************************************
  ***************************************/
-
-namespace {
-    Vision::Evaluation::Gofer::evaluator_gofer_t *DefaultEvaluator () {
-    //  return new Vca::Gofer::Named<IEvaluator,Vca::IDirectory> ("Default");
-        return new Vca::Gofer::Named<Vsa::IEvaluator,Vca::IPipeFactory> ("8765");
-    }
-}
-
-void Vision::Evaluation::Gofer::Evaluate (VString const &rExpression) {
-    static evaluator_gofer_t::Reference const pGofer (DefaultEvaluator ());
-    ThisClass::Reference pEvaluation (new ThisClass (pGofer, rExpression));
-    pEvaluation->onNeed ();
-}
 
 /***********************
  ***********************
