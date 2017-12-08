@@ -4,7 +4,8 @@
       'target_name': 'vxanode',
       'sources': [
         'vxa-node.cc',
-        'Vision_Evaluation_Gofer.cc'
+        'Vision_Evaluation_Gofer.cc',
+        'Vision_Evaluation_Value.cc'
       ],
       'include_dirs': [
         'vision/kernel',

@@ -72,4 +72,19 @@ namespace Vision {
     } // namespace Evaluation
 } // namespace Vision
 
+/**********************
+ *****  TypeInfo  *****
+ **********************/
+
+#ifndef Vision_Evaluation_Value
+#define Vision_Evaluation_Value extern
+#endif
+
+#if defined(USING_HIDDEN_DEFAULT_VISIBILITY) || defined(Vision_Evaluation_Value_Instantiations)
+
+Vision_Evaluation_Value template class Vca::VTypeInfoHolder<Vision::Evaluation::Value>;
+Vision_Evaluation_Value template class Vca::VTypeInfoHolder<Vision::Evaluation::Value const&>;
+
+#endif
+
 #endif
