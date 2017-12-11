@@ -11,7 +11,6 @@
         'vision/kernel',
       ],
       'libraries': [
-        '-Wl,-rpath=./vision/lib',
         '-L$(srcdir)/vision/lib',
         '-lVxa',
         '-lVsa',
@@ -37,6 +36,7 @@
               '-fno-rtti',
             ],
             'ldflags': [
+              "'-Wl,-rpath=$$ORIGIN/../../vision/lib'",
             ],
           },
         ],
