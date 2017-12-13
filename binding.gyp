@@ -40,6 +40,30 @@
             ],
           },
         ],
+        ['OS=="mac"',
+          {
+            'include_dirs': [
+              'vision/M_Darwin'
+            ],
+            'xcode_settings': {
+              'GCC_ENABLE_CPP_RTTI': 'YES',
+              'OTHER_CPLUSPLUSFLAGS': [
+                '-Wno-delete-non-virtual-dtor',
+                '-Wno-trigraphs',
+                '-Wno-undefined-bool-conversion',
+                '-Wno-format',
+                '-Wno-reorder',
+                '-Wno-logical-op-parentheses',
+                '-Wno-switch',
+                '-Wno-shift-op-parentheses',
+                '-Wno-shift-negative-value',
+                '-Wno-parentheses',
+                '-Wno-deprecated-declarations',
+                '-Wno-inconsistent-missing-override',
+              ],
+            },
+          },
+        ],
       ],
       ################
     },
