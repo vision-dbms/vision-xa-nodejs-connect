@@ -63,6 +63,11 @@ namespace {
 
     //  Destruction
         ~Queueable () {
+        /*****************************************************************************************
+         *  This destructor may be called from any Vca thread or, if we're lucky, from node's main
+         *  thread.  Since the 'uv' library isn't thread safe, it's only safe to run the following
+         *  line of code in node's main thread to avoid random crashes.  Make sure that happens!!!
+         *****************************************************************************************/
             uv_close (reinterpret_cast<uv_handle_t*>(&m_iNodeMessage), NULL);
         }
 
