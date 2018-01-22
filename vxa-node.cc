@@ -19,6 +19,7 @@
 namespace {
 
     using v8::Context;
+    using v8::Exception;
     using v8::FunctionCallbackInfo;
     using v8::HandleScope;
     using v8::Isolate;
@@ -256,19 +257,38 @@ namespace {
 
         Isolate* const pIsolate = args.GetIsolate();
 
-        Local<String> str = args[0]->ToString ();
+    //  Access the required expression to evaluate...
+        if (args.Length () < 1) {
+            pIsolate->ThrowException (
+                Exception::TypeError (String::NewFromUtf8 (pIsolate, "Missing Expression"))
+            );
+            return;
+        }
+        MaybeLocal<String> str = args[0]->ToString (pIsolate);
+        String::Utf8Value pExpression(str.ToLocalChecked ());
 
-        String::Utf8Value pExpression(str);
+    //  Access the client context if supplied...
+        if (args.Length () >= 2) {
+        }
 
+    //        Local<Object> obj = Object::New(pIsolate);
+    //        obj->Set(String::NewFromUtf8(pIsolate, "context"), cc);
+    //        obj->Set(String::NewFromUtf8(pIsolate, "command"), str);
+    //        args.GetReturnValue().Set(obj);
+
+    //  Set up the evaluation...
+        VE::Gofer::Reference const pGofer (
+            new VE::Gofer (DefaultEvaluator (), *pExpression, static_cast<VE::context_t*>(0))
+        );
+
+    //  Create the promise ...
         MaybeLocal<Promise::Resolver> mResolver = Promise::Resolver::New (pIsolate->GetCurrentContext ());
         Local<Promise::Resolver> hResolver = mResolver.ToLocalChecked ();
 
-        VE::Gofer::Reference const pGofer (new VE::Gofer (DefaultEvaluator (), *pExpression));
+    //  Start the evaluation...
         ResultSink::Reference const pResultSink (new ResultSink (pIsolate, hResolver, pGofer));
 
-//        Local<Object> obj = Object::New(pIsolate);
-//        obj->Set(String::NewFromUtf8(pIsolate, "msg"), str);
-//        args.GetReturnValue().Set(obj);
+    //  Return the promise
         args.GetReturnValue().Set(hResolver->GetPromise ());
     }
 

@@ -38,7 +38,7 @@ class Vision::Evaluation::Gofer::EvaluatorClient : public Vsa::VEvaluatorClient 
 
 //  Construction
 public:
-    EvaluatorClient (Gofer *pGofer);
+    EvaluatorClient (Gofer *pGofer, Vxa::ICollection *pContext);
 
 //  Destruction
 private:
@@ -63,8 +63,9 @@ private:
  **************************/
 
 Vision::Evaluation::Gofer::EvaluatorClient::EvaluatorClient (
-    Gofer *pGofer
+    Gofer *pGofer, Vxa::ICollection *pContext
 ) : m_pGofer (pGofer) {
+    aggregate (pContext);
 }
 
 /***********************
@@ -101,10 +102,11 @@ void Vision::Evaluation::Gofer::EvaluatorClient::OnResult_(Vsa::IEvaluationResul
 void Vision::Evaluation::Gofer::onNeed () {
     m_iEvaluator.materializeFor (this);
     m_iExpression.materializeFor (this);
+    m_iContext.materializeFor (this);
     BaseClass::onNeed ();
 }
 
 void Vision::Evaluation::Gofer::onData () {
-    EvaluatorClient::Reference const pEvaluatorClient (new EvaluatorClient (this));
+    EvaluatorClient::Reference const pEvaluatorClient (new EvaluatorClient (this, m_iContext));
     pEvaluatorClient->onQuery (m_iEvaluator, m_iExpression);
 }
