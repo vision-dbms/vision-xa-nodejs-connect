@@ -1,4 +1,4 @@
-/*****  Vision_Node_Value Implementation  *****/
+/*****  Vision_Node_Export Implementation  *****/
 
 /************************
  ************************
@@ -16,7 +16,7 @@
  *****  Self  *****
  ******************/
 
-#include "Vision_Node_Value.h"
+#include "Vision_Node_Export.h"
 
 /************************
  *****  Supporting  *****
@@ -26,13 +26,13 @@
 //#include "Vxa_VResultBuilder.h"
 
 
-/*********************************
- *********************************
- *****                       *****
- *****  Vision::Node::Value  *****
- *****                       *****
- *********************************
- *********************************/
+/**********************************
+ **********************************
+ *****                        *****
+ *****  Vision::Node::Export  *****
+ *****                        *****
+ **********************************
+ **********************************/
 
 /*************************
  *************************
@@ -40,7 +40,7 @@
  *************************
  *************************/
 
-Vision::Node::Value::~Value () {
+Vision::Node::Export::~Export () {
 }
 
 /***********************
@@ -56,11 +56,11 @@ Vision::Node::Value::~Value () {
  ***************************
  ***************************/
 
-Vision::Node::Value::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
+Vision::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
 }
 
 namespace {
-    Vxa::VCollectable<Vision::Node::Value> g_iMeta;
+    Vxa::VCollectable<Vision::Node::Export> g_iMeta;
 }
 
-DEFINE_VXA_COLLECTABLE(Vision::Node::Value);
+DEFINE_VXA_COLLECTABLE(Vision::Node::Export);

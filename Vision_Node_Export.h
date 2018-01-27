@@ -1,5 +1,5 @@
-#ifndef Vision_Node_Value_Interface
-#define Vision_Node_Value_Interface
+#ifndef Vision_Node_Export_Interface
+#define Vision_Node_Export_Interface
 
 /************************
  *****  Components  *****
@@ -23,8 +23,8 @@ namespace Vision {
         using v8::Local;
         using v8::Persistent;
 
-        class Value : public Vxa::VCollectableObject {
-            DECLARE_CONCRETE_RTTLITE (Value, Vxa::Object);
+        class Export : public Vxa::VCollectableObject {
+            DECLARE_CONCRETE_RTTLITE (Export, Vxa::Object);
 
 	//  Class Builder
 	public:
@@ -35,21 +35,19 @@ namespace Vision {
 
         //  Construction
         public:
-            template <class V> Value (Isolate *pIsolate, V v)
+            template <class V> Export (Isolate *pIsolate, V v)
                 : m_pStore (Store::GetStoreFor (pIsolate))
-                , m_xValue (m_pStore->insert (v))
             {
             }
 
         //  Destruction
         private:
-            ~Value ();
+            ~Export ();
 
         //  State
         private:
             Store::Reference const m_pStore;
-            Store::index_t   const m_xValue;
-        }; // class Value
+        }; // class Export
     } // namespace Vision::Node
 } // Vision
 
