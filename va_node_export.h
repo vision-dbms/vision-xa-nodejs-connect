@@ -1,5 +1,5 @@
-#ifndef Vision_Node_Export_Interface
-#define Vision_Node_Export_Interface
+#ifndef VA_Node_Export_Interface
+#define VA_Node_Export_Interface
 
 /************************
  *****  Components  *****
@@ -7,7 +7,7 @@
 
 #include "Vxa_VCollectableObject.h"
 
-#include "Vision_Node_Store.h"
+#include "va_node_gateway.h"
 
 /**************************
  *****  Declarations  *****
@@ -17,7 +17,7 @@
  *****  Definitions  *****
  *************************/
 
-namespace Vision {
+namespace VA {
     namespace Node {
         using v8::Isolate;
         using v8::Local;
@@ -48,10 +48,10 @@ namespace Vision {
 
         //  State
         private:
-            Store::Reference const m_pStore;
+            Gateway::Reference const m_pGateway;
         }; // class Export
-    } // namespace Vision::Node
-} // Vision
+    } // namespace VA::Node
+} // VA
 
 
 #endif

@@ -7,7 +7,8 @@
 #include "V_VQueue.h"
 
 #include "Vision_Evaluation_Gofer.h"
-#include "Vision_Node_Export.h"
+
+#include "va_node_export.h"
 
 #include "Vca_VcaGofer.h"
 #include "Vca_IDirectory.h"
@@ -34,7 +35,7 @@ namespace {
  *----  Helpers  ----*
  *********************/
     namespace VE = Vision::Evaluation;
-    namespace VN = Vision::Node;
+    namespace VN = VA::Node;
 
     char const *ValueOrElse (char const *pName, char const *pElse) {
         char const *pValue = getenv (pName);

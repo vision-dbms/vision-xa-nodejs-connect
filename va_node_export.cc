@@ -1,4 +1,4 @@
-/*****  Vision_Node_Export Implementation  *****/
+/*****  VA_Node_Export Implementation  *****/
 
 /************************
  ************************
@@ -16,7 +16,7 @@
  *****  Self  *****
  ******************/
 
-#include "Vision_Node_Export.h"
+#include "va_node_export.h"
 
 /************************
  *****  Supporting  *****
@@ -26,13 +26,13 @@
 //#include "Vxa_VResultBuilder.h"
 
 
-/**********************************
- **********************************
- *****                        *****
- *****  Vision::Node::Export  *****
- *****                        *****
- **********************************
- **********************************/
+/******************************
+ ******************************
+ *****                    *****
+ *****  VA::Node::Export  *****
+ *****                    *****
+ ******************************
+ ******************************/
 
 /****************************
  ****************************
@@ -40,7 +40,7 @@
  ****************************
  ****************************/
 
-bool Vision::Node::Export::GetExport (Vxa::export_return_t &rExport, Isolate *pIsolate, Local<Value> iValue) {
+bool VA::Node::Export::GetExport (Vxa::export_return_t &rExport, Isolate *pIsolate, Local<Value> iValue) {
     return false;
 }
 
@@ -50,7 +50,7 @@ bool Vision::Node::Export::GetExport (Vxa::export_return_t &rExport, Isolate *pI
  **************************
  **************************/
 
-Vision::Node::Export::Export (Isolate *pIsolate, Local<Value> iValue) {
+VA::Node::Export::Export (Isolate *pIsolate, Local<Value> iValue) {
 }
 
 /*************************
@@ -59,7 +59,7 @@ Vision::Node::Export::Export (Isolate *pIsolate, Local<Value> iValue) {
  *************************
  *************************/
 
-Vision::Node::Export::~Export () {
+VA::Node::Export::~Export () {
 }
 
 /***********************
@@ -75,11 +75,11 @@ Vision::Node::Export::~Export () {
  ***************************
  ***************************/
 
-Vision::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
+VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
 }
 
 namespace {
-    Vxa::VCollectable<Vision::Node::Export> g_iMeta;
+    Vxa::VCollectable<VA::Node::Export> g_iMeta;
 }
 
-DEFINE_VXA_COLLECTABLE(Vision::Node::Export);
+DEFINE_VXA_COLLECTABLE(VA::Node::Export);

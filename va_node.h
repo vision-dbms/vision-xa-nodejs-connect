@@ -1,5 +1,5 @@
-#ifndef Vision_Node_Interface
-#define Vision_Node_Interface
+#ifndef VA_Node_Interface
+#define VA_Node_Interface
 
 /************************
  *****  Components  *****
@@ -13,10 +13,10 @@
  *****  Definitions  *****
  *************************/
 
-namespace Vision {
+namespace VA {
     namespace Node {
-    } // namespace Vision::Node
-} // Vision
+    } // namespace VA::Node
+} // VA
 
 
 #endif

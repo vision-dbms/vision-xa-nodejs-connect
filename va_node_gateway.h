@@ -1,5 +1,5 @@
-#ifndef Vision_Node_Store_Interface
-#define Vision_Node_Store_Interface
+#ifndef VA_Node_Gateway_Interface
+#define VA_Node_Gateway_Interface
 
 /************************
  *****  Components  *****
@@ -17,30 +17,30 @@
  *****  Definitions  *****
  *************************/
 
-namespace Vision {
+namespace VA {
     namespace Node {
         using v8::Isolate;
         using v8::Local;
         using v8::Persistent;
 
-        class Store : public Vca::VRolePlayer {
-            DECLARE_CONCRETE_RTTLITE (Store, Vca::VRolePlayer);
+        class Gateway : public Vca::VRolePlayer {
+            DECLARE_CONCRETE_RTTLITE (Gateway, Vca::VRolePlayer);
 
         //  Index Type
         public:
             typedef int index_t;
 
-        //  Isolate Store Access
+        //  Isolate Gateway Access
         //  Construction
         public:
-            static Store *GetStoreFor (Isolate *pIsolate);
+            static Gateway *GetGatewayFor (Isolate *pIsolate);
 
         private:
-            Store (Isolate *pIsolate);
+            Gateway (Isolate *pIsolate);
 
         //  Destruction
         private:
-            ~Store ();
+            ~Gateway ();
 
         //  Access
         public:
@@ -57,9 +57,9 @@ namespace Vision {
         //  State
         private:
             Isolate *const m_pIsolate;
-        }; // class Store
-    } // namespace Vision::Node
-} // Vision
+        }; // class Gateway
+    } // namespace VA::Node
+} // VA
 
 
 #endif
