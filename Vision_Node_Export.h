@@ -22,6 +22,7 @@ namespace Vision {
         using v8::Isolate;
         using v8::Local;
         using v8::Persistent;
+        using v8::Value;
 
         class Export : public Vxa::VCollectableObject {
             DECLARE_CONCRETE_RTTLITE (Export, Vxa::Object);
@@ -33,12 +34,13 @@ namespace Vision {
                 ClassBuilder (Vxa::VClass *pClass);
             };
 
-        //  Construction
+        //  Access/Factory
         public:
-            template <class V> Export (Isolate *pIsolate, V v)
-                : m_pStore (Store::GetStoreFor (pIsolate))
-            {
-            }
+            static bool GetExport (Vxa::export_return_t &rExport, Isolate *pIsolate, Local<Value> iValue);
+
+        //  Construction
+        private:
+            Export (Isolate *pIsolate, Local<Value> iValue);
 
         //  Destruction
         private:

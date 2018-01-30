@@ -7,14 +7,13 @@
 #include "V_VQueue.h"
 
 #include "Vision_Evaluation_Gofer.h"
+#include "Vision_Node_Export.h"
 
 #include "Vca_VcaGofer.h"
 #include "Vca_IDirectory.h"
 #include "Vca_IPipeFactory.h"
 
 #include <iostream>
-
-// #include "Vision_Peer_NodeJS.h"
 
 namespace {
 
@@ -35,6 +34,7 @@ namespace {
  *----  Helpers  ----*
  *********************/
     namespace VE = Vision::Evaluation;
+    namespace VN = Vision::Node;
 
     char const *ValueOrElse (char const *pName, char const *pElse) {
         char const *pValue = getenv (pName);
@@ -268,17 +268,14 @@ namespace {
         String::Utf8Value pExpression(str.ToLocalChecked ());
 
     //  Access the client context if supplied...
+        Vxa::export_return_t iExport;
         if (args.Length () >= 2) {
+            VN::Export::GetExport (iExport, pIsolate, args[1]);
         }
-
-    //        Local<Object> obj = Object::New(pIsolate);
-    //        obj->Set(String::NewFromUtf8(pIsolate, "context"), cc);
-    //        obj->Set(String::NewFromUtf8(pIsolate, "command"), str);
-    //        args.GetReturnValue().Set(obj);
 
     //  Set up the evaluation...
         VE::Gofer::Reference const pGofer (
-            new VE::Gofer (DefaultEvaluator (), *pExpression, static_cast<VE::context_t*>(0))
+            new VE::Gofer (DefaultEvaluator (), *pExpression, iExport)
         );
 
     //  Create the promise ...
