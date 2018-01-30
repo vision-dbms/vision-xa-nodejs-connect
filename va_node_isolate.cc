@@ -1,4 +1,4 @@
-/*****  VA_Node_Gateway Implementation  *****/
+/*****  VA_Node_Isolate Implementation  *****/
 
 /************************
  ************************
@@ -16,7 +16,7 @@
  *****  Self  *****
  ******************/
 
-#include "va_node_gateway.h"
+#include "va_node_isolate.h"
 
 /************************
  *****  Supporting  *****
@@ -26,7 +26,7 @@
 /*******************************
  *******************************
  *****                     *****
- *****  VA::Node::Gateway  *****
+ *****  VA::Node::Isolate  *****
  *****                     *****
  *******************************
  *******************************/
@@ -37,7 +37,7 @@
  **************************
  **************************/
 
-VA::Node::Gateway::Gateway (Isolate *pIsolate) : m_pIsolate (pIsolate) {
+VA::Node::Isolate::Isolate (v8::Isolate *pIsolate) : m_pIsolate (pIsolate) {
 }
 
 /*************************
@@ -46,7 +46,7 @@ VA::Node::Gateway::Gateway (Isolate *pIsolate) : m_pIsolate (pIsolate) {
  *************************
  *************************/
 
-VA::Node::Gateway::~Gateway () {
+VA::Node::Isolate::~Isolate () {
 }
 
 /***********************

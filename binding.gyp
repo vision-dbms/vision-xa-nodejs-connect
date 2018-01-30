@@ -7,8 +7,9 @@
         'Vision_Evaluation_Gofer.cc',
         'Vision_Evaluation_Value.cc',
         'va_node.cc',
+        'va_node_context.cc',
         'va_node_export.cc',
-        'va_node_gateway.cc'
+        'va_node_isolate.cc'
       ],
       'include_dirs': [
         'vision/kernel',

@@ -24,19 +24,16 @@ namespace VA {
         using v8::Persistent;
         using v8::Value;
 
+    /*------------------------*
+     *----  class Export  ----*
+     *------------------------*/
+
         class Export : public Vxa::VCollectableObject {
             DECLARE_CONCRETE_RTTLITE (Export, Vxa::Object);
 
-	//  Class Builder
+	//  class ClassBuilder
 	public:
-	    class ClassBuilder : public Vxa::Object::ClassBuilder {
-            protected:
-                ClassBuilder (Vxa::VClass *pClass);
-            };
-
-        //  Access/Factory
-        public:
-            static bool GetExport (Vxa::export_return_t &rExport, Isolate *pIsolate, Local<Value> iValue);
+            class ClassBuilder;
 
         //  Construction
         private:
@@ -49,9 +46,21 @@ namespace VA {
         //  State
         private:
             Gateway::Reference const m_pGateway;
-        }; // class Export
-    } // namespace VA::Node
-} // VA
+
+        };
+
+    /*--------------------------------------*
+     *----  class Export::ClassBuilder  ----*
+     *--------------------------------------*/
+
+        class Export::ClassBuilder : public Vxa::Object::ClassBuilder {
+        protected:
+            ClassBuilder (Vxa::VClass *pClass);
+        };
+
+    } // namespace Node
+
+} // namespace VA
 
 
 #endif

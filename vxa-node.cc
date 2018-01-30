@@ -8,7 +8,9 @@
 
 #include "Vision_Evaluation_Gofer.h"
 
+#include "va_node.h"
 #include "va_node_export.h"
+#include "va_node_gateway.h"
 
 #include "Vca_VcaGofer.h"
 #include "Vca_IDirectory.h"
@@ -271,7 +273,7 @@ namespace {
     //  Access the client context if supplied...
         Vxa::export_return_t iExport;
         if (args.Length () >= 2) {
-            VN::Export::GetExport (iExport, pIsolate, args[1]);
+            VN::GetExport (iExport, pIsolate, args[1]);
         }
 
     //  Set up the evaluation...

@@ -31,18 +31,16 @@
  **********************
  **********************/
 
-/*************************************************************
-Node notes:
+/***************************
+ ***************************
+ *****  Export Access  *****
+ ***************************
+ ***************************/
 
-Adapter processing of `jsobj.name`...
+bool VA::Node::GetExport (Vxa::export_return_t &rExport, Local<v8::Context> iContext, Local<v8::Value> iValue) {
+    return false;
+}
 
-- call `v8::Object::Get` to obtain value
-- not found? return undefined
-- function? return result of call
-- else return value
-*************************************************************/
-
-namespace VA {
-    namespace Node {
-    }
+bool VA::Node::GetExport (Vxa::export_return_t &rExport, v8::Isolate *pIsolate, Local<v8::Value> iValue) {
+    return false;
 }
