@@ -7,11 +7,11 @@
 
 #include "Vxa_VCollectableObject.h"
 
-#include "va_node_gateway.h"
-
 /**************************
  *****  Declarations  *****
  **************************/
+
+#include "va_node_isolate.h"
 
 /*************************
  *****  Definitions  *****
@@ -19,10 +19,6 @@
 
 namespace VA {
     namespace Node {
-        using v8::Isolate;
-        using v8::Local;
-        using v8::Persistent;
-        using v8::Value;
 
     /*------------------------*
      *----  class Export  ----*
@@ -31,22 +27,39 @@ namespace VA {
         class Export : public Vxa::VCollectableObject {
             DECLARE_CONCRETE_RTTLITE (Export, Vxa::Object);
 
+            friend class Isolate;
+
+        //  Aliases
+            typedef v8::Value object_t;
+            typedef v8::Local<object_t>      handle_t;
+            typedef v8::Persistent<object_t> global_t;
+
 	//  class ClassBuilder
 	public:
             class ClassBuilder;
 
         //  Construction
         private:
-            Export (Isolate *pIsolate, Local<Value> iValue);
+            Export (Isolate *pIsolate, handle_t hObject);
 
         //  Destruction
         private:
             ~Export ();
 
+            bool onDeleteThis ();
+
+        //  Access
+            Isolate *isolate () const {
+                return m_pIsolate;
+            }
+            handle_t object () const {
+                return m_pIsolate->Local (m_hObject);
+            }
+
         //  State
         private:
-            Gateway::Reference const m_pGateway;
-
+            Isolate::Reference const m_pIsolate;
+            global_t           const m_hObject;
         };
 
     /*--------------------------------------*

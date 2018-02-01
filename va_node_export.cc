@@ -40,7 +40,10 @@
  **************************
  **************************/
 
-VA::Node::Export::Export (Isolate *pIsolate, Local<Value> iValue) {
+VA::Node::Export::Export (
+    Isolate *pIsolate, handle_t hObject
+) : m_pIsolate (pIsolate), m_hObject (pIsolate->isolate (), hObject) {
+    std::cerr << "VA::Node::Export::Export: " << this << std::endl;
 }
 
 /*************************
@@ -50,6 +53,13 @@ VA::Node::Export::Export (Isolate *pIsolate, Local<Value> iValue) {
  *************************/
 
 VA::Node::Export::~Export () {
+    std::cerr << "VA::Node::Export::~Export: " << this << std::endl;
+}
+
+bool VA::Node::Export::onDeleteThis () {
+//    return m_pIsolate->Detach (this);
+    std::cerr << "VA::Node::Export::onDeleteThis: " << this << std::endl;
+    return false;
 }
 
 /***********************

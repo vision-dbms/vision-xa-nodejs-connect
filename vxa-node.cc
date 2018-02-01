@@ -8,15 +8,13 @@
 
 #include "Vision_Evaluation_Gofer.h"
 
-#include "va_node.h"
+#include "va_node_process.h"
+#include "va_node_isolate.h"
 #include "va_node_export.h"
-#include "va_node_gateway.h"
 
 #include "Vca_VcaGofer.h"
 #include "Vca_IDirectory.h"
 #include "Vca_IPipeFactory.h"
-
-#include <iostream>
 
 namespace {
 
@@ -292,11 +290,25 @@ namespace {
         args.GetReturnValue().Set(hResolver->GetPromise ());
     }
 
+/**************************
+ *----  State Access  ----*
+ **************************/
+
+    void CachedIsolateCount (const FunctionCallbackInfo<Value>& args) {
+        VA::Node::Process::Reference pNodeProcess;
+        args.GetReturnValue ().Set (
+            static_cast<uint32_t>(
+                VA::Node::Process::GetInstance (pNodeProcess) ? pNodeProcess->isolateCacheSize () : 0
+            )
+        );
+    }
+
 /**********************************
  *----  Module Initialization ----*
  **********************************/
     void Init(Local<Object> exports, Local<Object> module) {
-        NODE_SET_METHOD(module, "exports", Evaluate);
+        NODE_SET_METHOD(exports, "v", Evaluate);
+        NODE_SET_METHOD(exports, "cachedIsolateCount", CachedIsolateCount);
     }
 
     NODE_MODULE(NODE_GYP_MODULE_NAME, Init)

@@ -21,6 +21,8 @@
 /************************
  *****  Supporting  *****
  ************************/
+
+#include "va_node_export.h"
 
 
 /**********************
@@ -37,10 +39,11 @@
  ***************************
  ***************************/
 
-bool VA::Node::GetExport (Vxa::export_return_t &rExport, Local<v8::Context> iContext, Local<v8::Value> iValue) {
-    return false;
-}
-
-bool VA::Node::GetExport (Vxa::export_return_t &rExport, v8::Isolate *pIsolate, Local<v8::Value> iValue) {
-    return false;
+bool VA::Node::GetExport (Vxa::export_return_t &rExport, Isolate::handle_t hIsolate, value_handle_t hObject) {
+    Isolate::Reference pIsolate; Export::Reference pObject;
+    if (Isolate::GetInstance (pIsolate, hIsolate) && pIsolate->Attach (pObject, hObject))
+        rExport.setTo (Vxa::Export (pObject));
+    else
+        rExport.clear ();
+    return rExport.isntNil ();
 }
