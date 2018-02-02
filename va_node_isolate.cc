@@ -87,7 +87,7 @@ bool VA::Node::Isolate::Attach (
     v8::HandleScope iHandleScope (m_hIsolate);
 
     object_cache_handle_t hObjectCache (Local (m_hObjectCache));
-    value_handle_t const hCachedObject (hObjectCache->Get (hObject));
+    value_handle_t hCachedObject (hObjectCache->Get (hObject));
 
     if (!hCachedObject.IsEmpty () && hCachedObject->IsExternal ()) {
         rpModelObject.setTo (reinterpret_cast<Export*>(hCachedObject.As<v8::External>()->Value()));
