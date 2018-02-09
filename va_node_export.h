@@ -56,6 +56,11 @@ namespace VA {
                 return m_pIsolate->Local (m_hObject);
             }
 
+        //  Methods
+        public:
+            void loopbackInt (Vxa::VResultBuilder &rRB, int i);
+            void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny const &rAny);
+
         //  State
         private:
             Isolate::Reference const m_pIsolate;

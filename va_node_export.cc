@@ -22,8 +22,9 @@
  *****  Supporting  *****
  ************************/
 
+#include "Vxa_VAny.h"
 #include "Vxa_VCollectable.h"
-//#include "Vxa_VResultBuilder.h"
+#include "Vxa_VResultBuilder.h"
 
 
 /******************************
@@ -62,11 +63,50 @@ bool VA::Node::Export::onDeleteThis () {
     return false;
 }
 
-/***********************
- ***********************
- *****  Callbacks  *****
- ***********************
- ***********************/
+/*********************
+ *********************
+ *****  Methods  *****
+ *********************
+ *********************/
+
+void VA::Node::Export::loopbackInt (
+    Vxa::VResultBuilder &rRB, int i
+) {
+    rRB = i;
+}
+
+namespace {
+    class LBAnyClient : public Vxa::VAny::Client {
+    public:
+        LBAnyClient (Vxa::VResultBuilder &rRB) : m_rRB (rRB) {
+        }
+        ~LBAnyClient () {
+        }
+    private:
+        template <typename value_t> void onImpl (value_t iValue) {
+            m_rRB = iValue;
+        }
+    public:
+        virtual void on (int iValue) OVERRIDE {
+            onImpl (iValue);
+        }
+        virtual void on (double iValue) OVERRIDE {
+            onImpl (iValue);
+        }
+        virtual void on (VString const &iValue) OVERRIDE {
+            onImpl (iValue);
+        }
+    private:
+        Vxa::VResultBuilder &m_rRB;
+    };
+}
+
+void VA::Node::Export::loopbackAny (
+    Vxa::VResultBuilder &rRB, Vxa::VAny const &rAny
+) {
+    LBAnyClient iAnyClient (rRB);
+    rAny.supply (iAnyClient);
+}
 
 
 /***************************
@@ -76,6 +116,8 @@ bool VA::Node::Export::onDeleteThis () {
  ***************************/
 
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
+    defineMethod ("loopbackInt:", &Export::loopbackInt);
+    defineMethod ("loopbackAny:", &Export::loopbackAny);
 }
 
 namespace {
