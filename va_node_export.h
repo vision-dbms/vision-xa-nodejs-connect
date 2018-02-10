@@ -61,6 +61,8 @@ namespace VA {
             void loopbackInt (Vxa::VResultBuilder &rRB, int i);
             void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny const &rAny);
 
+	    void defthod (Vxa::VResultBuilder &rRB);
+
         //  State
         private:
             Isolate::Reference const m_pIsolate;

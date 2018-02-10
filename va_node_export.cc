@@ -107,6 +107,20 @@ void VA::Node::Export::loopbackAny (
     LBAnyClient iAnyClient (rRB);
     rAny.supply (iAnyClient);
 }
+
+void VA::Node::Export::defthod (Vxa::VResultBuilder &rRB) {
+    VString iMessage;
+    Vxa::VTask const *const pTask = rRB.task ();
+    iMessage
+	<< "Called as '"
+	<< pTask->methodName ()
+	<< "' with parameter count of "
+	<< pTask->parameterCount ()
+	<< " and task size of "
+	<< pTask->cardinality ()
+	<< "\n";
+    rRB = iMessage;
+}
 
 
 /***************************
@@ -118,6 +132,8 @@ void VA::Node::Export::loopbackAny (
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
     defineMethod ("loopbackInt:", &Export::loopbackInt);
     defineMethod ("loopbackAny:", &Export::loopbackAny);
+
+    defineDefault (&Export::defthod);
 }
 
 namespace {
