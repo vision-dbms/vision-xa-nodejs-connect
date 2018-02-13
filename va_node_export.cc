@@ -69,18 +69,26 @@ bool VA::Node::Export::onDeleteThis () {
  *********************
  *********************/
 
+/*************************
+ *----  loopbackInt  ----*
+ *************************/
+
 void VA::Node::Export::loopbackInt (
     Vxa::VResultBuilder &rRB, int i
 ) {
     rRB = i;
 }
 
+/*************************
+ *----  loopbackAny  ----*
+ *************************/
+
 namespace {
-    class LBAnyClient : public Vxa::VAny::Client {
+    class LoopbackSink : public Vxa::VAny::Client {
     public:
-        LBAnyClient (Vxa::VResultBuilder &rRB) : m_rRB (rRB) {
+        LoopbackSink (Vxa::VResultBuilder &rRB) : m_rRB (rRB) {
         }
-        ~LBAnyClient () {
+        ~LoopbackSink () {
         }
     private:
         template <typename value_t> void onImpl (value_t iValue) {
@@ -102,13 +110,45 @@ namespace {
 }
 
 void VA::Node::Export::loopbackAny (
-    Vxa::VResultBuilder &rRB, Vxa::VAny const &rAny
+    Vxa::VResultBuilder &rRB, Vxa::VAny::value_t rAny
 ) {
-    LBAnyClient iAnyClient (rRB);
-    rAny.supply (iAnyClient);
+    LoopbackSink iAnySink (rRB);
+    rAny.supply (iAnySink);
 }
 
-void VA::Node::Export::defthod (Vxa::VResultBuilder &rRB) {
+/*************************
+ *----  interceptor  ----*
+ *************************/
+
+namespace {
+    class InterceptorSink : public Vxa::VAny::Client {
+    public:
+        InterceptorSink (VString &rMessage) : m_rMessage (rMessage) {
+        }
+        ~InterceptorSink () {
+        }
+    private:
+        template <typename value_t> void onImpl (value_t iValue) {
+            m_rMessage << iValue;
+        }
+    public:
+        virtual void on (int iValue) OVERRIDE {
+            onImpl (iValue);
+        }
+        virtual void on (double iValue) OVERRIDE {
+            onImpl (iValue);
+        }
+        virtual void on (VString const &iValue) OVERRIDE {
+            onImpl (iValue);
+        }
+    private:
+        VString &m_rMessage;
+    };
+}
+
+void VA::Node::Export::interceptor (
+    Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t rPack
+) {
     VString iMessage;
     Vxa::VTask const *const pTask = rRB.task ();
     iMessage
@@ -117,8 +157,15 @@ void VA::Node::Export::defthod (Vxa::VResultBuilder &rRB) {
 	<< "' with parameter count of "
 	<< pTask->parameterCount ()
 	<< " and task size of "
-	<< pTask->cardinality ()
-	<< "\n";
+	<< pTask->cardinality ();
+
+    InterceptorSink iAnySink (iMessage);
+    Vxa::cardinality_t const cParameters = rPack.parameterCount ();
+    for (Vxa::cardinality_t xParameter = 0; xParameter < cParameters; xParameter++) {
+        iMessage << "\n " <<  xParameter << ": ";
+        rPack.parameterValue (xParameter).supply (iAnySink);
+    }
+    iMessage << "\n";
     rRB = iMessage;
 }
 
@@ -133,7 +180,7 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object
     defineMethod ("loopbackInt:", &Export::loopbackInt);
     defineMethod ("loopbackAny:", &Export::loopbackAny);
 
-    defineDefault (&Export::defthod);
+    defineDefault (&Export::interceptor);
 }
 
 namespace {

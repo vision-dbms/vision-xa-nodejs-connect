@@ -11,6 +11,9 @@
  *****  Declarations  *****
  **************************/
 
+#include "Vxa_VAny.h"
+#include "Vxa_VPack.h"
+
 #include "va_node_isolate.h"
 
 /*************************
@@ -59,9 +62,9 @@ namespace VA {
         //  Methods
         public:
             void loopbackInt (Vxa::VResultBuilder &rRB, int i);
-            void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny const &rAny);
+            void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny::value_t);
 
-	    void defthod (Vxa::VResultBuilder &rRB);
+	    void interceptor (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
 
         //  State
         private:
