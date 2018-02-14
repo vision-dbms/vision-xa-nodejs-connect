@@ -15,7 +15,6 @@
         'vision/kernel',
       ],
       'libraries': [
-        '-L$(srcdir)/vision/lib',
         '-lVxa',
         '-lVsa',
         '-lVca',
@@ -39,9 +38,26 @@
             'cflags_cc!': [
               '-fno-rtti',
             ],
-            'ldflags': [
-              "'-Wl,-rpath=$$ORIGIN/../../vision/lib'",
-            ],
+            'configurations' : {
+              'Debug' : {
+                'cflags' : [
+                  '-L$(srcdir)/vision/lib/dbg',
+                ],
+                'ldflags': [
+                  '-L$(srcdir)/vision/lib/dbg',
+                  "'-Wl,-rpath=$$ORIGIN/../../vision/lib/dbg'",
+                ],
+              },
+              'Release' : {
+                'cflags' : [
+                  '-L$(srcdir)/vision/lib',
+                ],
+                'ldflags': [
+                  '-L$(srcdir)/vision/lib',
+                   "'-Wl,-rpath=$$ORIGIN/../../vision/lib'",
+                ],
+              }
+            },
           },
         ],
         ['OS=="mac"',
