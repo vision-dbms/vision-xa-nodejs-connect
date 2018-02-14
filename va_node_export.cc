@@ -168,6 +168,13 @@ void VA::Node::Export::interceptor (
     iMessage << "\n";
     rRB = iMessage;
 }
+
+void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::value_t pack_o_ds) {
+    double result = 0.0;
+    for (unsigned int xD = 0; xD < pack_o_ds.parameterCount (); xD++)
+        result += pack_o_ds[xD];
+    rRB = result;
+}
 
 
 /***************************
@@ -179,6 +186,13 @@ void VA::Node::Export::interceptor (
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
     defineMethod ("loopbackInt:", &Export::loopbackInt);
     defineMethod ("loopbackAny:", &Export::loopbackAny);
+
+    defineMethod ("add"		, &Export::adder);
+    defineMethod ("add:"	, &Export::adder);
+    defineMethod ("add:a:"	, &Export::adder);
+    defineMethod ("add:a:a:"	, &Export::adder);
+    defineMethod ("add:a:a:a:"	, &Export::adder);
+    defineMethod ("add:a:a:a:a:", &Export::adder);
 
     defineDefault (&Export::interceptor);
 }
