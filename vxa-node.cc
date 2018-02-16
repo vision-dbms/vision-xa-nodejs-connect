@@ -56,6 +56,12 @@ namespace {
     class Queueable : public VReferenceable {
         DECLARE_ABSTRACT_RTTLITE (Queueable, VReferenceable);
 
+    //  Aliases
+    public:
+        typedef VN::Isolate Isolate;
+        typedef VN::value_handle_t value_handle_t;
+        typedef VN::string_handle_t string_handle_t;
+
     //  Construction
     protected:
         Queueable (Isolate *pIsolate) : m_pIsolate (pIsolate) {
@@ -78,8 +84,23 @@ namespace {
         Isolate *isolate () const {
             return m_pIsolate;
         }
+        v8::Isolate *isolateHandle () const {
+            return m_pIsolate->handle ();
+        }
         Local<Context> context () const {
-            return m_pIsolate->GetCurrentContext ();
+            return m_pIsolate->getCurrentContext ();
+        }
+
+    //  Handle Cast
+    protected:
+        template <typename S> v8::Local<S> GetLocal (v8::PersistentBase<S> const &rThat) const {
+            return m_pIsolate->Local (rThat);
+        }
+
+    //  Value Creation Helpers
+    protected:
+        string_handle_t NewString (char const *pString) const {
+            return m_pIsolate->NewString (pString);
         }
 
     //  Scheduling
@@ -98,7 +119,7 @@ namespace {
             }
         }
         void Run () {
-            HandleScope iScope (isolate ());
+            HandleScope iScope (isolateHandle ());
             run ();
             release ();  // ... reference created by 'schedule' removed here.
         }
@@ -106,8 +127,8 @@ namespace {
 
     //  State
     private:
+        Isolate::Reference const m_pIsolate;
         uv_async_t m_iNodeMessage;
-        Isolate *const m_pIsolate;
     }; // class Queueable
 
 /************************
@@ -119,8 +140,11 @@ namespace {
 
     //  Aliases
     public:
+        typedef VN::Isolate Isolate;
         typedef Promise::Resolver resolver_t;
-        typedef Persistent<resolver_t> resolver_handle_t;
+
+        typedef Local<resolver_t>      resolver_handle_t;
+        typedef Persistent<resolver_t> resolver_global_t;
 
     //  class Resolver
     public:
@@ -130,8 +154,8 @@ namespace {
         //  Construction
         protected:
             Resolver (
-                Isolate *pIsolate, resolver_handle_t const &rhResolver
-            ) : BaseClass (pIsolate), m_hResolver (pIsolate, rhResolver) {
+                Isolate *pIsolate, resolver_global_t const &rhResolver
+            ) : BaseClass (pIsolate), m_hResolver (*pIsolate, rhResolver) {
             }
 
         //  Destruction
@@ -140,14 +164,23 @@ namespace {
             }
 
         //  Access
-        protected:
+        private:
             Local<resolver_t> resolver () const {
-                return Local<resolver_t>::New (isolate (), m_hResolver);
+                return GetLocal<resolver_t> (m_hResolver);
+            }
+
+        //  Resolution
+        protected:
+            template <typename R> void Resolve (R iR) const {
+                resolver ()->Resolve (iR);
+            }
+            template <typename R> void Reject (R iR) const {
+                resolver ()->Reject (iR);
             }
 
         //  State
         private:
-            resolver_handle_t m_hResolver;
+            resolver_global_t m_hResolver;
         };
 
     //  class Resolution
@@ -161,7 +194,7 @@ namespace {
         //  Construction
         public:
             Resolution (
-                Isolate *pIsolate, resolver_handle_t const &rhResolver, VE::Value iResult
+                Isolate *pIsolate, resolver_global_t const &rhResolver, VE::Value iResult
             ) : Resolver (pIsolate, rhResolver), m_iResult (iResult) {
             }
 
@@ -173,7 +206,7 @@ namespace {
         //  Execution
         private:
             void run () override {
-                resolver()->Resolve (String::NewFromUtf8 (isolate (), m_iResult.output ()));
+                Resolve (NewString (m_iResult.output ()));
             }
 
         //  State
@@ -193,7 +226,7 @@ namespace {
         public:
             Rejection (
                 Isolate *pIsolate,
-                resolver_handle_t const &rhResolver,
+                resolver_global_t const &rhResolver,
                 Vca::IError *pInterface,
                 VString const &rMessage
             ) : Resolver (pIsolate, rhResolver), m_pInterface (pInterface), m_iMessage (rMessage) {
@@ -207,7 +240,7 @@ namespace {
         //  Execution
         private:
             void run () override {
-                resolver()->Reject (String::NewFromUtf8 (isolate (), m_iMessage));
+                Reject (NewString (m_iMessage));
             }
 
         //  State
@@ -219,9 +252,9 @@ namespace {
     public:
         ResultSink (
             Isolate *pIsolate,
-            Local<resolver_t> hResolver,
+            resolver_handle_t hResolver,
             VE::evaluation_result_gofer_t *pResultGofer
-        ) : m_pIsolate (pIsolate), m_hResolver (pIsolate, hResolver) {
+        ) : m_pIsolate (pIsolate), m_hResolver (*pIsolate, hResolver) {
             retain (); {
                 pResultGofer->supplyMembers (this, &ThisClass::onData, &ThisClass::onError);
             } untain ();
@@ -246,8 +279,8 @@ namespace {
 
     //  State
     private:
-        Isolate *const    m_pIsolate;
-        resolver_handle_t m_hResolver;
+        VN::Isolate::Reference m_pIsolate;
+        resolver_global_t m_hResolver;
     };
 
 /**********************
@@ -256,22 +289,21 @@ namespace {
     void Evaluate(const FunctionCallbackInfo<Value>& args) {
         Vca::VCohortClaim cohortClaim;
 
-        Isolate* const pIsolate = args.GetIsolate();
+        VN::Isolate::Reference pIsolate;
+        VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
 
     //  Access the required expression to evaluate...
         if (args.Length () < 1) {
-            pIsolate->ThrowException (
-                Exception::TypeError (String::NewFromUtf8 (pIsolate, "Missing Expression"))
-            );
+            pIsolate->ThrowTypeError ("Missing Expression");
             return;
         }
-        MaybeLocal<String> str = args[0]->ToString (pIsolate);
+        MaybeLocal<String> str = args[0]->ToString (pIsolate->isolate ());
         String::Utf8Value pExpression(str.ToLocalChecked ());
 
     //  Access the client context if supplied...
         Vxa::export_return_t iExport;
         if (args.Length () >= 2) {
-            VN::GetExport (iExport, pIsolate, args[1]);
+            pIsolate->GetExport (iExport, args[1]);
         }
 
     //  Set up the evaluation...
@@ -280,7 +312,7 @@ namespace {
         );
 
     //  Create the promise ...
-        MaybeLocal<Promise::Resolver> mResolver = Promise::Resolver::New (pIsolate->GetCurrentContext ());
+        MaybeLocal<Promise::Resolver> mResolver = Promise::Resolver::New (pIsolate->getCurrentContext ());
         Local<Promise::Resolver> hResolver = mResolver.ToLocalChecked ();
 
     //  Start the evaluation...

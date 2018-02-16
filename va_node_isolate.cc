@@ -69,6 +69,31 @@ bool VA::Node::Isolate::GetInstance (Reference &rpInstance, v8::Isolate *pIsolat
     return Process::GetInstance (pThisProcess) && pThisProcess->Attach (rpInstance, pIsolate);
 }
 
+/************************
+ ************************
+ *****  Exceptions  *****
+ ************************
+ ************************/
+
+void VA::Node::Isolate::ThrowTypeError (char const *pMessage) const {
+    m_hIsolate->ThrowException (v8::Exception::TypeError (NewString (pMessage)));
+}
+
+/***************************
+ ***************************
+ *****  Export Access  *****
+ ***************************
+ ***************************/
+
+bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, value_handle_t hObject){
+    Export::Reference pObject;
+    if (!Attach (pObject, hObject))
+        return false;
+
+    rExport.setTo (Vxa::Export (pObject));
+    return true;
+}
+
 /******************************
  ******************************
  *****  Model Management  *****

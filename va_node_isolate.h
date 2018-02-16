@@ -56,12 +56,34 @@ namespace VA {
             handle_t isolate () const {
                 return m_hIsolate;
             }
+            handle_t handle () const {
+                return m_hIsolate;
+            }
+            operator handle_t () const {
+                return m_hIsolate;
+            }
+            v8::Local<v8::Context> getCurrentContext () const {
+                return m_hIsolate->GetCurrentContext ();
+            }
 
-        //  Handle Casting
+        //  Handle Conversion
         public:
             template <typename S> v8::Local<S> Local (v8::PersistentBase<S> const &rThat) const {
                 return v8::Local<S>::New (m_hIsolate, rThat);
             }
+
+        //  Object Creation
+        public:
+            string_handle_t NewString (char const *pString) const {
+                return v8::String::NewFromUtf8 (m_hIsolate, pString);
+            }
+
+        //  Exceptions
+        public:
+            void ThrowTypeError (char const *pMessage) const;
+
+        //  Export Access
+            bool GetExport (Vxa::export_return_t &rExport, value_handle_t hValue);
 
         //  Model Management
         public:

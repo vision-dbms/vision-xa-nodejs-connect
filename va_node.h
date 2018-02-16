@@ -22,9 +22,11 @@
 namespace VA {
     namespace Node {
         typedef v8::Local<v8::Value>      value_handle_t;
-        typedef v8::Persistent<v8::Value> value_global_t;
+        typedef v8::Local<v8::String>     string_handle_t;
 
-        bool GetExport (Vxa::export_return_t &rResult, v8::Isolate *pIsolate, value_handle_t iValue);
+        bool GetExport (
+            Vxa::export_return_t &rResult, v8::Isolate *pIsolate, value_handle_t iValue
+        );
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*
      *>  This needs to move upstream to V or one of its classes  <*
