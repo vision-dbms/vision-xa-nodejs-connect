@@ -5,7 +5,7 @@
  *****  Components  *****
  ************************/
 
-#include "Vxa_VCollectableObject.h"
+#include "va_node_isolated.h"
 
 /**************************
  *****  Declarations  *****
@@ -13,8 +13,6 @@
 
 #include "Vxa_VAny.h"
 #include "Vxa_VPack.h"
-
-#include "va_node_isolate.h"
 
 /*************************
  *****  Definitions  *****
@@ -27,8 +25,8 @@ namespace VA {
      *----  class Export  ----*
      *------------------------*/
 
-        class Export : public Vxa::VCollectableObject {
-            DECLARE_CONCRETE_RTTLITE (Export, Vxa::Object);
+        class Export : public Isolated {
+            DECLARE_CONCRETE_RTTLITE (Export, Isolated);
 
             friend class Isolate;
 
@@ -78,7 +76,7 @@ namespace VA {
      *----  class Export::ClassBuilder  ----*
      *--------------------------------------*/
 
-        class Export::ClassBuilder : public Vxa::Object::ClassBuilder {
+        class Export::ClassBuilder : public Isolated::ClassBuilder {
         protected:
             ClassBuilder (Vxa::VClass *pClass);
         };

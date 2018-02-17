@@ -1,6 +1,5 @@
 #include <node.h>
 #include <v8.h>
-#include <uv.h>
 
 #include "Vk.h"
 
@@ -8,9 +7,9 @@
 
 #include "Vision_Evaluation_Gofer.h"
 
-#include "va_node_process.h"
-#include "va_node_isolate.h"
 #include "va_node_export.h"
+#include "va_node_resolver.h"
+#include "va_node_triggerable.h"
 
 #include "Vca_VcaGofer.h"
 #include "Vca_IDirectory.h"
@@ -27,7 +26,7 @@ namespace {
     using v8::MaybeLocal;
     using v8::Object;
     using v8::Persistent;
-    using v8::Promise;
+
     using v8::String;
     using v8::Value;
 
@@ -49,88 +48,6 @@ namespace {
         return pGofer;
     }
 
-/***********************
- *----  Queueable  ----*
- ***********************/
-
-    class Queueable : public VReferenceable {
-        DECLARE_ABSTRACT_RTTLITE (Queueable, VReferenceable);
-
-    //  Aliases
-    public:
-        typedef VN::Isolate Isolate;
-        typedef VN::value_handle_t value_handle_t;
-        typedef VN::string_handle_t string_handle_t;
-
-    //  Construction
-    protected:
-        Queueable (Isolate *pIsolate) : m_pIsolate (pIsolate) {
-            assert (uv_async_init (uv_default_loop (), &m_iNodeMessage, &ThisClass::Run) == 0);
-            m_iNodeMessage.data = this;
-        }
-
-    //  Destruction
-        ~Queueable () {
-        /*****************************************************************************************
-         *  This destructor may be called from any Vca thread or, if we're lucky, from node's main
-         *  thread.  Since the 'uv' library isn't thread safe, it's only safe to run the following
-         *  line of code in node's main thread to avoid random crashes.  Make sure that happens!!!
-         *****************************************************************************************/
-            uv_close (reinterpret_cast<uv_handle_t*>(&m_iNodeMessage), NULL);
-        }
-
-    //  Access
-    protected:
-        Isolate *isolate () const {
-            return m_pIsolate;
-        }
-        v8::Isolate *isolateHandle () const {
-            return m_pIsolate->handle ();
-        }
-        Local<Context> context () const {
-            return m_pIsolate->getCurrentContext ();
-        }
-
-    //  Handle Cast
-    protected:
-        template <typename S> v8::Local<S> GetLocal (v8::PersistentBase<S> const &rThat) const {
-            return m_pIsolate->Local (rThat);
-        }
-
-    //  Value Creation Helpers
-    protected:
-        string_handle_t NewString (char const *pString) const {
-            return m_pIsolate->NewString (pString);
-        }
-
-    //  Scheduling
-    protected:
-        void schedule () {
-            retain (); // ... reference removed below after this queueable has been 'Run'
-            uv_async_send (&m_iNodeMessage);
-        }
-
-    //  Execution
-    private:
-        static void Run (uv_async_t *pHandle) {
-            Reference const pQueueable(static_cast<ThisClass*>(pHandle->data));
-            if (pQueueable) {
-                pQueueable->Run ();
-            }
-        }
-        void Run () {
-            HandleScope iScope (isolateHandle ());
-            run ();
-            release ();  // ... reference created by 'schedule' removed here.
-        }
-        virtual void run () = 0;
-
-    //  State
-    private:
-        Isolate::Reference const m_pIsolate;
-        uv_async_t m_iNodeMessage;
-    }; // class Queueable
-
 /************************
  *----  ResultSink  ----*
  ************************/
@@ -140,53 +57,12 @@ namespace {
 
     //  Aliases
     public:
-        typedef VN::Isolate Isolate;
-        typedef Promise::Resolver resolver_t;
-
-        typedef Local<resolver_t>      resolver_handle_t;
-        typedef Persistent<resolver_t> resolver_global_t;
-
-    //  class Resolver
-    public:
-        class Resolver : public Queueable {
-            DECLARE_ABSTRACT_RTTLITE (Resolver, Queueable);
-
-        //  Construction
-        protected:
-            Resolver (
-                Isolate *pIsolate, resolver_global_t const &rhResolver
-            ) : BaseClass (pIsolate), m_hResolver (*pIsolate, rhResolver) {
-            }
-
-        //  Destruction
-        protected:
-            ~Resolver () {
-            }
-
-        //  Access
-        private:
-            Local<resolver_t> resolver () const {
-                return GetLocal<resolver_t> (m_hResolver);
-            }
-
-        //  Resolution
-        protected:
-            template <typename R> void Resolve (R iR) const {
-                resolver ()->Resolve (iR);
-            }
-            template <typename R> void Reject (R iR) const {
-                resolver ()->Reject (iR);
-            }
-
-        //  State
-        private:
-            resolver_global_t m_hResolver;
-        };
+        typedef VN::Resolver Resolver;
 
     //  class Resolution
     public:
-        class Resolution : public Resolver {
-            DECLARE_CONCRETE_RTTLITE (Resolution, Resolver);
+        class Resolution : public Resolver::Resolution {
+            DECLARE_CONCRETE_RTTLITE (Resolution, Resolver::Resolution);
 
         //  Friends
             friend class ResultSink;
@@ -194,8 +70,8 @@ namespace {
         //  Construction
         public:
             Resolution (
-                Isolate *pIsolate, resolver_global_t const &rhResolver, VE::Value iResult
-            ) : Resolver (pIsolate, rhResolver), m_iResult (iResult) {
+                Resolver *pResolver, VE::Value iResult
+            ) : BaseClass (pResolver), m_iResult (iResult) {
             }
 
         //  Destruction
@@ -216,8 +92,8 @@ namespace {
 
     //  class Rejection
     public:
-        class Rejection : public Resolver {
-            DECLARE_CONCRETE_RTTLITE (Rejection, Resolver);
+        class Rejection : public Resolver::Resolution {
+            DECLARE_CONCRETE_RTTLITE (Rejection, Resolver::Resolution);
 
         //  Friends
             friend class ResultSink;
@@ -225,11 +101,8 @@ namespace {
         //  Construction
         public:
             Rejection (
-                Isolate *pIsolate,
-                resolver_global_t const &rhResolver,
-                Vca::IError *pInterface,
-                VString const &rMessage
-            ) : Resolver (pIsolate, rhResolver), m_pInterface (pInterface), m_iMessage (rMessage) {
+                Resolver *pResolver, Vca::IError *pInterface, VString const &rMessage
+            ) : BaseClass (pResolver), m_pInterface (pInterface), m_iMessage (rMessage) {
             }
 
         //  Destruction
@@ -248,39 +121,46 @@ namespace {
             Vca::IError::Reference m_pInterface;
             VString const          m_iMessage;
         }; // class ResultSink::Rejection
-        
+
+    //  Construction
     public:
         ResultSink (
-            Isolate *pIsolate,
-            resolver_handle_t hResolver,
-            VE::evaluation_result_gofer_t *pResultGofer
-        ) : m_pIsolate (pIsolate), m_hResolver (*pIsolate, hResolver) {
+            Resolver *pResolver, VE::evaluation_result_gofer_t *pResultGofer
+        ) : m_pResolver (pResolver) {
             retain (); {
                 pResultGofer->supplyMembers (this, &ThisClass::onData, &ThisClass::onError);
             } untain ();
         }
+
+    //  Destruction
     private:
         ~ResultSink () {
         }
 
+    //  Access
+    public:
+        Resolver::promise_handle_t GetPromise () const {
+            return m_pResolver->promise ();
+        }
+
+    //  Outcomes
     private:
         void onData (VE::Value iResult) {
-            Resolution::Reference const pQueueable (
-                new Resolution (m_pIsolate, m_hResolver, iResult)
+            Resolution::Reference const pOutcome (
+                new Resolution (m_pResolver, iResult)
             );
-            pQueueable->schedule ();
+            pOutcome->trigger ();
         }
         void onError (Vca::IError *pInterface, VString const &rMessage) {
-            Rejection::Reference const pQueueable (
-                new Rejection (m_pIsolate, m_hResolver, pInterface, rMessage)
+            Rejection::Reference const pOutcome (
+                new Rejection (m_pResolver, pInterface, rMessage)
             );
-            pQueueable->schedule ();
+            pOutcome->trigger ();
         }
 
     //  State
     private:
-        VN::Isolate::Reference m_pIsolate;
-        resolver_global_t m_hResolver;
+        Resolver::Reference m_pResolver;
     };
 
 /**********************
@@ -311,15 +191,13 @@ namespace {
             new VE::Gofer (DefaultEvaluator (), *pExpression, iExport)
         );
 
-    //  Create the promise ...
-        MaybeLocal<Promise::Resolver> mResolver = Promise::Resolver::New (pIsolate->getCurrentContext ());
-        Local<Promise::Resolver> hResolver = mResolver.ToLocalChecked ();
-
     //  Start the evaluation...
-        ResultSink::Reference const pResultSink (new ResultSink (pIsolate, hResolver, pGofer));
+        ResultSink::Reference const pResultSink (
+            new ResultSink (new VN::Resolver (pIsolate), pGofer)
+        );
 
-    //  Return the promise
-        args.GetReturnValue().Set(hResolver->GetPromise ());
+    //  And return the promise:
+        args.GetReturnValue().Set (pResultSink->GetPromise ());
     }
 
 /**************************

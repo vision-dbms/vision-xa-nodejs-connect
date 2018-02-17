@@ -69,11 +69,21 @@ bool VA::Node::Isolate::GetInstance (Reference &rpInstance, v8::Isolate *pIsolat
     return Process::GetInstance (pThisProcess) && pThisProcess->Attach (rpInstance, pIsolate);
 }
 
-/************************
- ************************
- *****  Exceptions  *****
- ************************
- ************************/
+/*************************
+ *************************
+ *****  New Helpers  *****
+ *************************
+ *************************/
+
+VA::Node::resolver_handle_t VA::Node::Isolate::NewResolver () const {
+    return resolver_t::New (getCurrentContext ()).ToLocalChecked ();
+}
+
+/*******************************
+ *******************************
+ *****  Exception Helpers  *****
+ *******************************
+ *******************************/
 
 void VA::Node::Isolate::ThrowTypeError (char const *pMessage) const {
     m_hIsolate->ThrowException (v8::Exception::TypeError (NewString (pMessage)));

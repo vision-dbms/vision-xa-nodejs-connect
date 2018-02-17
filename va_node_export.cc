@@ -43,7 +43,7 @@
 
 VA::Node::Export::Export (
     Isolate *pIsolate, handle_t hObject
-) : m_pIsolate (pIsolate), m_hObject (pIsolate->isolate (), hObject) {
+) : BaseClass (pIsolate), m_hObject (*pIsolate, hObject) {
     std::cerr << "VA::Node::Export::Export: " << this << std::endl;
 }
 

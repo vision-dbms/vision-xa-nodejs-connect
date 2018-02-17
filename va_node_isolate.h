@@ -66,19 +66,22 @@ namespace VA {
                 return m_hIsolate->GetCurrentContext ();
             }
 
-        //  Handle Conversion
+        //  Handle Helpers
         public:
-            template <typename S> v8::Local<S> Local (v8::PersistentBase<S> const &rThat) const {
+            template <typename S> v8::Local<S> Local (
+                v8::PersistentBase<S> const &rThat
+            ) const {
                 return v8::Local<S>::New (m_hIsolate, rThat);
             }
 
-        //  Object Creation
+        //  New Helpers
         public:
             string_handle_t NewString (char const *pString) const {
                 return v8::String::NewFromUtf8 (m_hIsolate, pString);
             }
+            resolver_handle_t NewResolver () const;
 
-        //  Exceptions
+        //  Exception Helpers
         public:
             void ThrowTypeError (char const *pMessage) const;
 
@@ -87,8 +90,12 @@ namespace VA {
 
         //  Model Management
         public:
-            bool Attach (ClassTraits<Export>::retaining_ptr_t &rpModelObject, v8::Local<v8::Object> hObject);
-            bool Attach (ClassTraits<Export>::retaining_ptr_t &rpModelObject, v8::Local<v8::Value> hValue);
+            bool Attach (
+                ClassTraits<Export>::retaining_ptr_t &rpModelObject, object_handle_t hObject
+            );
+            bool Attach (
+                ClassTraits<Export>::retaining_ptr_t &rpModelObject, value_handle_t hValue
+            );
         private:
             bool Detach (Export *pModelObject);
 
