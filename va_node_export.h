@@ -47,7 +47,9 @@ namespace VA {
         private:
             ~Export ();
 
-            bool onDeleteThis ();
+        //  Decommisioning
+        private:
+            virtual bool decommision () override;
 
         //  Access
             Isolate *isolate () const {

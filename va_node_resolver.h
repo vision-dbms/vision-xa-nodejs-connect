@@ -46,6 +46,10 @@ namespace VA {
         private:
             ~Resolver ();
 
+        //  Decommissioning
+        protected:
+            virtual bool decommision () override;
+
         //  Access
         public:
             promise_handle_t promise () const {

@@ -20,12 +20,14 @@
 namespace VA {
     namespace Node {
         class Export;
+        class Isolated;
 
         class Isolate : public Vca::VRolePlayer {
             DECLARE_CONCRETE_RTTLITE (Isolate, Vca::VRolePlayer);
 
-            friend class Process;
+            friend class Isolated;
             friend class Export;
+            friend class Process;
 
         //  Aliases
         public:
@@ -45,11 +47,14 @@ namespace VA {
         private:
             ~Isolate ();
 
-            bool onDeleteThis ();
-
         //  Instantiation
         public:
             static bool GetInstance (Reference &rpInstance, v8::Isolate *pIsolate);
+
+        //  Decommisioning
+        protected:
+            bool onDeleteThis ();                             // ... myself
+            bool okToDecommision (Isolated *pIsolated) const; // ... others
 
         //  Access
         public:

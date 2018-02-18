@@ -53,11 +53,6 @@ VA::Node::Isolate::Isolate (
 VA::Node::Isolate::~Isolate () {
 }
 
-bool VA::Node::Isolate::onDeleteThis () {
-//    return m_pProcess->Detach (this);
-    return false;
-}
-
 /***************************
  ***************************
  *****  Instantiation  *****
@@ -68,6 +63,37 @@ bool VA::Node::Isolate::GetInstance (Reference &rpInstance, v8::Isolate *pIsolat
     Process::Reference pThisProcess;
     return Process::GetInstance (pThisProcess) && pThisProcess->Attach (rpInstance, pIsolate);
 }
+
+/****************************
+ ****************************
+ *****  Decommisioning  *****
+ ****************************
+ ****************************/
+
+/********************
+ *----  MySelf  ----*
+ ********************/
+
+bool VA::Node::Isolate::onDeleteThis () {
+//    return m_pProcess->Detach (this);
+    return false;
+}
+
+/********************
+ *----  Others  ----*
+ ********************/
+
+bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
+#if 0
+    if (thisIsTheMainThread ())
+        return true;
+    rescheduleOnMainThread ();
+    return false;
+#else
+    return false;
+#endif
+}
+
 
 /*************************
  *************************

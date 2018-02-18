@@ -50,6 +50,17 @@ VA::Node::Resolver::Resolver (
 
 VA::Node::Resolver::~Resolver () {
 }
+
+/*****************************
+ *****************************
+ *****  Decommissioning  *****
+ *****************************
+ *****************************/
+
+bool VA::Node::Resolver::decommision () {
+    m_hResolver.Reset ();
+    return BaseClass::decommision ();
+}
 
 
 /********************************************

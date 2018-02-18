@@ -63,39 +63,15 @@ VA::Node::Triggerable::Triggerable (
 VA::Node::Triggerable::~Triggerable () {
 }
 
-bool VA::Node::Triggerable::onDeleteThis () {
-/************************************************************************************
- *  This destructor may be called from any thread.  Since the 'uv' library isn't
- *  thread safe, it's only safe to call 'uv_close' from node's main thread (a.k.a.
- *  'uv_default_loop()').  Make sure that happens by noting that 'm_iTrigger.data'
- *  is initialized on construction to the non-null value of 'this'.  Use that fact
- *  to create a two phase destruction process.  The first phase begins when this
- *  object first becomes reclaimable.  Because that can happen in any thread, this
- *  this routine responds by clearing 'm_bRunning', triggering this triggerable,
- *  and returning false to prevent the destructor call from happening at this point.
- *  Because calling 'trigger' creates a reference to this object that will be cleared
- *  when the trigger is processed, this routine will be called again, this time in
- *  node's 'uv_default_loop ()' main thread.  At that point, this routine can safely
- *  call 'uv_close' and return 'true' to complete destruction.
- ************************************************************************************/
-    if (m_bRunning.clearIfSet ()) {
-        std::cerr
-            << "VA::Node::Triggerable["
-            << this
-            << "]::onDeleteThis (1): "
-            << referenceCount ()
-            << std::endl;
-        trigger ();
-        return false;
-    }
-    std::cerr
-        << "VA::Node::Triggerable["
-        << this
-        << "]::onDeleteThis (2): "
-        << referenceCount ()
-        << std::endl;
+/*****************************
+ *****************************
+ *****  Decommissioning  *****
+ *****************************
+ *****************************/
+
+bool VA::Node::Triggerable::decommision () {
     uv_close (reinterpret_cast<uv_handle_t*>(&m_iTrigger), NULL);
-    return true;
+    return BaseClass::decommision ();
 }
 
 

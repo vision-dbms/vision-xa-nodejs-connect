@@ -57,10 +57,15 @@ VA::Node::Export::~Export () {
     std::cerr << "VA::Node::Export::~Export: " << this << std::endl;
 }
 
-bool VA::Node::Export::onDeleteThis () {
-//    return m_pIsolate->Detach (this);
-    std::cerr << "VA::Node::Export::onDeleteThis: " << this << std::endl;
-    return false;
+/*****************************
+ *****************************
+ *****  Decommissioning  *****
+ *****************************
+ *****************************/
+
+bool VA::Node::Export::decommision () {
+    std::cerr << "VA::Node::Export::decommision: " << this << std::endl;
+    return m_pIsolate->Detach (this) && BaseClass::decommision ();
 }
 
 /*********************
@@ -95,13 +100,13 @@ namespace {
             m_rRB = iValue;
         }
     public:
-        virtual void on (int iValue) OVERRIDE {
+        virtual void on (int iValue) override {
             onImpl (iValue);
         }
-        virtual void on (double iValue) OVERRIDE {
+        virtual void on (double iValue) override {
             onImpl (iValue);
         }
-        virtual void on (VString const &iValue) OVERRIDE {
+        virtual void on (VString const &iValue) override {
             onImpl (iValue);
         }
     private:
@@ -132,13 +137,13 @@ namespace {
             m_rMessage << iValue;
         }
     public:
-        virtual void on (int iValue) OVERRIDE {
+        virtual void on (int iValue) override {
             onImpl (iValue);
         }
-        virtual void on (double iValue) OVERRIDE {
+        virtual void on (double iValue) override {
             onImpl (iValue);
         }
-        virtual void on (VString const &iValue) OVERRIDE {
+        virtual void on (VString const &iValue) override {
             onImpl (iValue);
         }
     private:

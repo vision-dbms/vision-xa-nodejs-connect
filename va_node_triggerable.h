@@ -31,8 +31,10 @@ namespace VA {
         //  Destruction
         protected:
             ~Triggerable ();
-            bool onDeleteThis ();
 
+        //  Decommisioning
+        protected:
+            virtual bool decommision () override;
 
         //  Triggering
         protected:

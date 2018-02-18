@@ -30,6 +30,54 @@ namespace VA {
         protected:
             ~Isolated ();
 
+        //  Decommisioning
+/************************************************************************************
+ *  An 'Isolated's destructor may be called from any thread.  As of this writing,
+ *  it is not safe to destroy 'node', 'v8' or 'uv' objects (e.g., 'Reset' a
+ *  'v8::Persistent', 'uv_close' a 'uv_async_t' handle, etc.) on any thread other
+ *  than the node/uv main thread.  While these resources are not currently subject
+ *  to automatic destruction ("uv.h" structs are C objects, 'v8::Persistent' handles
+ *  are not automatically reset on destruction (see the comments assocated with
+ *  'kResetInDestructor' in "v8.h"), the apparent quiet 'success' of destructors
+ *  that should be releasing resources comes at the cost of leaked memory.  To
+ *  address these issues, this class provides support for a two phase destruction
+ *  process (* SEE BELOW *) that arranges for the reclamation of resources in the
+ *  correct thread. To take advantage of that process, every derived class with
+ *  resources to reclaim must define a 'protected' ('private' is ok for 'final'
+ *  classes) virtual override of this class' 'decommision' member that releases
+ *  the resources allocated by this class and calls the base class version of
+ *  'decommision':
+ *  
+ *    bool VA::Node::DerivedClass::decommission () {
+ *    //  Free the resources held by this instance ...
+ *        m_hSomething.Reset ();
+ *        somethingMoreComplicated ();
+ *        etc ();
+ *
+ *    //  Call the base class' version of 'decommision':
+ *        return BaseClass::decommision ();
+ *    }
+ *
+ *--------------------------------------------------------------------------------
+ *
+ *  (*) IMPORTANT IMPLEMENTATION NOTE (*)
+ *
+ *  The decommisioning process is implemented using the 'onDeleteThis' hook provided
+ *  by the object lifetime management infrastructure inherited from 'Isolated's base
+ *  class(es).  That hook gives derived classes an opportunity to approve an object's
+ *  destruction (by returning 'true') or to defer or cancel that destruction (by
+ *  returning 'false' after presumably making alternative arrangements) as is done
+ *  here:
+ *
+ *    bool VA::Node::Isolated::onDeleteThis () {
+ *        return m_pIsolate->okToDecommision (this) && decommision ();
+ *    }
+ *
+ ************************************************************************************/
+        protected:
+            bool onDeleteThis ();
+            virtual bool decommision ();
+
         //  Access
         public:
             Isolate *isolate () const {

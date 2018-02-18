@@ -37,7 +37,9 @@
  **************************
  **************************/
 
-VA::Node::Isolated::Isolated (Isolate *pIsolate) : m_pIsolate (pIsolate) {
+VA::Node::Isolated::Isolated (
+    Isolate *pIsolate
+) : m_pIsolate (pIsolate) {
 }
 
 /*************************
@@ -47,4 +49,18 @@ VA::Node::Isolated::Isolated (Isolate *pIsolate) : m_pIsolate (pIsolate) {
  *************************/
 
 VA::Node::Isolated::~Isolated () {
+}
+
+/****************************
+ ****************************
+ *****  Decommisioning  *****
+ ****************************
+ ****************************/
+
+bool VA::Node::Isolated::onDeleteThis () {
+    return m_pIsolate->okToDecommision (this) && decommision ();
+}
+
+bool VA::Node::Isolated::decommision () {
+    return true;
 }
