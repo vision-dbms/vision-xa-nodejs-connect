@@ -97,9 +97,6 @@ namespace VA {
         //  Model Management
         public:
             bool Attach (
-                ClassTraits<Export>::retaining_ptr_t &rpModelObject, object_handle_t hObject
-            );
-            bool Attach (
                 ClassTraits<Export>::retaining_ptr_t &rpModelObject, value_handle_t hValue
             );
         private:

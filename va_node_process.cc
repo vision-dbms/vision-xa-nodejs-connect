@@ -23,7 +23,51 @@
  ************************/
 
 #include "va_node_isolate.h"
+
+#include "va_node_isolated.h"
+
+#include "V_VQueue.h"
+
+#include <unordered_map>
+#include <uv.h>
 
+
+/***********************************************************
+ ***********************************************************
+ *****                                                 *****
+ *****  {}::template <typename Request> class UVQueue  *****
+ *****                                                 *****
+ ***********************************************************
+ ***********************************************************/
+
+namespace {
+    template <typename Request> class UVQueue {
+        DECLARE_NUCLEAR_FAMILY (UVQueue<Request>);
+
+    public:
+        UVQueue (uv_async_cb pCB, void *pData) {
+            uv_async_init (uv_default_loop (), &m_hTrigger, pCB);
+            m_hTrigger.data = pData;
+        }
+        ~UVQueue () {
+            uv_close (reinterpret_cast<uv_handle_t*>(&m_hTrigger), NULL);
+        }
+
+        bool enqueue (Request const &rRequest) {
+            bool const bFirst = m_iQueue.enqueue (rRequest);
+            uv_async_send (&m_hTrigger);
+            return bFirst;
+        }
+        bool dequeue (Request &rRequest) {
+            return m_iQueue.dequeue (rRequest);
+        }
+
+    //  State
+    private:
+        V::VQueue<Request> m_iQueue;
+        uv_async_t m_hTrigger;
+    };
+}
 
 /****************************************
  ****************************************
@@ -38,13 +82,11 @@ class VA::Node::Process::Primary final : public Process {
 
 //  Construction
 public:
-    Primary () {
-    }
+    Primary ();
 
 //  Destruction
 private:
-    ~Primary () {
-    }
+    ~Primary ();
 
 //  Access
 public:
@@ -53,21 +95,47 @@ public:
     }
 
 //  Model Management
-private:
+public:
     virtual bool attach (
         ClassTraits<Isolate>::retaining_ptr_t &rpModelObject, v8::Isolate *pIsolate
     ) override;
     virtual bool detach (Isolate *pModelObject) override;
 
-//  Queue Management
+//  Object Management
 private:
     virtual bool okToDecommision (Isolated *pIsolated) override;
+
+//  Queue Management
+public:
+    void enqueueDecommission (Isolated *pIsolated);
+private:
+    static void ProcessDecommisions (uv_async_t *pAsyncHandle);
+    void processDecommisions ();
 
 //  State
 private:
     std::unordered_map<v8::Isolate*,ClassTraits<Isolate>::notaining_ptr_t> m_iIsolateCache;
+    UVQueue<Isolated::Reference> m_qDecommisions;
 };
 
+
+/**************************
+ **************************
+ *****  Construction  *****
+ **************************
+ **************************/
+
+VA::Node::Process::Primary::Primary () : m_qDecommisions (&ThisClass::ProcessDecommisions, this) {
+}
+
+/*************************
+ *************************
+ *****  Destruction  *****
+ *************************
+ *************************/
+
+VA::Node::Process::Primary::~Primary () {
+}
 
 /******************************
  ******************************
@@ -91,23 +159,37 @@ bool VA::Node::Process::Primary::attach (
 bool VA::Node::Process::Primary::detach (Isolate *pModelObject) {
     return pModelObject && m_iIsolateCache.erase (pModelObject->m_hIsolate) == 1;
 }
-
 
-/****************************
- ****************************
- *****  Decommisioning  *****
- ****************************
- ****************************/
-
-/**********************
- *----  Isolated  ----*
- **********************/
+/*******************************
+ *******************************
+ *****  Object Management  *****
+ *******************************
+ *******************************/
 
 bool VA::Node::Process::Primary::okToDecommision (Isolated *pIsolated) {
-#if 0
-    rescheduleOnMainThread ();
-#endif
-    return false;
+    return true;
+}
+
+
+/******************************
+ ******************************
+ *****  Queue Management  *****
+ ******************************
+ ******************************/
+
+void VA::Node::Process::Primary::enqueueDecommission (Isolated *pIsolated) {
+    m_qDecommisions.enqueue (Isolated::Reference (pIsolated));
+}
+
+void VA::Node::Process::Primary::ProcessDecommisions (uv_async_t *pHandle) {
+    ThisClass* const pThis (static_cast<ThisClass*>(pHandle->data));
+    if (pThis)
+        pThis->processDecommisions ();
+}
+
+void VA::Node::Process::Primary::processDecommisions () {
+    Isolated::Reference pDecommisionable;
+    while (m_qDecommisions.dequeue (pDecommisionable));
 }
 
 
@@ -143,10 +225,10 @@ private:
     virtual bool attach (
         ClassTraits<Isolate>::retaining_ptr_t &rpModelObject, v8::Isolate *pIsolate
     ) override {
-        return false;
+        return m_pPrimary->attach (rpModelObject, pIsolate);
     }
     virtual bool detach (Isolate *pModelObject) override {
-        return false;
+        return m_pPrimary->detach (pModelObject);
     }
 
 //  Queue Management
@@ -172,9 +254,7 @@ private:
  ****************************/
 
 bool VA::Node::Process::Secondary::okToDecommision (Isolated *pIsolated) {
-#if 0
-    rescheduleOnMainThread ();
-#endif
+    m_pPrimary->enqueueDecommission (pIsolated);
     return false;
 }
 

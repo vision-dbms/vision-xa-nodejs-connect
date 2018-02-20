@@ -129,12 +129,6 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, value_handle_t
  ******************************/
 
 bool VA::Node::Isolate::Attach (
-    ClassTraits<Export>::retaining_ptr_t &rpModelObject, v8::Local<v8::Object> hObject
-) {
-    return false;
-}
-
-bool VA::Node::Isolate::Attach (
     ClassTraits<Export>::retaining_ptr_t &rpModelObject, v8::Local<v8::Value> hObject
 ) {
     v8::HandleScope iHandleScope (m_hIsolate);

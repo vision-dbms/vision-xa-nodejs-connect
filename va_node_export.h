@@ -52,11 +52,9 @@ namespace VA {
             virtual bool decommision () override;
 
         //  Access
-            Isolate *isolate () const {
-                return m_pIsolate;
-            }
+        private:
             handle_t object () const {
-                return m_pIsolate->Local (m_hObject);
+                return isolate ()->Local (m_hObject);
             }
 
         //  Methods
@@ -70,8 +68,7 @@ namespace VA {
 
         //  State
         private:
-            Isolate::Reference const m_pIsolate;
-            global_t           const m_hObject;
+            global_t const m_hObject;
         };
 
     /*--------------------------------------*

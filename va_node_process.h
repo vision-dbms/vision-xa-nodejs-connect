@@ -13,8 +13,6 @@
 
 #include "Vca_VRolePlayer.h"
 
-#include <unordered_map>
-
 /**************************
  *****  Declarations  *****
  **************************/
