@@ -26,39 +26,67 @@
 namespace VA {
     namespace Node {
         class Isolate;
+        class Isolated;
 
         class Process : public Vca::VRolePlayer {
-            DECLARE_CONCRETE_RTTLITE (Process, Vca::VRolePlayer);
+            DECLARE_ABSTRACT_RTTLITE (Process, Vca::VRolePlayer);
 
             friend class Isolate;
 
+        //  Implementation Classes
+        public:
+            class Primary;
+            class Secondary;
+
         //  Construction
-        private:
-            Process ();
-
-        //  Destruction
-        private:
-            ~Process ();
-
-        //  Instantiation
-        public:
-            static bool GetInstance (Reference &rpInstance);
-
-        //  Access
-        public:
-            size_t isolateCacheSize () const {
-                return m_iIsolateCache.size ();
+        protected:
+            Process () {
             }
 
-        //  Model Management
-        public:
-            bool Attach (ClassTraits<Isolate>::retaining_ptr_t &rpModelObject, v8::Isolate *pIsolate);
-        private:
-            bool Detach (Isolate *pModelObject);
+        //  Destruction
+        protected:
+            ~Process () {
+            }
 
-        //  State
+        //  Isolate Management ...
+        //  ... Interface
+        public:
+            static bool Attach (
+                ClassTraits<Isolate>::retaining_ptr_t &rpModelObject, v8::Isolate *pIsolate
+            ) {
+                return Implementation ()->attach (rpModelObject, pIsolate);
+            }
         private:
-            std::unordered_map<v8::Isolate*,ClassTraits<Isolate>::notaining_ptr_t> m_iIsolateCache;
+            static bool Detach (Isolate *pModelObject) {
+                return Implementation ()->detach (pModelObject);
+            }
+        public:
+            static size_t IsolateCacheSize () {
+                return Implementation ()->isolateCacheSize ();
+            }
+
+        //  ... Implementation
+        private:
+            virtual bool attach (
+                ClassTraits<Isolate>::retaining_ptr_t &rpModelObject, v8::Isolate *pIsolate
+            ) = 0;
+            virtual bool detach (Isolate *pModelObject) = 0;
+            virtual size_t isolateCacheSize () const = 0;
+
+        //  Object Management ...
+        //  ... Interface
+        private:
+            static bool OkToDecommision (Isolated *pIsolated) {
+                return Implementation ()->okToDecommision (pIsolated);
+            }
+
+        //  ... Implementation
+        private:
+            virtual bool okToDecommision (Isolated *pIsolated) = 0;
+            
+        //  Implementation
+        public:
+            static Process *Implementation ();
         };
 
     } // namespace VA::Node

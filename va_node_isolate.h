@@ -25,9 +25,10 @@ namespace VA {
         class Isolate : public Vca::VRolePlayer {
             DECLARE_CONCRETE_RTTLITE (Isolate, Vca::VRolePlayer);
 
+            friend class Process::Primary;
+
             friend class Isolated;
             friend class Export;
-            friend class Process;
 
         //  Aliases
         public:
@@ -41,7 +42,7 @@ namespace VA {
 
         //  Construction
         private:
-            Isolate (Process *pProcess, v8::Isolate *pIsolate);
+            Isolate (v8::Isolate *pIsolate);
 
         //  Destruction
         private:
@@ -106,9 +107,8 @@ namespace VA {
 
         //  State
         private:
-            Process::Reference const m_pProcess;
-            global_t           const m_hIsolate;
-            object_cache_global_t    m_hObjectCache;
+            global_t        const m_hIsolate;
+            object_cache_global_t m_hObjectCache;
         };
 
     } // namespace VA::Node

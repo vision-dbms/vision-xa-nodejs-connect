@@ -205,11 +205,8 @@ namespace {
  **************************/
 
     void CachedIsolateCount (const FunctionCallbackInfo<Value>& args) {
-        VA::Node::Process::Reference pNodeProcess;
         args.GetReturnValue ().Set (
-            static_cast<uint32_t>(
-                VA::Node::Process::GetInstance (pNodeProcess) ? pNodeProcess->isolateCacheSize () : 0
-            )
+            static_cast<uint32_t>(VA::Node::Process::IsolateCacheSize ())
         );
     }
 

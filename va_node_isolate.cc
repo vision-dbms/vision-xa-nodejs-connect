@@ -40,8 +40,8 @@
  **************************/
 
 VA::Node::Isolate::Isolate (
-    Process *pProcess, handle_t hIsolate
-) : m_pProcess (pProcess), m_hIsolate (hIsolate), m_hObjectCache (hIsolate, object_cache_t::New (hIsolate)) {
+    handle_t hIsolate
+) : m_hIsolate (hIsolate), m_hObjectCache (hIsolate, object_cache_t::New (hIsolate)) {
 }
 
 /*************************
@@ -60,8 +60,7 @@ VA::Node::Isolate::~Isolate () {
  ***************************/
 
 bool VA::Node::Isolate::GetInstance (Reference &rpInstance, v8::Isolate *pIsolate) {
-    Process::Reference pThisProcess;
-    return Process::GetInstance (pThisProcess) && pThisProcess->Attach (rpInstance, pIsolate);
+    return Process::Attach (rpInstance, pIsolate);
 }
 
 /****************************
@@ -75,7 +74,7 @@ bool VA::Node::Isolate::GetInstance (Reference &rpInstance, v8::Isolate *pIsolat
  ********************/
 
 bool VA::Node::Isolate::onDeleteThis () {
-//    return m_pProcess->Detach (this);
+//  return Process::Detach (this);
     return false;
 }
 
@@ -84,14 +83,7 @@ bool VA::Node::Isolate::onDeleteThis () {
  ********************/
 
 bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
-#if 0
-    if (thisIsTheMainThread ())
-        return true;
-    rescheduleOnMainThread ();
-    return false;
-#else
-    return false;
-#endif
+    return Process::OkToDecommision (pIsolated);
 }
 
 
