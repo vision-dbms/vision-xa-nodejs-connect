@@ -5,7 +5,7 @@
  *****  Components  *****
  ************************/
 
-#include "Vca_VRolePlayer.h"
+#include "va_node_entity.h"
 
 /**************************
  *****  Declarations  *****
@@ -22,8 +22,8 @@ namespace VA {
         class Export;
         class Isolated;
 
-        class Isolate : public Vca::VRolePlayer {
-            DECLARE_CONCRETE_RTTLITE (Isolate, Vca::VRolePlayer);
+        class Isolate : public Entity {
+            DECLARE_CONCRETE_RTTLITE (Isolate, Entity);
 
             friend class Process::Primary;
 

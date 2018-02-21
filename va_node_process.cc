@@ -22,8 +22,7 @@
  *****  Supporting  *****
  ************************/
 
-#include "va_node_isolate.h"
-
+#include "va_node_callback.h"
 #include "va_node_isolated.h"
 
 #include "V_VQueue.h"
@@ -112,10 +111,18 @@ private:
     static void ProcessDecommisions (uv_async_t *pAsyncHandle);
     void processDecommisions ();
 
+//  Callback Management
+public:
+    virtual void scheduleCallback (Callback *pCallback) override;
+private:
+    static void ProcessCallbacks (uv_async_t *pAsyncHandle);
+    void processCallbacks ();
+
 //  State
 private:
     std::unordered_map<v8::Isolate*,ClassTraits<Isolate>::notaining_ptr_t> m_iIsolateCache;
     UVQueue<Isolated::Reference> m_qDecommisions;
+    UVQueue<Callback::Reference> m_qCallbacks;
 };
 
 
@@ -125,7 +132,12 @@ private:
  **************************
  **************************/
 
-VA::Node::Process::Primary::Primary () : m_qDecommisions (&ThisClass::ProcessDecommisions, this) {
+VA::Node::Process::Primary::Primary (
+) : m_qDecommisions (
+    &ThisClass::ProcessDecommisions, this
+), m_qCallbacks (
+    &ThisClass::ProcessCallbacks, this
+) {
 }
 
 /*************************
@@ -170,13 +182,6 @@ bool VA::Node::Process::Primary::okToDecommision (Isolated *pIsolated) {
     return true;
 }
 
-
-/******************************
- ******************************
- *****  Queue Management  *****
- ******************************
- ******************************/
-
 void VA::Node::Process::Primary::enqueueDecommission (Isolated *pIsolated) {
     m_qDecommisions.enqueue (Isolated::Reference (pIsolated));
 }
@@ -190,6 +195,28 @@ void VA::Node::Process::Primary::ProcessDecommisions (uv_async_t *pHandle) {
 void VA::Node::Process::Primary::processDecommisions () {
     Isolated::Reference pDecommisionable;
     while (m_qDecommisions.dequeue (pDecommisionable));
+}
+
+/*********************************
+ *********************************
+ *****  Callback Management  *****
+ *********************************
+ *********************************/
+
+void VA::Node::Process::Primary::scheduleCallback (Callback *pCallback) {
+    m_qCallbacks.enqueue (Callback::Reference (pCallback));
+}
+
+void VA::Node::Process::Primary::ProcessCallbacks (uv_async_t *pHandle) {
+    ThisClass* const pThis (static_cast<ThisClass*>(pHandle->data));
+    if (pThis)
+        pThis->processCallbacks ();
+}
+
+void VA::Node::Process::Primary::processCallbacks () {
+    Callback::Reference pCallback;
+    while (m_qCallbacks.dequeue (pCallback))
+        pCallback->run ();
 }
 
 
@@ -231,9 +258,13 @@ private:
         return m_pPrimary->detach (pModelObject);
     }
 
-//  Queue Management
+//  Object Management
 private:
     virtual bool okToDecommision (Isolated *pIsolated) override;
+
+//  Callback Management
+private:
+    virtual void scheduleCallback (Callback *pCallback) override;
 
 //  State
 private:
@@ -247,15 +278,25 @@ private:
  ******************************
  ******************************/
 
-/****************************
- ****************************
- *****  Decommisioning  *****
- ****************************
- ****************************/
+/*********************************
+ *********************************
+ *****  Lifetime Management  *****
+ *********************************
+ *********************************/
 
 bool VA::Node::Process::Secondary::okToDecommision (Isolated *pIsolated) {
     m_pPrimary->enqueueDecommission (pIsolated);
     return false;
+}
+
+/*********************************
+ *********************************
+ *****  Callback Management  *****
+ *********************************
+ *********************************/
+
+void VA::Node::Process::Secondary::scheduleCallback (Callback *pCallback) {
+    m_pPrimary->scheduleCallback (pCallback);
 }
 
 

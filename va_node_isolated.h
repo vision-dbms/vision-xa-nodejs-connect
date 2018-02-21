@@ -5,7 +5,7 @@
  *****  Components  *****
  ************************/
 
-#include "Vxa_VCollectableObject.h"
+#include "va_node_entity.h"
 
 #include "va_node_isolate.h"
 
@@ -19,8 +19,8 @@
 
 namespace VA {
     namespace Node {
-        class Isolated : public Vxa::VCollectableObject {
-            DECLARE_ABSTRACT_RTTLITE (Isolated, Vxa::VCollectableObject);
+        class Isolated : public Entity {
+            DECLARE_ABSTRACT_RTTLITE (Isolated, Entity);
 
         //  Construction
         protected:
@@ -103,6 +103,10 @@ namespace VA {
             string_handle_t NewString (char const *pString) const {
                 return m_pIsolate->NewString (pString);
             }
+
+        //  Task Launcher
+        public:
+            static bool launchTask (Vxa::VTask *pTask);
 
         //  State
         private:

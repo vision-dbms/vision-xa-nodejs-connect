@@ -144,7 +144,12 @@ bool VA::Node::Isolate::Attach (
         rpModelObject.setTo (new Export (this, hObject));
         hObjectCache->Set (hObject, v8::External::New (m_hIsolate, rpModelObject.referent ()));
         std::cerr
-            << "VA::Node::Isolate::Attach: " << this << ", added: " << rpModelObject.referent () << std::endl;
+            << "VA::Node::Isolate["
+            << this
+            << "]::Attach: "
+            << rpModelObject.referent ()
+            << " attached"
+            << std::endl;
     }
     return rpModelObject.isntNil ();
 }
@@ -153,7 +158,13 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
     v8::HandleScope iHandleScope (m_hIsolate);
     bool const bResult = pModelObject && Local (m_hObjectCache)->Delete (pModelObject->object ());
 
-    std::cerr << "VA::Node::Isolate::Detach<Export>: " << pModelObject << bResult << std::endl;
+    std::cerr
+        << "VA::Node::Isolate["
+        << this
+        << "]::Detach: "
+        << pModelObject
+        << (bResult ? " detached" : " retained")
+        << std::endl;
 
     return bResult;
 }

@@ -7,10 +7,12 @@
         'Vision_Evaluation_Gofer.cc',
         'Vision_Evaluation_Value.cc',
         'va_node.cc',
+        'va_node_callback.cc',
+        'va_node_entity.cc',
         'va_node_export.cc',
-        'va_node_process.cc',
         'va_node_isolate.cc',
         'va_node_isolated.cc',
+        'va_node_process.cc',
         'va_node_resolver.cc',
         'va_node_triggerable.cc'
       ],

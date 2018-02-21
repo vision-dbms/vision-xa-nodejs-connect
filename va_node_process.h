@@ -1,17 +1,11 @@
 #ifndef VA_Node_Process_Interface
 #define VA_Node_Process_Interface
 
-/*********************
- *****  Context  *****
- *********************/
-
-#include "va_node.h"
-
 /************************
  *****  Components  *****
  ************************/
 
-#include "Vca_VRolePlayer.h"
+#include "va_node_entity.h"
 
 /**************************
  *****  Declarations  *****
@@ -23,12 +17,14 @@
 
 namespace VA {
     namespace Node {
+        class Callback;
         class Isolate;
         class Isolated;
 
-        class Process : public Vca::VRolePlayer {
-            DECLARE_ABSTRACT_RTTLITE (Process, Vca::VRolePlayer);
+        class Process : public Entity {
+            DECLARE_ABSTRACT_RTTLITE (Process, Entity);
 
+            friend class Callback;
             friend class Isolate;
 
         //  Implementation Classes
@@ -71,7 +67,7 @@ namespace VA {
             virtual bool detach (Isolate *pModelObject) = 0;
             virtual size_t isolateCacheSize () const = 0;
 
-        //  Object Management ...
+        //  Lifetime Management ...
         //  ... Interface
         private:
             static bool OkToDecommision (Isolated *pIsolated) {
@@ -81,7 +77,19 @@ namespace VA {
         //  ... Implementation
         private:
             virtual bool okToDecommision (Isolated *pIsolated) = 0;
-            
+
+        //  Callback Management ...
+        //  ... Interface
+        private:
+            static void ScheduleCallback (Callback *pCallback) {
+                return Implementation ()->scheduleCallback (pCallback);
+            }
+
+        //  ... Implementation
+        private:
+            virtual void scheduleCallback (Callback *pCallback) = 0;
+
+        private:
         //  Implementation
         public:
             static Process *Implementation ();
