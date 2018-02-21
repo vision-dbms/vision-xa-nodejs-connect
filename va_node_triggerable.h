@@ -49,8 +49,7 @@ namespace VA {
 
         //  State
         private:
-            uv_async_t   m_iTrigger;
-            V::VTwiddler m_bRunning;
+            uv_async_t m_iTrigger;
         };
     } // namespace VA::Node
 

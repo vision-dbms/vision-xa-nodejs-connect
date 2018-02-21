@@ -47,7 +47,7 @@ VA::Node::Triggerable::Triggerable (
 
 VA::Node::Triggerable::Triggerable (
     Isolate *pIsolate
-) : BaseClass (pIsolate), m_bRunning (true) {
+) : BaseClass (pIsolate) {
     assert (
         uv_async_init (uv_default_loop (), &m_iTrigger, &ThisClass::Run) == 0
     );
