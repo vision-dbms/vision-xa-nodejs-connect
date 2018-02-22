@@ -139,7 +139,7 @@ namespace {
 
     //  Access
     public:
-        Resolver::promise_handle_t GetPromise () const {
+        Resolver::local_promise_t GetPromise () const {
             return m_pResolver->promise ();
         }
 
@@ -166,19 +166,18 @@ namespace {
 /**********************
  *----  Evaluate  ----*
  **********************/
-    void Evaluate(const FunctionCallbackInfo<Value>& args) {
+    void Evaluate(FunctionCallbackInfo<Value> const& args) {
         Vca::VCohortClaim cohortClaim;
 
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
 
-    //  Access the required expression to evaluate...
-        if (args.Length () < 1) {
+    //  Access the required expression argument...
+        VString iExpression;
+        if (args.Length () < 1 || !pIsolate->GetString (iExpression, args[0])) {
             pIsolate->ThrowTypeError ("Missing Expression");
             return;
         }
-        MaybeLocal<String> str = args[0]->ToString (pIsolate->isolate ());
-        String::Utf8Value pExpression(str.ToLocalChecked ());
 
     //  Access the client context if supplied...
         Vxa::export_return_t iExport;
@@ -188,7 +187,7 @@ namespace {
 
     //  Set up the evaluation...
         VE::Gofer::Reference const pGofer (
-            new VE::Gofer (DefaultEvaluator (), *pExpression, iExport)
+            new VE::Gofer (DefaultEvaluator (), iExpression, iExport)
         );
 
     //  Start the evaluation...

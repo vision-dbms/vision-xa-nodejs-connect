@@ -92,15 +92,22 @@ namespace VA {
 
         //  Handle Conversion
         protected:
+        //  ... persistent -> local
             template <typename S> v8::Local<S> GetLocal (
                 v8::PersistentBase<S> const &rThat
             ) const {
                 return m_pIsolate->Local (rThat);
             }
 
+        //  Object Access
+        protected:
+            template <typename handle_t> bool GetString (VString &rString, handle_t hString) const {
+                return m_pIsolate->GetString (rString, hString);
+            }
+
         //  Object Creation
         protected:
-            string_handle_t NewString (char const *pString) const {
+            local_string_t NewString (char const *pString) const {
                 return m_pIsolate->NewString (pString);
             }
 

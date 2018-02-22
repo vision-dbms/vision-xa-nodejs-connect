@@ -30,18 +30,13 @@ namespace VA {
 
             friend class Isolate;
 
-        //  Aliases
-            typedef v8::Value object_t;
-            typedef v8::Local<object_t>      handle_t;
-            typedef v8::Persistent<object_t> global_t;
-
 	//  class ClassBuilder
 	public:
             class ClassBuilder;
 
         //  Construction
         private:
-            Export (Isolate *pIsolate, handle_t hObject);
+            Export (Isolate *pIsolate, local_value_t hValue);
 
         //  Destruction
         private:
@@ -53,8 +48,8 @@ namespace VA {
 
         //  Access
         private:
-            handle_t object () const {
-                return isolate ()->Local (m_hObject);
+            local_value_t object () const {
+                return isolate ()->Local (m_hValue);
             }
 
         //  Methods
@@ -70,7 +65,7 @@ namespace VA {
 
         //  State
         private:
-            global_t const m_hObject;
+            persistent_value_t const m_hValue;
         };
 
     /*--------------------------------------*

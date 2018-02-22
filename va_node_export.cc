@@ -42,8 +42,8 @@
  **************************/
 
 VA::Node::Export::Export (
-    Isolate *pIsolate, handle_t hObject
-) : BaseClass (pIsolate), m_hObject (*pIsolate, hObject) {
+    Isolate *pIsolate, local_value_t hValue
+) : BaseClass (pIsolate), m_hValue (*pIsolate, hValue) {
     std::cerr << "VA::Node::Export::Export: " << this << std::endl;
 }
 
@@ -188,16 +188,16 @@ void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::valu
 
 void VA::Node::Export::JSToString (Vxa::VResultBuilder &rRB) {
     v8::HandleScope iHS (isolateHandle ());
-    v8::String::Utf8Value pString (object()->ToString (context ()).ToLocalChecked ());
-    std::cerr << *pString;
-    rRB.setResultTo (VString (*pString));;
+    VString iResult;
+    GetString (iResult, object()->ToString (context ()));
+    rRB = iResult;
 }
 
 void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
     v8::HandleScope iHS (isolateHandle ());
-    v8::String::Utf8Value pString (object()->ToDetailString (context ()).ToLocalChecked ());
-    std::cerr << *pString;
-    rRB.setResultTo (VString (*pString));;
+    VString iResult;
+    GetString (iResult, object()->ToDetailString (context ()));
+    rRB = iResult;
 }
 
 

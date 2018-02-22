@@ -37,8 +37,8 @@ namespace VA {
             typedef object_t*   global_t;
 
             typedef v8::NativeWeakMap              object_cache_t;
-            typedef v8::Local<object_cache_t>      object_cache_handle_t;
-            typedef v8::Persistent<object_cache_t> object_cache_global_t;
+            typedef V8<object_cache_t>::local      object_cache_handle_t;
+            typedef V8<object_cache_t>::persistent object_cache_global_t;
 
         //  Construction
         private:
@@ -80,24 +80,31 @@ namespace VA {
                 return v8::Local<S>::New (m_hIsolate, rThat);
             }
 
-        //  New Helpers
+        //  Access Helpers
         public:
-            string_handle_t NewString (char const *pString) const {
-                return v8::String::NewFromUtf8 (m_hIsolate, pString);
+            template <typename handle_t> bool GetString (VString &rString, handle_t hString) const {
+                return GetString (rString, hString->ToString (handle ()));
             }
-            resolver_handle_t NewResolver () const;
+            bool GetString (VString &rString, maybe_string_t hString) const;
+            bool GetString (VString &rString, local_string_t hString) const;
+
+        //  Creation Helpers
+        public:
+            local_resolver_t NewResolver () const;
+
+            local_string_t NewString (char const *pString) const;
 
         //  Exception Helpers
         public:
             void ThrowTypeError (char const *pMessage) const;
 
         //  Export Access
-            bool GetExport (Vxa::export_return_t &rExport, value_handle_t hValue);
+            bool GetExport (Vxa::export_return_t &rExport, local_value_t hValue);
 
         //  Model Management
         public:
             bool Attach (
-                ClassTraits<Export>::retaining_ptr_t &rpModelObject, value_handle_t hValue
+                ClassTraits<Export>::retaining_ptr_t &rpModelObject, local_value_t hValue
             );
         private:
             bool Detach (Export *pModelObject);

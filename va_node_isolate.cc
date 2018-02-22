@@ -87,15 +87,37 @@ bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
 }
 
 
-/*************************
- *************************
- *****  New Helpers  *****
- *************************
- *************************/
+/****************************
+ ****************************
+ *****  Access Helpers  *****
+ ****************************
+ ****************************/
 
-VA::Node::resolver_handle_t VA::Node::Isolate::NewResolver () const {
+bool VA::Node::Isolate::GetString (VString &rString, maybe_string_t hString) const {
+    local_string_t hLocalString;
+    return hString.ToLocal<string_t> (&hLocalString) && GetString (rString, hLocalString);
+}
+
+bool VA::Node::Isolate::GetString (VString &rString, local_string_t hString) const {
+    string_t::Utf8Value pString (hString);
+    rString.setTo (*pString);
+    return true;
+}
+
+/******************************
+ ******************************
+ *****  Creation Helpers  *****
+ ******************************
+ ******************************/
+
+VA::Node::local_resolver_t VA::Node::Isolate::NewResolver () const {
     return resolver_t::New (getCurrentContext ()).ToLocalChecked ();
 }
+
+VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) const {
+    return v8::String::NewFromUtf8 (m_hIsolate, pString);
+}
+
 
 /*******************************
  *******************************
@@ -113,7 +135,7 @@ void VA::Node::Isolate::ThrowTypeError (char const *pMessage) const {
  ***************************
  ***************************/
 
-bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, value_handle_t hObject){
+bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t hObject){
     Export::Reference pObject;
     if (!Attach (pObject, hObject))
         return false;
@@ -134,7 +156,7 @@ bool VA::Node::Isolate::Attach (
     v8::HandleScope iHandleScope (m_hIsolate);
 
     object_cache_handle_t hObjectCache (Local (m_hObjectCache));
-    value_handle_t hCachedObject (hObjectCache->Get (hObject));
+    local_value_t hCachedObject (hObjectCache->Get (hObject));
 
     if (!hCachedObject.IsEmpty () && hCachedObject->IsExternal ()) {
         rpModelObject.setTo (reinterpret_cast<Export*>(hCachedObject.As<v8::External>()->Value()));

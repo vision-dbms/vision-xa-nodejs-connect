@@ -27,11 +27,7 @@ namespace VA {
         //  Aliases
         public:
             typedef v8::Promise promise_t;
-            typedef v8::Local<promise_t> promise_handle_t;
-
-            typedef promise_t::Resolver resolver_t;
-            typedef v8::Local<resolver_t>      handle_t;
-            typedef v8::Persistent<resolver_t> global_t;
+            typedef V8<promise_t>::local local_promise_t;
 
         //  Resolution
         public:
@@ -52,11 +48,11 @@ namespace VA {
 
         //  Access
         public:
-            promise_handle_t promise () const {
+            local_promise_t promise () const {
                 return resolver ()->GetPromise ();
             }
         private:
-            handle_t resolver () const {
+            local_resolver_t resolver () const {
                 return GetLocal<resolver_t> (m_hResolver);
             }
 
@@ -71,7 +67,7 @@ namespace VA {
 
         //  State
         private:
-            global_t m_hResolver;
+            persistent_resolver_t m_hResolver;
         };
 
 

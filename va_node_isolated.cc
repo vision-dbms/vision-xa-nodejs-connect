@@ -114,11 +114,7 @@ namespace {
 }
 
 bool VA::Node::Isolated::launchTask (Vxa::VTask *pTask) {
-#if 1
     TaskLauncher::Reference const pLauncher (new TaskLauncher (pTask));
     pLauncher->trigger ();
     return true;
-#else
-    return pTask->launchInThreadPool ();
-#endif
 }

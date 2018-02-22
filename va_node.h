@@ -21,16 +21,29 @@
 
 namespace VA {
     namespace Node {
-        typedef v8::Local<v8::Value>      value_handle_t;
-        typedef v8::Local<v8::Object>     object_handle_t;
-        typedef v8::Local<v8::String>     string_handle_t;
+        template <typename type> struct V8 {
+            typedef v8::Local<type> local;
+            typedef v8::MaybeLocal<type> maybe;
+            typedef v8::Persistent<type> persistent;
+        };
 
-        typedef v8::Promise::Resolver     resolver_t;
-        typedef v8::Local<resolver_t>     resolver_handle_t;
-        typedef v8::Persistent<resolver_t>resolver_global_t;
+        typedef v8::Value value_t;
+        typedef typename V8<value_t>::local local_value_t;
+        typedef typename V8<value_t>::maybe maybe_value_t;
+        typedef typename V8<value_t>::persistent persistent_value_t;
+
+        typedef v8::String string_t;
+        typedef typename V8<string_t>::local local_string_t;
+        typedef typename V8<string_t>::maybe maybe_string_t;
+        typedef typename V8<string_t>::persistent persistent_string_t;
+
+        typedef v8::Promise::Resolver resolver_t;
+        typedef V8<resolver_t>::local local_resolver_t;
+        typedef V8<resolver_t>::maybe maybe_resolver_t;
+        typedef V8<resolver_t>::persistent persistent_resolver_t;
 
         bool GetExport (
-            Vxa::export_return_t &rResult, v8::Isolate *pIsolate, value_handle_t iValue
+            Vxa::export_return_t &rResult, v8::Isolate *pIsolate, local_value_t hValue
         );
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*
