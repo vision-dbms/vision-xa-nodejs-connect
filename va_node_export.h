@@ -65,6 +65,8 @@ namespace VA {
 	    void interceptor (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
 
             void adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::value_t pack_o_ds);
+            void JSToString (Vxa::VResultBuilder &rRB);
+            void JSToDetail (Vxa::VResultBuilder &rRB);
 
         //  State
         private:

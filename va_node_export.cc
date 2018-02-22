@@ -183,6 +183,25 @@ void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::valu
 
 
 /***************************
+ *****  JS Operations  *****
+ ***************************/
+
+void VA::Node::Export::JSToString (Vxa::VResultBuilder &rRB) {
+    v8::HandleScope iHS (isolateHandle ());
+    v8::String::Utf8Value pString (object()->ToString (context ()).ToLocalChecked ());
+    std::cerr << *pString;
+    rRB.setResultTo (VString (*pString));;
+}
+
+void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
+    v8::HandleScope iHS (isolateHandle ());
+    v8::String::Utf8Value pString (object()->ToDetailString (context ()).ToLocalChecked ());
+    std::cerr << *pString;
+    rRB.setResultTo (VString (*pString));;
+}
+
+
+/***************************
  ***************************
  *****  Class Builder  *****
  ***************************
@@ -200,6 +219,9 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object
     defineMethod ("add:a:a:a:a:", &Export::adder);
 
     defineDefault (&Export::interceptor);
+
+    defineMethod (".toString"   , &Export::JSToString);
+    defineMethod (".toDetail"   , &Export::JSToDetail);
 }
 
 namespace {
