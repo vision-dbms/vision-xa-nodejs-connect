@@ -82,12 +82,7 @@ bool VA::Node::Triggerable::decommision () {
  **************************************/
 
 void VA::Node::Triggerable::trigger () {
-    std::cerr
-        << "VA::Node::Triggerable["
-        << this
-        << "]::trigger: "
-        << referenceCount ()
-        << std::endl;
+    std::cerr << "VA::Node::Triggerable[" << this << "]::trigger" << std::endl;
     retain ();  // reference removed below in 'Run'
     uv_async_send (&m_iTrigger);
 }
@@ -99,12 +94,7 @@ void VA::Node::Triggerable::Run (uv_async_t *pHandle) {
 }
 
 void VA::Node::Triggerable::Run () {
-    std::cerr
-        << "VA::Node::Triggerable["
-        << this
-        << "]::Run: "
-        << referenceCount ()
-        << std::endl;
+    std::cerr << "VA::Node::Triggerable[" << this << "]::run" << std::endl;
     v8::HandleScope iScope (isolateHandle ());
     run ();
     release ();  // ... reference created by 'schedule' removed here.
