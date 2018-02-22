@@ -15,19 +15,13 @@
 #include "Vca_IDirectory.h"
 #include "Vca_IPipeFactory.h"
 
+#include "Vca_VServerApplication.h"
+
 namespace {
 
-    using v8::Context;
-    using v8::Exception;
     using v8::FunctionCallbackInfo;
-    using v8::HandleScope;
-    using v8::Isolate;
     using v8::Local;
-    using v8::MaybeLocal;
     using v8::Object;
-    using v8::Persistent;
-
-    using v8::String;
     using v8::Value;
 
 /*********************
@@ -163,9 +157,121 @@ namespace {
         Resolver::Reference m_pResolver;
     };
 
+/**********************************
+ *----  class ServerContext  -----*
+ **********************************/
+
+    class ServerContext final : public VReferenceable {
+        DECLARE_CONCRETE_RTTLITE (ServerContext, VReferenceable);
+
+    //  Aliases
+    public:
+        typedef VkDynamicArrayOf<VString> arg_storage_t;
+
+    //  Construction
+    public:
+        ServerContext (arg_storage_t const &rArgs);
+
+    //  Destruction
+    private:
+        ~ServerContext () {
+        }
+
+    //  Application Context
+    public:
+        Vca::VApplicationContext *applicationContext () const;
+
+    //  State
+    private:
+        arg_storage_t m_aArgs;
+        argv_t        m_pArgs;
+    };
+
+/****************/
+    ServerContext::ServerContext (
+        arg_storage_t const &rArgs
+    ) : m_aArgs (rArgs), m_pArgs (new char* [rArgs.elementCount ()]) {
+        for (unsigned int xArg = 1; xArg < m_aArgs.elementCount (); xArg++) {
+            m_pArgs[xArg] = m_aArgs[xArg].storage ();
+        }
+    }
+
+/****************/
+    Vca::VApplicationContext *ServerContext::applicationContext () const {
+        return new Vca::VApplicationContext (m_aArgs.elementCount (), m_pArgs);
+    }
+
+/**************************
+ *----  class Server  ----*
+ **************************/
+
+    class Server final : public Vca::VServerApplication {
+        DECLARE_CONCRETE_RTTLITE (Server, VServerApplication);
+
+    //  Construction
+    public:
+        Server (ServerContext *pContext, Vxa::export_return_t const &rExport);
+
+    //  Destruction
+    private:
+        ~Server () {
+        }
+
+    //  Control
+    private:
+        virtual bool start_() override;
+
+    //  State
+    private:
+        ServerContext::Reference const m_pServerContext;
+    };
+
+    Server::Server (
+        ServerContext *pContext, Vxa::export_return_t const &rExport
+    ) : BaseClass (pContext->applicationContext ()), m_pServerContext (pContext) {
+        aggregate (rExport);
+    }
+
+    bool Server::start_() {
+        return BaseClass::start_() && offerSelf () && isStarting ();
+    }
+
+/*******************
+ *----  Offer  ----*
+ *******************/
+
+    void Offer(FunctionCallbackInfo<Value> const& args) {
+        Vca::VCohortClaim cohortClaim;
+
+        VN::Isolate::Reference pIsolate;
+        VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
+
+    //  Access the server export...
+        if (args.Length () < 1) {
+            pIsolate->ThrowTypeError ("Missing Object");
+            return;
+        }
+        Vxa::export_return_t iExport;
+        pIsolate->GetExport (iExport, args[0]);
+
+        ServerContext::arg_storage_t aServerArgs (args.Length ());
+        aServerArgs[0] = "-node-";
+        for (unsigned int xArg = 1; xArg < aServerArgs.elementCount (); xArg++) {
+            if (!pIsolate->GetString (aServerArgs[xArg], args[xArg])) {
+                VString iMessage;
+                iMessage << "Invalid Argument: " << xArg;
+                pIsolate->ThrowTypeError (iMessage);
+            }
+        }
+
+        Server::Reference pServer (new Server (new ServerContext (aServerArgs), iExport));
+        args.GetReturnValue ().Set (pServer->start ());
+    }
+
 /**********************
  *----  Evaluate  ----*
  **********************/
+
     void Evaluate(FunctionCallbackInfo<Value> const& args) {
         Vca::VCohortClaim cohortClaim;
 
@@ -179,7 +285,7 @@ namespace {
             return;
         }
 
-    //  Access the client context if supplied...
+    //  Access the client export if supplied...
         Vxa::export_return_t iExport;
         if (args.Length () >= 2) {
             pIsolate->GetExport (iExport, args[1]);
@@ -212,8 +318,9 @@ namespace {
 /**********************************
  *----  Module Initialization ----*
  **********************************/
-    void Init(Local<Object> exports, Local<Object> module) {
+    void Init(v8::Local<Object> exports, v8::Local<Object> module) {
         NODE_SET_METHOD(exports, "v", Evaluate);
+        NODE_SET_METHOD(exports, "o", Offer);
         NODE_SET_METHOD(exports, "cachedIsolateCount", CachedIsolateCount);
     }
 

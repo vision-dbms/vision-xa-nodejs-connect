@@ -20,6 +20,7 @@
         'vision/kernel',
       ],
       'libraries': [
+        '-lVcaMain',
         '-lVxa',
         '-lVsa',
         '-lVca',
