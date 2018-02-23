@@ -42,10 +42,6 @@ namespace VA {
         typedef V8<resolver_t>::maybe maybe_resolver_t;
         typedef V8<resolver_t>::persistent persistent_resolver_t;
 
-        bool GetExport (
-            Vxa::export_return_t &rResult, v8::Isolate *pIsolate, local_value_t hValue
-        );
-
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*
      *>  This needs to move upstream to V or one of its classes  <*
      *>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

@@ -32,17 +32,3 @@
  *****            *****
  **********************
  **********************/
-
-/***************************
- ***************************
- *****  Export Access  *****
- ***************************
- ***************************/
-
-bool VA::Node::GetExport (
-    Vxa::export_return_t &rExport, Isolate::handle_t hIsolate, local_value_t hObject
-) {
-    Isolate::Reference pIsolate;
-    return Isolate::GetInstance (pIsolate, hIsolate)
-        && pIsolate->GetExport (rExport, hObject);
-}
