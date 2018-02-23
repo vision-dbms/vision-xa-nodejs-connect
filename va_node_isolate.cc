@@ -23,6 +23,7 @@
  ************************/
 
 #include "va_node_export.h"
+#include "va_node_handle_scope.h"
 
 
 /*******************************
@@ -153,7 +154,7 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t 
 bool VA::Node::Isolate::Attach (
     ClassTraits<Export>::retaining_ptr_t &rpModelObject, v8::Local<v8::Value> hObject
 ) {
-    v8::HandleScope iHandleScope (m_hIsolate);
+    HandleScope iHS (this);
 
     object_cache_handle_t hObjectCache (Local (m_hObjectCache));
     local_value_t hCachedObject (hObjectCache->Get (hObject));
@@ -177,7 +178,7 @@ bool VA::Node::Isolate::Attach (
 }
 
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
-    v8::HandleScope iHandleScope (m_hIsolate);
+    HandleScope iHS (this);
     bool const bResult = pModelObject && Local (m_hObjectCache)->Delete (pModelObject->object ());
 
     std::cerr

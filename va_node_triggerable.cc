@@ -22,8 +22,9 @@
  *****  Supporting  *****
  ************************/
 
+#include "va_node_handle_scope.h"
+
 #include <node.h>
-#include <iostream>
 
 
 /***********************************
@@ -95,7 +96,7 @@ void VA::Node::Triggerable::Run (uv_async_t *pHandle) {
 
 void VA::Node::Triggerable::Run () {
     std::cerr << "VA::Node::Triggerable[" << this << "]::run" << std::endl;
-    v8::HandleScope iScope (isolateHandle ());
+    HandleScope iHS (this);
     run ();
     release ();  // ... reference created by 'schedule' removed here.
 }

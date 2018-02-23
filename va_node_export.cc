@@ -22,6 +22,8 @@
  *****  Supporting  *****
  ************************/
 
+#include "va_node_handle_scope.h"
+
 #include "Vxa_VAny.h"
 #include "Vxa_VCollectable.h"
 #include "Vxa_VResultBuilder.h"
@@ -187,14 +189,14 @@ void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::valu
  ***************************/
 
 void VA::Node::Export::JSToString (Vxa::VResultBuilder &rRB) {
-    v8::HandleScope iHS (isolateHandle ());
+    HandleScope iHS (this);
     VString iResult;
     GetString (iResult, object()->ToString (context ()));
     rRB = iResult;
 }
 
 void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
-    v8::HandleScope iHS (isolateHandle ());
+    HandleScope iHS (this);
     VString iResult;
     GetString (iResult, object()->ToDetailString (context ()));
     rRB = iResult;

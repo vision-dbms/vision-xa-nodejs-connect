@@ -214,8 +214,7 @@ namespace {
 
     //  Destruction
     private:
-        ~Server () {
-        }
+        ~Server ();
 
     //  Control
     private:
@@ -226,12 +225,20 @@ namespace {
         ServerContext::Reference const m_pServerContext;
     };
 
+/****************/
     Server::Server (
         ServerContext *pContext, Vxa::export_return_t const &rExport
     ) : BaseClass (pContext->applicationContext ()), m_pServerContext (pContext) {
         aggregate (rExport);
+        std::cerr << "Server[" << this << "]::Server" << std::endl;
     }
 
+/****************/
+    Server::~Server () {
+        std::cerr << "Server[" << this << "]::~Server" << std::endl;
+    }
+
+/****************/
     bool Server::start_() {
         return BaseClass::start_() && offerSelf () && isStarting ();
     }
