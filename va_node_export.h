@@ -58,8 +58,9 @@ namespace VA {
             void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny::value_t);
 
 	    void interceptor (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
-
             void adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::value_t pack_o_ds);
+
+            void JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
             void JSToString (Vxa::VResultBuilder &rRB);
             void JSToDetail (Vxa::VResultBuilder &rRB);
 

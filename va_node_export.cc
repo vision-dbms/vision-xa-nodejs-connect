@@ -188,6 +188,9 @@ void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::valu
  *****  JS Operations  *****
  ***************************/
 
+void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t) {
+}
+
 void VA::Node::Export::JSToString (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
     VString iResult;
