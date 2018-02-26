@@ -157,19 +157,21 @@ void VA::Node::Export::interceptor (
     Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t rPack
 ) {
     VString iMessage;
-    Vxa::VTask const *const pTask = rRB.task ();
     iMessage
 	<< "Called as '"
-	<< pTask->methodName ()
+        << (rRB.invokedIntensionally () ? ":" : "")
+	<< rRB.selectorName ()
 	<< "' with parameter count of "
-	<< pTask->parameterCount ()
+	<< rRB.parameterCount ()
 	<< " and task size of "
-	<< pTask->cardinality ();
+	<< rRB.taskCardinality ();
 
     InterceptorSink iAnySink (iMessage);
     Vxa::cardinality_t const cParameters = rPack.parameterCount ();
     for (Vxa::cardinality_t xParameter = 0; xParameter < cParameters; xParameter++) {
-        iMessage << "\n " <<  xParameter << ": ";
+        iMessage.printf (
+            "\n %2u: %10s: ", xParameter, rRB.selectorComponent (xParameter).content ()
+        );
         rPack.parameterValue (xParameter).supply (iAnySink);
     }
     iMessage << "\n";
@@ -187,6 +189,36 @@ void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::valu
 /***************************
  *****  JS Operations  *****
  ***************************/
+
+namespace {
+    using namespace VA::Node;
+
+    class JSCallbackSink : public Vxa::VAny::Client {
+    public:
+        JSCallbackSink (
+            maybe_value_t &rResult, Isolate *pIsolate
+        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
+        }
+        ~JSCallbackSink () {
+        }
+    private:
+        template <typename value_t> void onImpl (value_t iValue) {
+        }
+    public:
+        virtual void on (int iValue) override {
+            onImpl (iValue);
+        }
+        virtual void on (double iValue) override {
+            onImpl (iValue);
+        }
+        virtual void on (VString const &iValue) override {
+            onImpl (iValue);
+        }
+    private:
+        maybe_value_t      m_rResult;
+        Isolate::Reference m_pIsolate;
+    };
+}
 
 void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t) {
 }
@@ -223,10 +255,11 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object
     defineMethod ("add:a:a:a:"	, &Export::adder);
     defineMethod ("add:a:a:a:a:", &Export::adder);
 
-    defineDefault (&Export::interceptor);
-
     defineMethod (".toString"   , &Export::JSToString);
     defineMethod (".toDetail"   , &Export::JSToDetail);
+
+//    defineDefault (&Export::JSCallback);
+    defineDefault (&Export::interceptor);
 }
 
 namespace {

@@ -97,12 +97,12 @@ namespace {
         virtual void run () override {
             std::cerr << "{}::TaskLauncher[" << this << "]::run: "
                       << m_pTask.referent () << ": before: "
-                      << m_pTask->methodName ()
+                      << m_pTask->selectorName ()
                       << std::endl;
             m_pTask->runWithMonitor ();
             std::cerr << "{}::TaskLauncher[" << this << "]::run: "
                       << m_pTask.referent () << ": after : "
-                      << m_pTask->methodName ()
+                      << m_pTask->selectorName ()
                       << std::endl;
         }
 
