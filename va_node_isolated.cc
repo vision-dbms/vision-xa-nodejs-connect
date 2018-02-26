@@ -82,28 +82,16 @@ namespace {
     //  Construction
     public:
         TaskLauncher (Vxa::VTask *pTask) : m_pTask (pTask) {
-            std::cerr << "{}::TaskLauncher[" << this << "]::TaskLauncher: "
-                      << pTask << std::endl;
         }
     //  Destruction
     private:
         ~TaskLauncher () {
-            std::cerr << "{}::TaskLauncher[" << this << "]::~TaskLauncher: "
-                      << m_pTask.referent () << std::endl;
         }
 
     //  Execution
     private:
         virtual void run () override {
-            std::cerr << "{}::TaskLauncher[" << this << "]::run: "
-                      << m_pTask.referent () << ": before: "
-                      << m_pTask->selectorName ()
-                      << std::endl;
             m_pTask->runWithMonitor ();
-            std::cerr << "{}::TaskLauncher[" << this << "]::run: "
-                      << m_pTask.referent () << ": after : "
-                      << m_pTask->selectorName ()
-                      << std::endl;
         }
 
 
