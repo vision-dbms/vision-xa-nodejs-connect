@@ -42,7 +42,7 @@
 
 VA::Node::Isolate::Isolate (
     handle_t hIsolate
-) : m_hIsolate (hIsolate), m_hObjectCache (hIsolate, object_cache_t::New (hIsolate)) {
+) : m_hIsolate (hIsolate), m_hValueCache (hIsolate, object_cache_t::New (hIsolate)) {
 }
 
 /*************************
@@ -116,7 +116,7 @@ VA::Node::local_resolver_t VA::Node::Isolate::NewResolver () const {
 }
 
 VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) const {
-    return v8::String::NewFromUtf8 (m_hIsolate, pString);
+    return string_t::NewFromUtf8 (m_hIsolate, pString);
 }
 
 
@@ -136,12 +136,12 @@ void VA::Node::Isolate::ThrowTypeError (char const *pMessage) const {
  ***************************
  ***************************/
 
-bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t hObject){
-    Export::Reference pObject;
-    if (!Attach (pObject, hObject))
+bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t hValue){
+    Export::Reference pValue;
+    if (!Attach (pValue, hValue))
         return false;
 
-    rExport.setTo (Vxa::Export (pObject));
+    rExport.setTo (Vxa::Export (pValue));
     return true;
 }
 
@@ -152,20 +152,27 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t 
  ******************************/
 
 bool VA::Node::Isolate::Attach (
-    ClassTraits<Export>::retaining_ptr_t &rpModelObject, v8::Local<v8::Value> hObject
+    ClassTraits<Export>::retaining_ptr_t &rpModelObject, maybe_value_t hValue
+) {
+    local_value_t hLocalValue;
+    return hValue.ToLocal<value_t> (&hLocalValue) && Attach (rpModelObject, hLocalValue);
+}
+
+bool VA::Node::Isolate::Attach (
+    ClassTraits<Export>::retaining_ptr_t &rpModelObject, local_value_t hValue
 ) {
     HandleScope iHS (this);
 
-    object_cache_handle_t hObjectCache (Local (m_hObjectCache));
-    local_value_t hCachedObject (hObjectCache->Get (hObject));
+    object_cache_handle_t hValueCache (Local (m_hValueCache));
+    local_value_t hCachedValue (hValueCache->Get (hValue));
 
-    if (!hCachedObject.IsEmpty () && hCachedObject->IsExternal ()) {
-        rpModelObject.setTo (reinterpret_cast<Export*>(hCachedObject.As<v8::External>()->Value()));
+    if (!hCachedValue.IsEmpty () && hCachedValue->IsExternal ()) {
+        rpModelObject.setTo (reinterpret_cast<Export*>(hCachedValue.As<v8::External>()->Value()));
         std::cerr
             << "VA::Node::Isolate::Attach: " << this << ", found: " << rpModelObject.referent () << std::endl;
     } else {
-        rpModelObject.setTo (new Export (this, hObject));
-        hObjectCache->Set (hObject, v8::External::New (m_hIsolate, rpModelObject.referent ()));
+        rpModelObject.setTo (new Export (this, hValue));
+        hValueCache->Set (hValue, v8::External::New (m_hIsolate, rpModelObject.referent ()));
         std::cerr
             << "VA::Node::Isolate["
             << this
@@ -179,7 +186,7 @@ bool VA::Node::Isolate::Attach (
 
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
     HandleScope iHS (this);
-    bool const bResult = pModelObject && Local (m_hObjectCache)->Delete (pModelObject->object ());
+    bool const bResult = pModelObject && Local (m_hValueCache)->Delete (pModelObject->value ());
 
     std::cerr
         << "VA::Node::Isolate["

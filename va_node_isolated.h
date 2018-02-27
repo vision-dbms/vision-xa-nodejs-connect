@@ -99,6 +99,14 @@ namespace VA {
                 return m_pIsolate->Local (rThat);
             }
 
+        //  Model Management
+        protected:
+            template <typename handle_t> bool Attach (
+                ClassTraits<Export>::retaining_ptr_t &rpModelObject, handle_t hValue
+            ) const {
+                return m_pIsolate->Attach (rpModelObject, hValue);
+            }
+
         //  Object Access
         protected:
             template <typename handle_t> bool GetString (VString &rString, handle_t hString) const {

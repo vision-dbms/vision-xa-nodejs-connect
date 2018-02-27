@@ -27,20 +27,30 @@ namespace VA {
             typedef v8::Persistent<type> persistent;
         };
 
-        typedef v8::Value value_t;
-        typedef typename V8<value_t>::local local_value_t;
-        typedef typename V8<value_t>::maybe maybe_value_t;
-        typedef typename V8<value_t>::persistent persistent_value_t;
+        typedef v8::Object object_t;
+        typedef typename V8<object_t>::local local_object_t;
+        typedef typename V8<object_t>::maybe maybe_object_t;
+        typedef typename V8<object_t>::persistent persistent_object_t;
+
+        typedef v8::Promise promise_t;
+        typedef V8<promise_t>::local local_promise_t;
+        typedef V8<promise_t>::maybe maybe_promise_t;
+        typedef V8<promise_t>::persistent persistent_promise_t;
+
+        typedef promise_t::Resolver resolver_t;
+        typedef V8<resolver_t>::local local_resolver_t;
+        typedef V8<resolver_t>::maybe maybe_resolver_t;
+        typedef V8<resolver_t>::persistent persistent_resolver_t;
 
         typedef v8::String string_t;
         typedef typename V8<string_t>::local local_string_t;
         typedef typename V8<string_t>::maybe maybe_string_t;
         typedef typename V8<string_t>::persistent persistent_string_t;
 
-        typedef v8::Promise::Resolver resolver_t;
-        typedef V8<resolver_t>::local local_resolver_t;
-        typedef V8<resolver_t>::maybe maybe_resolver_t;
-        typedef V8<resolver_t>::persistent persistent_resolver_t;
+        typedef v8::Value value_t;
+        typedef typename V8<value_t>::local local_value_t;
+        typedef typename V8<value_t>::maybe maybe_value_t;
+        typedef typename V8<value_t>::persistent persistent_value_t;
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*
      *>  This needs to move upstream to V or one of its classes  <*

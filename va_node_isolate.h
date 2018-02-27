@@ -104,6 +104,9 @@ namespace VA {
         //  Model Management
         public:
             bool Attach (
+                ClassTraits<Export>::retaining_ptr_t &rpModelObject, maybe_value_t hValue
+            );
+            bool Attach (
                 ClassTraits<Export>::retaining_ptr_t &rpModelObject, local_value_t hValue
             );
         private:
@@ -112,7 +115,7 @@ namespace VA {
         //  State
         private:
             global_t        const m_hIsolate;
-            object_cache_global_t m_hObjectCache;
+            object_cache_global_t m_hValueCache;
         };
 
     } // namespace VA::Node

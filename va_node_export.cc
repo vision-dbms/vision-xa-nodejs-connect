@@ -70,6 +70,25 @@ bool VA::Node::Export::decommision () {
     return isolate ()->Detach (this) && BaseClass::decommision ();
 }
 
+/****************************
+ ****************************
+ *****  Return Helpers  *****
+ ****************************
+ ****************************/
+
+void VA::Node::Export::returnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const {
+    Reference pValue;
+    if (Attach (pValue, hValue))
+        rRB = pValue;
+}
+
+void VA::Node::Export::returnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const {
+    Reference pValue;
+    if (Attach (pValue, hValue))
+        rRB = pValue;
+}
+
+
 /*********************
  *********************
  *****  Methods  *****
@@ -190,6 +209,10 @@ void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::valu
  *****  JS Operations  *****
  ***************************/
 
+/**********************
+ *----  Callback  ----*
+ **********************/
+
 namespace {
     using namespace VA::Node;
 
@@ -221,20 +244,258 @@ namespace {
 }
 
 void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t) {
+    HandleScope iHS (this);
+
+    rRB = false;
+    local_object_t hThis;
+    if (GetLocal<object_t> (hThis)) {
+        maybe_value_t const hPropertyValue = hThis->Get (
+            context (), NewString (rRB.selectorComponent (0))
+        );
+        returnUnwrapped (rRB, hPropertyValue);
+    }
 }
+
+
+/*************************
+ *----  Conversions  ----*
+ *************************/
 
 void VA::Node::Export::JSToString (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
     VString iResult;
-    GetString (iResult, object()->ToString (context ()));
+    GetString (iResult, value()->ToString (context ()));
     rRB = iResult;
 }
 
 void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
     VString iResult;
-    GetString (iResult, object()->ToDetailString (context ()));
+    GetString (iResult, value()->ToDetailString (context ()));
     rRB = iResult;
+}
+
+
+/****************************
+ *----  Property Query  ----*
+ ****************************/
+
+void VA::Node::Export::JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName) {
+    HandleScope iHS (this);
+
+    bool bTrue = false;
+
+    local_object_t hThis;
+    bool bResult = GetLocal<object_t> (hThis)
+        && hThis->Has (context (), NewString (rPropertyName)).To (&bTrue)
+        && bTrue;
+    rRB = bResult;
+}
+
+
+/************************
+ *----  Type Query  ----*
+ ************************/
+
+void VA::Node::Export::JSIsUndefined (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsUndefined ();
+}
+void VA::Node::Export::JSIsNull (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsNull ();
+}
+void VA::Node::Export::JSIsNullOrUndefined (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsNullOrUndefined ();
+}
+void VA::Node::Export::JSIsTrue (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsTrue ();
+}
+void VA::Node::Export::JSIsFalse (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsFalse ();
+}
+void VA::Node::Export::JSIsName (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsName ();
+}
+void VA::Node::Export::JSIsString (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsString ();
+}
+void VA::Node::Export::JSIsSymbol (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsSymbol ();
+}
+void VA::Node::Export::JSIsFunction (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsFunction ();
+}
+void VA::Node::Export::JSIsArray (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsArray ();
+}
+void VA::Node::Export::JSIsObject (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsObject ();
+}
+void VA::Node::Export::JSIsBoolean (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsBoolean ();
+}
+void VA::Node::Export::JSIsNumber (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsNumber ();
+}
+void VA::Node::Export::JSIsExternal (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsExternal ();
+}
+void VA::Node::Export::JSIsInt32 (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsInt32 ();
+}
+void VA::Node::Export::JSIsUint32 (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsUint32 ();
+}
+void VA::Node::Export::JSIsDate (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsDate ();
+}
+void VA::Node::Export::JSIsArgumentsObject (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsArgumentsObject ();
+}
+void VA::Node::Export::JSIsBooleanObject (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsBooleanObject ();
+}
+void VA::Node::Export::JSIsNumberObject (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsNumberObject ();
+}
+void VA::Node::Export::JSIsStringObject (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsStringObject ();
+}
+void VA::Node::Export::JSIsSymbolObject (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsSymbolObject ();
+}
+void VA::Node::Export::JSIsNativeError (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsNativeError ();
+}
+void VA::Node::Export::JSIsRegExp (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsRegExp ();
+}
+void VA::Node::Export::JSIsAsyncFunction (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsAsyncFunction ();
+}
+void VA::Node::Export::JSIsGeneratorFunction (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsGeneratorFunction ();
+}
+void VA::Node::Export::JSIsGeneratorObject (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsGeneratorObject ();
+}
+void VA::Node::Export::JSIsPromise (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsPromise ();
+}
+void VA::Node::Export::JSIsMap (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsMap ();
+}
+void VA::Node::Export::JSIsSet (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsSet ();
+}
+void VA::Node::Export::JSIsMapIterator (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsMapIterator ();
+}
+void VA::Node::Export::JSIsSetIterator (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsSetIterator ();
+}
+void VA::Node::Export::JSIsWeakMap (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsWeakMap ();
+}
+void VA::Node::Export::JSIsWeakSet (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsWeakSet ();
+}
+void VA::Node::Export::JSIsArrayBuffer (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsArrayBuffer ();
+}
+void VA::Node::Export::JSIsArrayBufferView (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsArrayBufferView ();
+}
+void VA::Node::Export::JSIsTypedArray (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsTypedArray ();
+}
+void VA::Node::Export::JSIsUint8Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsUint8Array ();
+}
+void VA::Node::Export::JSIsUint8ClampedArray (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsUint8ClampedArray ();
+}
+void VA::Node::Export::JSIsInt8Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsInt8Array ();
+}
+void VA::Node::Export::JSIsUint16Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsUint16Array ();
+}
+void VA::Node::Export::JSIsInt16Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsInt16Array ();
+}
+void VA::Node::Export::JSIsUint32Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsUint32Array ();
+}
+void VA::Node::Export::JSIsInt32Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsInt32Array ();
+}
+void VA::Node::Export::JSIsFloat32Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsFloat32Array ();
+}
+void VA::Node::Export::JSIsFloat64Array (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsFloat64Array ();
+}
+void VA::Node::Export::JSIsDataView (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsDataView ();
+}
+void VA::Node::Export::JSIsSharedArrayBuffer (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsSharedArrayBuffer ();
+}
+void VA::Node::Export::JSIsProxy (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsProxy ();
+}
+void VA::Node::Export::JSIsWebAssemblyCompiledModule (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    rRB = value()->IsWebAssemblyCompiledModule ();
 }
 
 
@@ -255,11 +516,67 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object
     defineMethod ("add:a:a:a:"	, &Export::adder);
     defineMethod ("add:a:a:a:a:", &Export::adder);
 
-    defineMethod (".toString"   , &Export::JSToString);
-    defineMethod (".toDetail"   , &Export::JSToDetail);
+    defineMethod (".toString"                   , &Export::JSToString);
+    defineMethod (".toDetail"                   , &Export::JSToDetail);
 
-//    defineDefault (&Export::JSCallback);
+    defineMethod (".hasProperty:"               , &Export::JSHasProperty);
+
+    defineMethod (".isUndefined"                , &Export::JSIsUndefined);
+    defineMethod (".isNull"                     , &Export::JSIsNull);
+    defineMethod (".isNullOrUndefined"          , &Export::JSIsNullOrUndefined);
+    defineMethod (".isTrue"                     , &Export::JSIsTrue);
+    defineMethod (".isFalse"                    , &Export::JSIsFalse);
+    defineMethod (".isName"                     , &Export::JSIsName);
+    defineMethod (".isString"                   , &Export::JSIsString);
+    defineMethod (".isSymbol"                   , &Export::JSIsSymbol);
+    defineMethod (".isFunction"                 , &Export::JSIsFunction);
+    defineMethod (".isArray"                    , &Export::JSIsArray);
+    defineMethod (".isObject"                   , &Export::JSIsObject);
+    defineMethod (".isBoolean"                  , &Export::JSIsBoolean);
+    defineMethod (".isNumber"                   , &Export::JSIsNumber);
+    defineMethod (".isExternal"                 , &Export::JSIsExternal);
+    defineMethod (".isInt32"                    , &Export::JSIsInt32);
+    defineMethod (".isUint32"                   , &Export::JSIsUint32);
+    defineMethod (".isDate"                     , &Export::JSIsDate);
+    defineMethod (".isArgumentsObject"          , &Export::JSIsArgumentsObject);
+    defineMethod (".isBooleanObject"            , &Export::JSIsBooleanObject);
+    defineMethod (".isNumberObject"             , &Export::JSIsNumberObject);
+    defineMethod (".isStringObject"             , &Export::JSIsStringObject);
+    defineMethod (".isSymbolObject"             , &Export::JSIsSymbolObject);
+    defineMethod (".isNativeError"              , &Export::JSIsNativeError);
+    defineMethod (".isRegExp"                   , &Export::JSIsRegExp);
+    defineMethod (".isAsyncFunction"            , &Export::JSIsAsyncFunction);
+    defineMethod (".isGeneratorFunction"        , &Export::JSIsGeneratorFunction);
+    defineMethod (".isGeneratorObject"          , &Export::JSIsGeneratorObject);
+    defineMethod (".isPromise"                  , &Export::JSIsPromise);
+    defineMethod (".isMap"                      , &Export::JSIsMap);
+    defineMethod (".isSet"                      , &Export::JSIsSet);
+    defineMethod (".isMapIterator"              , &Export::JSIsMapIterator);
+    defineMethod (".isSetIterator"              , &Export::JSIsSetIterator);
+    defineMethod (".isWeakMap"                  , &Export::JSIsWeakMap);
+    defineMethod (".isWeakSet"                  , &Export::JSIsWeakSet);
+    defineMethod (".isArrayBuffer"              , &Export::JSIsArrayBuffer);
+    defineMethod (".isArrayBufferView"          , &Export::JSIsArrayBufferView);
+    defineMethod (".isTypedArray"               , &Export::JSIsTypedArray);
+    defineMethod (".isUint8Array"               , &Export::JSIsUint8Array);
+    defineMethod (".isUint8ClampedArray"        , &Export::JSIsUint8ClampedArray);
+    defineMethod (".isInt8Array"                , &Export::JSIsInt8Array);
+    defineMethod (".isUint16Array"              , &Export::JSIsUint16Array);
+    defineMethod (".isInt16Array"               , &Export::JSIsInt16Array);
+    defineMethod (".isUint32Array"              , &Export::JSIsUint32Array);
+    defineMethod (".isInt32Array"               , &Export::JSIsInt32Array);
+    defineMethod (".isFloat32Array"             , &Export::JSIsFloat32Array);
+    defineMethod (".isFloat64Array"             , &Export::JSIsFloat64Array);
+    defineMethod (".isDataView"                 , &Export::JSIsDataView);
+    defineMethod (".isSharedArrayBuffer"        , &Export::JSIsSharedArrayBuffer);
+    defineMethod (".isProxy"                    , &Export::JSIsProxy);
+    defineMethod (".isWebAssemblyCompiledModule", &Export::JSIsWebAssemblyCompiledModule);
+    
+#if 1
+    defineDefault (&Export::JSCallback);
+#else
     defineDefault (&Export::interceptor);
+#endif
 }
 
 namespace {

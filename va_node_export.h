@@ -48,11 +48,59 @@ namespace VA {
 
         //  Access
         private:
-            local_value_t object () const {
+            template <typename v8_t> bool GetLocal (typename V8<v8_t>::local &localOther) const {
+                typename V8<v8_t>::maybe maybeOther;
+                return GetMaybe (maybeOther) && maybeOther.ToLocal (&localOther);
+            }
+
+            template <typename handle_t> bool GetMaybe (handle_t &maybeOther) const {
+                return false;
+            }
+            bool GetMaybe (V8<v8::Boolean>::maybe &maybeOther) const {
+                maybeOther = value()->ToBoolean (context ());
+                return true;
+            }
+            bool GetMaybe (V8<v8::Number>::maybe &maybeOther) const {
+                maybeOther = value()->ToNumber (context ());
+                return true;
+            }
+            bool GetMaybe (V8<v8::String>::maybe &maybeOther, bool bToDetailString) const {
+                maybeOther = bToDetailString
+                    ? value()->ToDetailString (context ())
+                    : value()->ToString (context ());
+                return true;
+            }
+            bool GetMaybe (V8<v8::Object>::maybe &maybeOther) const {
+                maybeOther = value()->ToObject (context ());
+                return true;
+            }
+            bool GetMaybe (V8<v8::Integer>::maybe &maybeOther) const {
+                maybeOther = value()->ToInteger (context ());
+                return true;
+            }
+            bool GetMaybe (V8<v8::Uint32>::maybe &maybeOther) const {
+                maybeOther = value()->ToUint32 (context ());
+                return true;
+            }
+            bool GetMaybe (V8<v8::Int32>::maybe &maybeOther) const {
+                maybeOther = value()->ToInt32 (context ());
+                return true;
+            }
+            bool GetMaybe (V8<v8::Value>::maybe &maybeOther) const {
+                maybeOther = value();
+                return true;
+            }
+
+            local_value_t value () const {
                 return isolate ()->Local (m_hValue);
             }
 
-        //  Methods
+        //  Return Helpers
+        private:
+            void returnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const;
+            void returnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const;
+
+        //  Test Methods
         public:
             void loopbackInt (Vxa::VResultBuilder &rRB, int i);
             void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny::value_t);
@@ -60,9 +108,65 @@ namespace VA {
 	    void interceptor (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
             void adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::value_t pack_o_ds);
 
+        //  JS Methods
+        public:
             void JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
+
             void JSToString (Vxa::VResultBuilder &rRB);
             void JSToDetail (Vxa::VResultBuilder &rRB);
+
+            void JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName);
+
+            void JSIsUndefined (Vxa::VResultBuilder &rRB);
+            void JSIsNull (Vxa::VResultBuilder &rRB);
+            void JSIsNullOrUndefined (Vxa::VResultBuilder &rRB);
+            void JSIsTrue (Vxa::VResultBuilder &rRB);
+            void JSIsFalse (Vxa::VResultBuilder &rRB);
+            void JSIsName (Vxa::VResultBuilder &rRB);
+            void JSIsString (Vxa::VResultBuilder &rRB);
+            void JSIsSymbol (Vxa::VResultBuilder &rRB);
+            void JSIsFunction (Vxa::VResultBuilder &rRB);
+            void JSIsArray (Vxa::VResultBuilder &rRB);
+            void JSIsObject (Vxa::VResultBuilder &rRB);
+            void JSIsBoolean (Vxa::VResultBuilder &rRB);
+            void JSIsNumber (Vxa::VResultBuilder &rRB);
+            void JSIsExternal (Vxa::VResultBuilder &rRB);
+            void JSIsInt32 (Vxa::VResultBuilder &rRB);
+            void JSIsUint32 (Vxa::VResultBuilder &rRB);
+            void JSIsDate (Vxa::VResultBuilder &rRB);
+            void JSIsArgumentsObject (Vxa::VResultBuilder &rRB);
+            void JSIsBooleanObject (Vxa::VResultBuilder &rRB);
+            void JSIsNumberObject (Vxa::VResultBuilder &rRB);
+            void JSIsStringObject (Vxa::VResultBuilder &rRB);
+            void JSIsSymbolObject (Vxa::VResultBuilder &rRB);
+            void JSIsNativeError (Vxa::VResultBuilder &rRB);
+            void JSIsRegExp (Vxa::VResultBuilder &rRB);
+            void JSIsAsyncFunction (Vxa::VResultBuilder &rRB);
+            void JSIsGeneratorFunction (Vxa::VResultBuilder &rRB);
+            void JSIsGeneratorObject (Vxa::VResultBuilder &rRB);
+            void JSIsPromise (Vxa::VResultBuilder &rRB);
+            void JSIsMap (Vxa::VResultBuilder &rRB);
+            void JSIsSet (Vxa::VResultBuilder &rRB);
+            void JSIsMapIterator (Vxa::VResultBuilder &rRB);
+            void JSIsSetIterator (Vxa::VResultBuilder &rRB);
+            void JSIsWeakMap (Vxa::VResultBuilder &rRB);
+            void JSIsWeakSet (Vxa::VResultBuilder &rRB);
+            void JSIsArrayBuffer (Vxa::VResultBuilder &rRB);
+            void JSIsArrayBufferView (Vxa::VResultBuilder &rRB);
+            void JSIsTypedArray (Vxa::VResultBuilder &rRB);
+            void JSIsUint8Array (Vxa::VResultBuilder &rRB);
+            void JSIsUint8ClampedArray (Vxa::VResultBuilder &rRB);
+            void JSIsInt8Array (Vxa::VResultBuilder &rRB);
+            void JSIsUint16Array (Vxa::VResultBuilder &rRB);
+            void JSIsInt16Array (Vxa::VResultBuilder &rRB);
+            void JSIsUint32Array (Vxa::VResultBuilder &rRB);
+            void JSIsInt32Array (Vxa::VResultBuilder &rRB);
+            void JSIsFloat32Array (Vxa::VResultBuilder &rRB);
+            void JSIsFloat64Array (Vxa::VResultBuilder &rRB);
+            void JSIsDataView (Vxa::VResultBuilder &rRB);
+            void JSIsSharedArrayBuffer (Vxa::VResultBuilder &rRB);
+            void JSIsProxy (Vxa::VResultBuilder &rRB);
+            void JSIsWebAssemblyCompiledModule (Vxa::VResultBuilder &rRB);
 
         //  State
         private:
