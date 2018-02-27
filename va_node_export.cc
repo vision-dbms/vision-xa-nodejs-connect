@@ -283,12 +283,9 @@ void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
 void VA::Node::Export::JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName) {
     HandleScope iHS (this);
 
-    bool bTrue = false;
-
     local_object_t hThis;
     bool bResult = GetLocal<object_t> (hThis)
-        && hThis->Has (context (), NewString (rPropertyName)).To (&bTrue)
-        && bTrue;
+        && hThis->Has (context (), NewString (rPropertyName)).FromMaybe (false);
     rRB = bResult;
 }
 
@@ -306,8 +303,12 @@ void VA::Node::Export::JSIsNull (Vxa::VResultBuilder &rRB) {
     rRB = value()->IsNull ();
 }
 void VA::Node::Export::JSIsNullOrUndefined (Vxa::VResultBuilder &rRB) {
+#if 0
     HandleScope iHS (this);
     rRB = value()->IsNullOrUndefined ();
+#else
+    rRB = false;
+#endif
 }
 void VA::Node::Export::JSIsTrue (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
@@ -394,8 +395,12 @@ void VA::Node::Export::JSIsRegExp (Vxa::VResultBuilder &rRB) {
     rRB = value()->IsRegExp ();
 }
 void VA::Node::Export::JSIsAsyncFunction (Vxa::VResultBuilder &rRB) {
+#if 0
     HandleScope iHS (this);
     rRB = value()->IsAsyncFunction ();
+#else
+    rRB = false;
+#endif
 }
 void VA::Node::Export::JSIsGeneratorFunction (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
@@ -494,8 +499,12 @@ void VA::Node::Export::JSIsProxy (Vxa::VResultBuilder &rRB) {
     rRB = value()->IsProxy ();
 }
 void VA::Node::Export::JSIsWebAssemblyCompiledModule (Vxa::VResultBuilder &rRB) {
+#if 0
     HandleScope iHS (this);
     rRB = value()->IsWebAssemblyCompiledModule ();
+#else
+    rRB = false;
+#endif
 }
 
 
