@@ -48,61 +48,63 @@ namespace VA {
 
         //  Access
         private:
-            template <typename v8_t> bool GetLocal (typename V8<v8_t>::local &localOther) const {
-                typename V8<v8_t>::maybe maybeOther;
-                return GetMaybe (maybeOther) && maybeOther.ToLocal (&localOther);
+        /*************************************************************************
+         *--->  The following 'Get*' will be migrating to VA::Node::Isolate  <---*
+         *************************************************************************/
+            template <typename handle_t> bool GetLocal (handle_t &rhLocal) const {
+                typename V8<handle_t>::maybe hMaybe;
+                return GetMaybe (hMaybe) && hMaybe.ToLocal (&rhLocal);
             }
 
-            template <typename handle_t> bool GetMaybe (handle_t &maybeOther) const {
+            template <typename handle_t> bool GetMaybe (handle_t &rhMaybe) const {
                 return false;
             }
-            bool GetMaybe (V8<v8::Boolean>::maybe &maybeOther) const {
-                maybeOther = value()->ToBoolean (context ());
+            bool GetMaybe (V8<v8::Boolean>::maybe &rhMaybe) const {
+                rhMaybe = value()->ToBoolean (context ());
                 return true;
             }
-            bool GetMaybe (V8<v8::Number>::maybe &maybeOther) const {
-                maybeOther = value()->ToNumber (context ());
+            bool GetMaybe (V8<v8::Number>::maybe &rhMaybe) const {
+                rhMaybe = value()->ToNumber (context ());
                 return true;
             }
-            bool GetMaybe (V8<v8::String>::maybe &maybeOther, bool bToDetailString) const {
-                maybeOther = bToDetailString
+            bool GetMaybe (V8<v8::String>::maybe &rhMaybe, bool bToDetailString) const {
+                rhMaybe = bToDetailString
                     ? value()->ToDetailString (context ())
                     : value()->ToString (context ());
                 return true;
             }
-            bool GetMaybe (V8<v8::Object>::maybe &maybeOther) const {
-                maybeOther = value()->ToObject (context ());
+            bool GetMaybe (V8<v8::Object>::maybe &rhMaybe) const {
+                rhMaybe = value()->ToObject (context ());
                 return true;
             }
-            bool GetMaybe (V8<v8::Integer>::maybe &maybeOther) const {
-                maybeOther = value()->ToInteger (context ());
+            bool GetMaybe (V8<v8::Integer>::maybe &rhMaybe) const {
+                rhMaybe = value()->ToInteger (context ());
                 return true;
             }
-            bool GetMaybe (V8<v8::Uint32>::maybe &maybeOther) const {
-                maybeOther = value()->ToUint32 (context ());
+            bool GetMaybe (V8<v8::Uint32>::maybe &rhMaybe) const {
+                rhMaybe = value()->ToUint32 (context ());
                 return true;
             }
-            bool GetMaybe (V8<v8::Int32>::maybe &maybeOther) const {
-                maybeOther = value()->ToInt32 (context ());
+            bool GetMaybe (V8<v8::Int32>::maybe &rhMaybe) const {
+                rhMaybe = value()->ToInt32 (context ());
                 return true;
             }
-            bool GetMaybe (V8<v8::Value>::maybe &maybeOther) const {
-                maybeOther = value();
+            bool GetMaybe (V8<v8::Value>::maybe &rhMaybe) const {
+                rhMaybe = value();
                 return true;
             }
 
             local_value_t value () const {
-                return isolate ()->Local (m_hValue);
+                return BaseClass::GetLocal (m_hValue);
             }
 
         //  Return Helpers
         private:
-            void returnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const;
-            void returnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const;
+            void ReturnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const;
+            void ReturnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const;
 
         //  Test Methods
         public:
-            void loopbackInt (Vxa::VResultBuilder &rRB, int i);
             void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny::value_t);
 
 	    void interceptor (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
@@ -114,6 +116,7 @@ namespace VA {
 
             void JSToString (Vxa::VResultBuilder &rRB);
             void JSToDetail (Vxa::VResultBuilder &rRB);
+            void JSUnwrap (Vxa::VResultBuilder &rRB);
 
             void JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName);
 

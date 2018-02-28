@@ -68,25 +68,28 @@ namespace VA {
             operator handle_t () const {
                 return m_hIsolate;
             }
-            v8::Local<v8::Context> getCurrentContext () const {
+            local_context_t currentContext () const {
                 return m_hIsolate->GetCurrentContext ();
             }
 
         //  Handle Helpers
         public:
-            template <typename S> v8::Local<S> Local (
-                v8::PersistentBase<S> const &rThat
+            template <typename T> typename V8<T>::local GetLocal (
+                T const &rThat
             ) const {
-                return v8::Local<S>::New (m_hIsolate, rThat);
+                return V8<T>::local::New (m_hIsolate, rThat);
             }
 
         //  Access Helpers
         public:
-            template <typename handle_t> bool GetString (VString &rString, handle_t hString) const {
-                return GetString (rString, hString->ToString (handle ()));
-            }
-            bool GetString (VString &rString, maybe_string_t hString) const;
-            bool GetString (VString &rString, local_string_t hString) const;
+            bool UnwrapString (
+                VString &rString, maybe_value_t hValue, bool bDetail = false
+            ) const;
+            bool UnwrapString (
+                VString &rString, local_value_t hValue, bool bDetail = false
+            ) const;
+            bool UnwrapString (VString &rString, maybe_string_t hString) const;
+            bool UnwrapString (VString &rString, local_string_t hString) const;
 
         //  Creation Helpers
         public:

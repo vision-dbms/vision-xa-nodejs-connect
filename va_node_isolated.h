@@ -86,17 +86,15 @@ namespace VA {
             v8::Isolate *isolateHandle () const {
                 return m_pIsolate->handle ();
             }
-            v8::Local<v8::Context> context () const {
-                return m_pIsolate->getCurrentContext ();
+            local_context_t context () const {
+                return m_pIsolate->currentContext ();
             }
 
         //  Handle Conversion
         protected:
         //  ... persistent -> local
-            template <typename S> v8::Local<S> GetLocal (
-                v8::PersistentBase<S> const &rThat
-            ) const {
-                return m_pIsolate->Local (rThat);
+            template <typename T> typename V8<T>::local GetLocal (T const &rThat) const {
+                return m_pIsolate->GetLocal (rThat);
             }
 
         //  Model Management
@@ -109,8 +107,10 @@ namespace VA {
 
         //  Object Access
         protected:
-            template <typename handle_t> bool GetString (VString &rString, handle_t hString) const {
-                return m_pIsolate->GetString (rString, hString);
+            template <typename handle_t> bool UnwrapString (
+                VString &rString, handle_t hString, bool bDetail = false
+            ) const {
+                return m_pIsolate->UnwrapString (rString, hString, bDetail);
             }
 
         //  Object Creation

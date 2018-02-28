@@ -20,8 +20,6 @@
 namespace {
 
     using v8::FunctionCallbackInfo;
-    using v8::Local;
-    using v8::Object;
     using v8::Value;
 
 /*********************
@@ -262,7 +260,7 @@ namespace {
         ServerContext::arg_storage_t aServerArgs (args.Length ());
         aServerArgs[0] = "-node-";
         for (unsigned int xArg = 1; xArg < aServerArgs.elementCount (); xArg++) {
-            if (!pIsolate->GetString (aServerArgs[xArg], args[xArg])) {
+            if (!pIsolate->UnwrapString (aServerArgs[xArg], args[xArg])) {
                 VString iMessage;
                 iMessage << "Invalid Argument: " << xArg;
                 pIsolate->ThrowTypeError (iMessage);
@@ -285,7 +283,7 @@ namespace {
 
     //  Access the required expression argument...
         VString iExpression;
-        if (args.Length () < 1 || !pIsolate->GetString (iExpression, args[0])) {
+        if (args.Length () < 1 || !pIsolate->UnwrapString (iExpression, args[0])) {
             pIsolate->ThrowTypeError ("Missing Expression");
             return;
         }
@@ -323,7 +321,7 @@ namespace {
 /**********************************
  *----  Module Initialization ----*
  **********************************/
-    void Init(v8::Local<Object> exports, v8::Local<Object> module) {
+    void Init (VN::local_object_t exports, VN::local_object_t module) {
         NODE_SET_METHOD(exports, "v", Evaluate);
         NODE_SET_METHOD(exports, "o", Offer);
         NODE_SET_METHOD(exports, "cachedIsolateCount", CachedIsolateCount);

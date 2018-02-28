@@ -76,16 +76,20 @@ bool VA::Node::Export::decommision () {
  ****************************
  ****************************/
 
-void VA::Node::Export::returnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const {
+void VA::Node::Export::ReturnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const {
     Reference pValue;
     if (Attach (pValue, hValue))
         rRB = pValue;
+    else
+        rRB = false;
 }
 
-void VA::Node::Export::returnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const {
+void VA::Node::Export::ReturnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const {
     Reference pValue;
     if (Attach (pValue, hValue))
         rRB = pValue;
+    else
+        rRB = false;
 }
 
 
@@ -94,16 +98,6 @@ void VA::Node::Export::returnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t 
  *****  Methods  *****
  *********************
  *********************/
-
-/*************************
- *----  loopbackInt  ----*
- *************************/
-
-void VA::Node::Export::loopbackInt (
-    Vxa::VResultBuilder &rRB, int i
-) {
-    rRB = i;
-}
 
 /*************************
  *----  loopbackAny  ----*
@@ -248,11 +242,11 @@ void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAn
 
     rRB = false;
     local_object_t hThis;
-    if (GetLocal<object_t> (hThis)) {
+    if (GetLocal (hThis)) {
         maybe_value_t const hPropertyValue = hThis->Get (
             context (), NewString (rRB.selectorComponent (0))
         );
-        returnUnwrapped (rRB, hPropertyValue);
+        ReturnUnwrapped (rRB, hPropertyValue);
     }
 }
 
@@ -264,15 +258,24 @@ void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAn
 void VA::Node::Export::JSToString (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
     VString iResult;
-    GetString (iResult, value()->ToString (context ()));
+    UnwrapString (iResult, value(), false);
     rRB = iResult;
 }
 
 void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
     VString iResult;
-    GetString (iResult, value()->ToDetailString (context ()));
+    UnwrapString (iResult, value(), true);
     rRB = iResult;
+}
+
+/****************************
+ *----  Return Helpers  ----*
+ ****************************/
+
+void VA::Node::Export::JSUnwrap (Vxa::VResultBuilder &rRB) {
+    HandleScope iHS (this);
+    ReturnUnwrapped (rRB, value ());
 }
 
 
@@ -282,11 +285,10 @@ void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
 
 void VA::Node::Export::JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName) {
     HandleScope iHS (this);
-
     local_object_t hThis;
-    bool bResult = GetLocal<object_t> (hThis)
-        && hThis->Has (context (), NewString (rPropertyName)).FromMaybe (false);
-    rRB = bResult;
+    rRB = GetLocal (hThis) && hThis->Has (
+        context (), NewString (rPropertyName)
+    ).FromMaybe (false);
 }
 
 
@@ -515,7 +517,6 @@ void VA::Node::Export::JSIsWebAssemblyCompiledModule (Vxa::VResultBuilder &rRB) 
  ***************************/
 
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
-    defineMethod ("loopbackInt:", &Export::loopbackInt);
     defineMethod ("loopbackAny:", &Export::loopbackAny);
 
     defineMethod ("add"		, &Export::adder);
@@ -527,6 +528,8 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object
 
     defineMethod (".toString"                   , &Export::JSToString);
     defineMethod (".toDetail"                   , &Export::JSToDetail);
+
+    defineMethod (".unwrap"                     , &Export::JSUnwrap);
 
     defineMethod (".hasProperty:"               , &Export::JSHasProperty);
 

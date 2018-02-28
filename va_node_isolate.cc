@@ -90,16 +90,35 @@ bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
 
 /****************************
  ****************************
- *****  Access Helpers  *****
+ *****  Unwrap Helpers  *****
  ****************************
  ****************************/
 
-bool VA::Node::Isolate::GetString (VString &rString, maybe_string_t hString) const {
-    local_string_t hLocalString;
-    return hString.ToLocal<string_t> (&hLocalString) && GetString (rString, hLocalString);
+bool VA::Node::Isolate::UnwrapString (
+    VString &rString, maybe_value_t hValue, bool bDetail
+) const {
+    local_value_t hLocalValue;
+    return hValue.ToLocal<value_t> (&hLocalValue) && UnwrapString (rString, hLocalValue);
 }
 
-bool VA::Node::Isolate::GetString (VString &rString, local_string_t hString) const {
+bool VA::Node::Isolate::UnwrapString (
+    VString &rString, local_value_t hValue, bool bDetail
+) const {
+    return UnwrapString (
+        rString, bDetail ? hValue->ToDetailString (
+            currentContext ()
+        ) : hValue->ToString (
+            currentContext ()
+        )
+    );
+}
+
+bool VA::Node::Isolate::UnwrapString (VString &rString, maybe_string_t hString) const {
+    local_string_t hLocalString;
+    return hString.ToLocal<string_t> (&hLocalString) && UnwrapString (rString, hLocalString);
+}
+
+bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) const {
     string_t::Utf8Value pString (hString);
     rString.setTo (*pString);
     return true;
@@ -112,7 +131,7 @@ bool VA::Node::Isolate::GetString (VString &rString, local_string_t hString) con
  ******************************/
 
 VA::Node::local_resolver_t VA::Node::Isolate::NewResolver () const {
-    return resolver_t::New (getCurrentContext ()).ToLocalChecked ();
+    return resolver_t::New (currentContext ()).ToLocalChecked ();
 }
 
 VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) const {
@@ -163,7 +182,7 @@ bool VA::Node::Isolate::Attach (
 ) {
     HandleScope iHS (this);
 
-    object_cache_handle_t hValueCache (Local (m_hValueCache));
+    object_cache_handle_t hValueCache (GetLocal (m_hValueCache));
     local_value_t hCachedValue (hValueCache->Get (hValue));
 
     if (!hCachedValue.IsEmpty () && hCachedValue->IsExternal ()) {
@@ -186,7 +205,9 @@ bool VA::Node::Isolate::Attach (
 
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
     HandleScope iHS (this);
-    bool const bResult = pModelObject && Local (m_hValueCache)->Delete (pModelObject->value ());
+    bool const bResult = pModelObject && GetLocal (m_hValueCache)->Delete (
+        pModelObject->value ()
+    );
 
     std::cerr
         << "VA::Node::Isolate["
@@ -198,15 +219,3 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
 
     return bResult;
 }
-
-/*****************************************************************
-
-class V8_EXPORT NativeWeakMap : public Data {
- public:
-  static Local<NativeWeakMap> New(Isolate* isolate);
-  void Set(Local<Value> key, Local<Value> value);
-  Local<Value> Get(Local<Value> key) const;
-  bool Has(Local<Value> key);
-  bool Delete(Local<Value> key);
-
- *****************************************************************/
