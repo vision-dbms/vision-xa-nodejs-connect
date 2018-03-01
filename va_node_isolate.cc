@@ -197,7 +197,7 @@ bool VA::Node::Isolate::Attach (
             << this
             << "]::Attach: "
             << rpModelObject.referent ()
-            << " attached"
+            << (hValueCache->Has (hValue) ? " attached" : " uncached")
             << std::endl;
     }
     return rpModelObject.isntNil ();
@@ -205,17 +205,32 @@ bool VA::Node::Isolate::Attach (
 
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
     HandleScope iHS (this);
-    bool const bResult = pModelObject && GetLocal (m_hValueCache)->Delete (
-        pModelObject->value ()
+    object_cache_handle_t const hCache = GetLocal (m_hValueCache);
+    local_value_t         const hModelValue = pModelObject->value ();
+    local_value_t               hCacheValue;
+
+/*****************
+ ****  Consider the model object gone if:
+ *
+ *  1) it was just deleted from the cache (hCache->Delete (hModelValue) returns true)  . . . . OR:
+ *  2) it isn't in the cache ((hCacheValue= hCache->Get (hModelValue)).IsEmpty ()) . . . . . . OR:
+ *  3) the cached value isn't a v8::External (hCacheValue->IsExternal () returns false)  . . . OR:
+ *  4) the cached external isn't the model object (reinterpret_cast<...> != pModelObject)
+ *
+ ****************/
+    return [&](bool bGone) {
+        std::cerr
+            << "VA::Node::Isolate["
+            << this
+            << "]::Detach: "
+            << pModelObject
+            << (bGone ? " detached" : " retained")
+            << std::endl;
+        return bGone;
+    } (
+        hCache->Delete (hModelValue)                         ||
+        (hCacheValue = hCache->Get (hModelValue)).IsEmpty () ||
+        !hCacheValue->IsExternal ()                          ||
+        hCacheValue.As<v8::External>()->Value() != pModelObject
     );
-
-    std::cerr
-        << "VA::Node::Isolate["
-        << this
-        << "]::Detach: "
-        << pModelObject
-        << (bResult ? " detached" : " retained")
-        << std::endl;
-
-    return bResult;
 }
