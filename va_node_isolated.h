@@ -101,8 +101,8 @@ namespace VA {
         //  Local Access
         protected:
         //  ... source handle -> local handle
-            template <typename source_t> typename V8<source_t>::local GetLocalFor (source_t const &rHandle) const {
-                return m_pIsolate->GetLocalFor (rHandle);
+            template <typename source_t> typename V8<source_t>::local LocalFor (source_t const &rHandle) const {
+                return m_pIsolate->LocalFor (rHandle);
             }
 
         //  ... source handle -> local handle (maybe)

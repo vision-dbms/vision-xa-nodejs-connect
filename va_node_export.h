@@ -50,10 +50,10 @@ namespace VA {
         private:
         //  ... this -> local handle
             local_value_t value () const {
-                return GetLocalFor (m_hValue);
+                return LocalFor (m_hValue);
             }
             local_value_t GetLocal () const {
-                return GetLocalFor (m_hValue);
+                return LocalFor (m_hValue);
             }
         //  ... this -> local handle (maybe)
             template <typename handle_t> bool GetLocal (handle_t &rhLocal) const {

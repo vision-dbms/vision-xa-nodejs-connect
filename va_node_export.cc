@@ -241,9 +241,9 @@ void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAn
     HandleScope iHS (this);
 
     rRB = false;
-    local_object_t hThis;
-    if (GetLocal (hThis)) {
-        maybe_value_t const hPropertyValue = hThis->Get (
+    local_object_t hObject;
+    if (GetLocal (hObject)) {
+        maybe_value_t const hPropertyValue = hObject->Get (
             context (), NewString (rRB.selectorComponent (0))
         );
         ReturnUnwrapped (rRB, hPropertyValue);
@@ -285,8 +285,8 @@ void VA::Node::Export::JSUnwrap (Vxa::VResultBuilder &rRB) {
 
 void VA::Node::Export::JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName) {
     HandleScope iHS (this);
-    local_object_t hThis;
-    rRB = GetLocal (hThis) && hThis->Has (
+    local_object_t hObject;
+    rRB = GetLocal (hObject) && hObject->Has (
         context (), NewString (rPropertyName)
     ).FromMaybe (false);
 }

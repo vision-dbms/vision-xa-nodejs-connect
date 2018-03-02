@@ -98,7 +98,7 @@ bool VA::Node::Isolate::UnwrapString (
     VString &rString, maybe_value_t hValue, bool bDetail
 ) const {
     local_value_t hLocalValue;
-    return ToLocalFrom (hLocalValue, hValue) && UnwrapString (rString, hLocalValue);
+    return GetLocalFor (hLocalValue, hValue) && UnwrapString (rString, hLocalValue);
 }
 
 bool VA::Node::Isolate::UnwrapString (
@@ -115,7 +115,7 @@ bool VA::Node::Isolate::UnwrapString (
 
 bool VA::Node::Isolate::UnwrapString (VString &rString, maybe_string_t hString) const {
     local_string_t hLocalString;
-    return ToLocalFrom (hLocalString, hString) && UnwrapString (rString, hLocalString);
+    return GetLocalFor (hLocalString, hString) && UnwrapString (rString, hLocalString);
 }
 
 bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) const {
@@ -174,7 +174,7 @@ bool VA::Node::Isolate::Attach (
     ClassTraits<Export>::retaining_ptr_t &rpModelObject, maybe_value_t hValue
 ) {
     local_value_t hLocalValue;
-    return ToLocalFrom (hLocalValue, hValue) && Attach (rpModelObject, hLocalValue);
+    return GetLocalFor (hLocalValue, hValue) && Attach (rpModelObject, hLocalValue);
 }
 
 bool VA::Node::Isolate::Attach (
@@ -182,7 +182,7 @@ bool VA::Node::Isolate::Attach (
 ) {
     HandleScope iHS (this);
 
-    object_cache_handle_t hValueCache (GetLocalFor (m_hValueCache));
+    object_cache_handle_t hValueCache (LocalFor (m_hValueCache));
     local_value_t hCachedValue (hValueCache->Get (hValue));
 
     if (!hCachedValue.IsEmpty () && hCachedValue->IsExternal ()) {
@@ -205,7 +205,7 @@ bool VA::Node::Isolate::Attach (
 
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
     HandleScope iHS (this);
-    object_cache_handle_t const hCache = GetLocalFor (m_hValueCache);
+    object_cache_handle_t const hCache = LocalFor (m_hValueCache);
     local_value_t         const hModelValue = pModelObject->value ();
     local_value_t               hCacheValue;
 

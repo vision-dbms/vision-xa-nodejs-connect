@@ -75,7 +75,7 @@ namespace VA {
         //  Local Access
         public:
         //  ... handle -> local handle
-            template <typename source_t> typename V8<source_t>::local GetLocalFor (
+            template <typename source_t> typename V8<source_t>::local LocalFor (
                 source_t const &rhSouce
             ) const {
                 return V8<source_t>::local::New (m_hIsolate, rhSouce);
@@ -85,11 +85,11 @@ namespace VA {
             template <typename local_t> bool GetLocalFrom (
                 local_t &rhLocal, persistent_value_t const &hValue
             ) const {
-                return GetLocalFrom (rhLocal, GetLocalFor (hValue));
+                return GetLocalFrom (rhLocal, LocalFor (hValue));
             }
             template <typename local_t> bool GetLocalFrom (local_t &rhLocal, local_value_t const &hValue) const {
                 typename V8<local_t>::maybe hMaybe;
-                return GetMaybeFrom (hMaybe, hValue) && ToLocalFrom (rhLocal, hMaybe);
+                return GetMaybeFrom (hMaybe, hValue) && GetLocalFor (rhLocal, hMaybe);
             }
 
         //  ... handle -> local handle (maybe) fixed points

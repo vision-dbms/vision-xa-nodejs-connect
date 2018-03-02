@@ -21,6 +21,31 @@
 
 namespace VA {
     namespace Node {
+    /*********************************************************************************
+     *****  Handle Access Function Naming Conventions:
+     *
+     *      LocalFor     - unconditional handle form conversion (e.g, Persistent<T> to
+     *                     Local<T>). Function returns local handle.
+     *                   - no referenced content examination (i.e., same T).
+     *      GetLocalFor  - conditional handle form conversion (e.g, MaybeLocal<T> to
+     *                     Local<T>). Function returns true if successful, handle
+     *                     returned by reference argument (typically the first).
+     *                   - no referenced content examination (i.e., same T).
+     *                   - same T (no referenced content examination).
+     *      GetLocalFrom - conditional handle form conversion with referenced content
+     *                     examination (e.g., Persistent<Value> -> Local<Object>).
+     *                     Function return true if successful, handle returned by
+     *                     reference argument (typically the first).
+     *      GetMaybeFrom - conditional handle form conversion with referenced content
+     *                     examination (e.g., Persistent<Value> -> MaybeLocal<Object>).
+     *                     Function return true if successful, handle returned by
+     *                     reference argument (typically the first).
+     *      GetLocal/GetMaybe
+     *                   - special cases of GetLocalFrom and GetMaybeFrom typically
+     *                     used as class members in classes that implicitly supply
+     *                     the required 'From' data (e.g., VA::Node::Export).
+     *
+     **********************************************************************************/
         template <typename T> struct V8 {
             typedef v8::Local<T> local;
             typedef v8::MaybeLocal<T> maybe;
@@ -28,16 +53,18 @@ namespace VA {
             typedef v8::PersistentBase<T> persistent_base;
         };
         template <typename T> struct V8<v8::Local<T> > : public V8<T> {
-            typedef v8::Local<T> source_handle_t;
-            static bool ToLocalFrom (typename V8<T>::local &rhLocal, source_handle_t hSomewhere) {
-                rhLocal = hSomewhere;
+            static bool GetLocalFor (
+                typename V8<T>::local &rhLocal, typename V8<T>::local const &rhSomewhere
+            ) {
+                rhLocal = rhSomewhere;
                 return true;
             }
         };
         template <typename T> struct V8<v8::MaybeLocal<T> > : public V8<T> {
-            typedef v8::MaybeLocal<T> source_handle_t;
-            static bool ToLocalFrom (typename V8<T>::local &rhLocal, source_handle_t hSomewhere) {
-                return hSomewhere.ToLocal (&rhLocal);
+            static bool GetLocalFor (
+                typename V8<T>::local &rhLocal, typename V8<T>::maybe const &rhSomewhere
+            ) {
+                return rhSomewhere.ToLocal (&rhLocal);
             }
         };
         template <typename T> struct V8<v8::PersistentBase<T> > : public V8<T> {
@@ -46,10 +73,12 @@ namespace VA {
         template <typename T> struct V8<v8::Persistent<T> > : public V8<v8::PersistentBase<T> > {
             typedef v8::Persistent<T> source_handle_t;
         };
-    /*----------------*/
 
-        template <typename handle_t> bool ToLocalFrom (typename V8<handle_t>::local &rhLocal, handle_t hSomewhere) {
-            return V8<handle_t>::ToLocalFrom (rhLocal, hSomewhere);
+    /*----------------*/
+        template <typename handle_t> bool GetLocalFor (
+            typename V8<handle_t>::local &rhLocal, handle_t const &rhSomewhere
+        ) {
+            return V8<handle_t>::GetLocalFor (rhLocal, rhSomewhere);
         }
 
     /*----------------*/
