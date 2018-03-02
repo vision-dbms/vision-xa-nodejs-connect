@@ -98,7 +98,7 @@ bool VA::Node::Isolate::UnwrapString (
     VString &rString, maybe_value_t hValue, bool bDetail
 ) const {
     local_value_t hLocalValue;
-    return hValue.ToLocal<value_t> (&hLocalValue) && UnwrapString (rString, hLocalValue);
+    return ToLocalFrom (hLocalValue, hValue) && UnwrapString (rString, hLocalValue);
 }
 
 bool VA::Node::Isolate::UnwrapString (
@@ -115,7 +115,7 @@ bool VA::Node::Isolate::UnwrapString (
 
 bool VA::Node::Isolate::UnwrapString (VString &rString, maybe_string_t hString) const {
     local_string_t hLocalString;
-    return hString.ToLocal<string_t> (&hLocalString) && UnwrapString (rString, hLocalString);
+    return ToLocalFrom (hLocalString, hString) && UnwrapString (rString, hLocalString);
 }
 
 bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) const {
@@ -174,7 +174,7 @@ bool VA::Node::Isolate::Attach (
     ClassTraits<Export>::retaining_ptr_t &rpModelObject, maybe_value_t hValue
 ) {
     local_value_t hLocalValue;
-    return hValue.ToLocal<value_t> (&hLocalValue) && Attach (rpModelObject, hLocalValue);
+    return ToLocalFrom (hLocalValue, hValue) && Attach (rpModelObject, hLocalValue);
 }
 
 bool VA::Node::Isolate::Attach (

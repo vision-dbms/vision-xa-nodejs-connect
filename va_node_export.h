@@ -53,7 +53,7 @@ namespace VA {
          *************************************************************************/
             template <typename handle_t> bool GetLocal (handle_t &rhLocal) const {
                 typename V8<handle_t>::maybe hMaybe;
-                return GetMaybe (hMaybe) && hMaybe.ToLocal (&rhLocal);
+                return GetMaybe (hMaybe) && ToLocalFrom (rhLocal, hMaybe);
             }
 
             template <typename handle_t> bool GetMaybe (handle_t &rhMaybe) const {

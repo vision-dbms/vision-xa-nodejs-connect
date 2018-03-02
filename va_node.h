@@ -28,14 +28,31 @@ namespace VA {
             typedef v8::PersistentBase<T> persistent_base;
         };
         template <typename T> struct V8<v8::Local<T> > : public V8<T> {
+            typedef v8::Local<T> source_handle_t;
+            static bool ToLocalFrom (typename V8<T>::local &rhLocal, source_handle_t hSomewhere) {
+                rhLocal = hSomewhere;
+                return true;
+            }
         };
         template <typename T> struct V8<v8::MaybeLocal<T> > : public V8<T> {
-        };
-        template <typename T> struct V8<v8::Persistent<T> > : public V8<T> {
+            typedef v8::MaybeLocal<T> source_handle_t;
+            static bool ToLocalFrom (typename V8<T>::local &rhLocal, source_handle_t hSomewhere) {
+                return hSomewhere.ToLocal (&rhLocal);
+            }
         };
         template <typename T> struct V8<v8::PersistentBase<T> > : public V8<T> {
+            typedef v8::PersistentBase<T> source_handle_t;
         };
+        template <typename T> struct V8<v8::Persistent<T> > : public V8<v8::PersistentBase<T> > {
+            typedef v8::Persistent<T> source_handle_t;
+        };
+    /*----------------*/
 
+        template <typename handle_t> bool ToLocalFrom (typename V8<handle_t>::local &rhLocal, handle_t hSomewhere) {
+            return V8<handle_t>::ToLocalFrom (rhLocal, hSomewhere);
+        }
+
+    /*----------------*/
         typedef v8::Boolean boolean_t;
         typedef V8<boolean_t>::local local_boolean_t;
         typedef V8<boolean_t>::maybe maybe_boolean_t;
