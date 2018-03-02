@@ -90,19 +90,33 @@ namespace VA {
                 return m_pIsolate->currentContext ();
             }
 
-        //  Handle Conversion
-        protected:
-        //  ... persistent -> local
-            template <typename T> typename V8<T>::local GetLocal (T const &rThat) const {
-                return m_pIsolate->GetLocal (rThat);
-            }
-
         //  Model Management
         protected:
             template <typename handle_t> bool Attach (
                 ClassTraits<Export>::retaining_ptr_t &rpModelObject, handle_t hValue
             ) const {
                 return m_pIsolate->Attach (rpModelObject, hValue);
+            }
+
+        //  Local Access
+        protected:
+        //  ... source handle -> local handle
+            template <typename source_t> typename V8<source_t>::local GetLocalFor (source_t const &rHandle) const {
+                return m_pIsolate->GetLocalFor (rHandle);
+            }
+
+        //  ... source handle -> local handle (maybe)
+            template <typename local_t, typename source_t> bool GetLocalFrom (
+                local_t &rhLocal, source_t const &rhSource
+            ) const {
+                return m_pIsolate->GetLocalFrom (rhLocal, rhSource);
+            }
+
+        //  ... source handle -> maybe local handle
+            template <typename maybe_t, typename source_t> bool GetMaybeFrom (
+                maybe_t &rhMaybe, source_t const &rhSource
+            ) const {
+                return m_pIsolate->GetMaybeFrom (rhMaybe, rhSource);
             }
 
         //  Object Access

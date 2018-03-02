@@ -53,7 +53,7 @@ namespace VA {
             }
         private:
             local_resolver_t resolver () const {
-                return GetLocal (m_hResolver);
+                return GetLocalFor (m_hResolver);
             }
 
         //  Outcome

@@ -182,7 +182,7 @@ bool VA::Node::Isolate::Attach (
 ) {
     HandleScope iHS (this);
 
-    object_cache_handle_t hValueCache (GetLocal (m_hValueCache));
+    object_cache_handle_t hValueCache (GetLocalFor (m_hValueCache));
     local_value_t hCachedValue (hValueCache->Get (hValue));
 
     if (!hCachedValue.IsEmpty () && hCachedValue->IsExternal ()) {
@@ -205,7 +205,7 @@ bool VA::Node::Isolate::Attach (
 
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
     HandleScope iHS (this);
-    object_cache_handle_t const hCache = GetLocal (m_hValueCache);
+    object_cache_handle_t const hCache = GetLocalFor (m_hValueCache);
     local_value_t         const hModelValue = pModelObject->value ();
     local_value_t               hCacheValue;
 

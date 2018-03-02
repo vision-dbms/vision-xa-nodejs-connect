@@ -72,12 +72,68 @@ namespace VA {
                 return m_hIsolate->GetCurrentContext ();
             }
 
-        //  Handle Helpers
+        //  Local Access
         public:
-            template <typename T> typename V8<T>::local GetLocal (
-                T const &rThat
+        //  ... handle -> local handle
+            template <typename source_t> typename V8<source_t>::local GetLocalFor (
+                source_t const &rhSouce
             ) const {
-                return V8<T>::local::New (m_hIsolate, rThat);
+                return V8<source_t>::local::New (m_hIsolate, rhSouce);
+            }
+
+        //  ... handle -> local handle (maybe)
+            template <typename local_t> bool GetLocalFrom (
+                local_t &rhLocal, persistent_value_t const &hValue
+            ) const {
+                return GetLocalFrom (rhLocal, GetLocalFor (hValue));
+            }
+            template <typename local_t> bool GetLocalFrom (local_t &rhLocal, local_value_t const &hValue) const {
+                typename V8<local_t>::maybe hMaybe;
+                return GetMaybeFrom (hMaybe, hValue) && ToLocalFrom (rhLocal, hMaybe);
+            }
+
+        //  ... handle -> local handle (maybe) fixed points
+            bool GetLocalFrom (local_value_t &rhLocal, local_value_t const &hValue) const {
+                rhLocal = hValue;
+                return true;
+            }
+
+        //  ... handle -> maybe local handle fixed points
+            bool GetMaybeFrom (V8<v8::Value>::maybe &rhMaybe, local_value_t hValue) const {
+                rhMaybe = hValue;
+                return !rhMaybe.IsEmpty ();
+            }
+
+        //  ... handle -> maybe local handle
+            bool GetMaybeFrom (V8<v8::Boolean>::maybe &rhMaybe, local_value_t hValue) const {
+                rhMaybe = hValue->ToBoolean (currentContext ());
+                return !rhMaybe.IsEmpty ();
+            }
+            bool GetMaybeFrom (V8<v8::Number>::maybe &rhMaybe, local_value_t hValue) const {
+                rhMaybe = hValue->ToNumber (currentContext ());
+                return !rhMaybe.IsEmpty ();
+            }
+            bool GetMaybeFrom (V8<v8::String>::maybe &rhMaybe, local_value_t hValue, bool bToDetailString) const {
+                rhMaybe = bToDetailString
+                    ? hValue->ToDetailString (currentContext ())
+                    : hValue->ToString (currentContext ());
+                return !rhMaybe.IsEmpty ();
+            }
+            bool GetMaybeFrom (V8<v8::Object>::maybe &rhMaybe, local_value_t hValue) const {
+                rhMaybe = hValue->ToObject (currentContext ());
+                return !rhMaybe.IsEmpty ();
+            }
+            bool GetMaybeFrom (V8<v8::Integer>::maybe &rhMaybe, local_value_t hValue) const {
+                rhMaybe = hValue->ToInteger (currentContext ());
+                return !rhMaybe.IsEmpty ();
+            }
+            bool GetMaybeFrom (V8<v8::Uint32>::maybe &rhMaybe, local_value_t hValue) const {
+                rhMaybe = hValue->ToUint32 (currentContext ());
+                return !rhMaybe.IsEmpty ();
+            }
+            bool GetMaybeFrom (V8<v8::Int32>::maybe &rhMaybe, local_value_t hValue) const {
+                rhMaybe = hValue->ToInt32 (currentContext ());
+                return !rhMaybe.IsEmpty ();
             }
 
         //  Access Helpers

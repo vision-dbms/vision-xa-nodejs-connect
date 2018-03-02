@@ -46,56 +46,22 @@ namespace VA {
         private:
             virtual bool decommision () override;
 
-        //  Access
+        //  Local Access
         private:
-        /*************************************************************************
-         *--->  The following 'Get*' will be migrating to VA::Node::Isolate  <---*
-         *************************************************************************/
-            template <typename handle_t> bool GetLocal (handle_t &rhLocal) const {
-                typename V8<handle_t>::maybe hMaybe;
-                return GetMaybe (hMaybe) && ToLocalFrom (rhLocal, hMaybe);
-            }
-
-            template <typename handle_t> bool GetMaybe (handle_t &rhMaybe) const {
-                return false;
-            }
-            bool GetMaybe (V8<v8::Boolean>::maybe &rhMaybe) const {
-                rhMaybe = value()->ToBoolean (context ());
-                return true;
-            }
-            bool GetMaybe (V8<v8::Number>::maybe &rhMaybe) const {
-                rhMaybe = value()->ToNumber (context ());
-                return true;
-            }
-            bool GetMaybe (V8<v8::String>::maybe &rhMaybe, bool bToDetailString) const {
-                rhMaybe = bToDetailString
-                    ? value()->ToDetailString (context ())
-                    : value()->ToString (context ());
-                return true;
-            }
-            bool GetMaybe (V8<v8::Object>::maybe &rhMaybe) const {
-                rhMaybe = value()->ToObject (context ());
-                return true;
-            }
-            bool GetMaybe (V8<v8::Integer>::maybe &rhMaybe) const {
-                rhMaybe = value()->ToInteger (context ());
-                return true;
-            }
-            bool GetMaybe (V8<v8::Uint32>::maybe &rhMaybe) const {
-                rhMaybe = value()->ToUint32 (context ());
-                return true;
-            }
-            bool GetMaybe (V8<v8::Int32>::maybe &rhMaybe) const {
-                rhMaybe = value()->ToInt32 (context ());
-                return true;
-            }
-            bool GetMaybe (V8<v8::Value>::maybe &rhMaybe) const {
-                rhMaybe = value();
-                return true;
-            }
-
+        //  ... this -> local handle
             local_value_t value () const {
-                return BaseClass::GetLocal (m_hValue);
+                return GetLocalFor (m_hValue);
+            }
+            local_value_t GetLocal () const {
+                return GetLocalFor (m_hValue);
+            }
+        //  ... this -> local handle (maybe)
+            template <typename handle_t> bool GetLocal (handle_t &rhLocal) const {
+                return this->GetLocalFrom (rhLocal, m_hValue);
+            }
+        //  ... this -> maybe local handle
+            template <typename handle_t> bool GetMaybe (handle_t &rhMaybe) const {
+                return this->GetMaybeFrom (rhMaybe, m_hValue);
             }
 
         //  Return Helpers
