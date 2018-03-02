@@ -90,7 +90,7 @@ bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
 
 /****************************
  ****************************
- *****  Unwrap Helpers  *****
+ *****  Access Helpers  *****
  ****************************
  ****************************/
 
@@ -106,9 +106,9 @@ bool VA::Node::Isolate::UnwrapString (
 ) const {
     return UnwrapString (
         rString, bDetail ? hValue->ToDetailString (
-            currentContext ()
+            context ()
         ) : hValue->ToString (
-            currentContext ()
+            context ()
         )
     );
 }
@@ -131,13 +131,12 @@ bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) 
  ******************************/
 
 VA::Node::local_resolver_t VA::Node::Isolate::NewResolver () const {
-    return resolver_t::New (currentContext ()).ToLocalChecked ();
+    return resolver_t::New (context ()).ToLocalChecked ();
 }
 
 VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) const {
     return string_t::NewFromUtf8 (m_hIsolate, pString);
 }
-
 
 /*******************************
  *******************************
@@ -156,13 +155,14 @@ void VA::Node::Isolate::ThrowTypeError (char const *pMessage) const {
  ***************************/
 
 bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t hValue){
-    Export::Reference pValue;
+    ExportReference pValue;
     if (!Attach (pValue, hValue))
         return false;
 
     rExport.setTo (Vxa::Export (pValue));
     return true;
 }
+
 
 /******************************
  ******************************
@@ -171,14 +171,14 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t 
  ******************************/
 
 bool VA::Node::Isolate::Attach (
-    ClassTraits<Export>::retaining_ptr_t &rpModelObject, maybe_value_t hValue
+    ExportReference &rpModelObject, maybe_value_t hValue
 ) {
     local_value_t hLocalValue;
     return GetLocalFor (hLocalValue, hValue) && Attach (rpModelObject, hLocalValue);
 }
 
 bool VA::Node::Isolate::Attach (
-    ClassTraits<Export>::retaining_ptr_t &rpModelObject, local_value_t hValue
+    ExportReference &rpModelObject, local_value_t hValue
 ) {
     HandleScope iHS (this);
 
@@ -233,4 +233,92 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
         !hCacheValue->IsExternal ()                          ||
         hCacheValue.As<v8::External>()->Value() != pModelObject
     );
+}
+
+
+/***************************
+ ***************************
+ *****  Result Return  *****
+ ***************************
+ ***************************/
+
+bool VA::Node::Isolate::MaybeSetResultTo (
+    Vxa::VResultBuilder &rRB, local_value_t hValue
+) {
+    return !hValue.IsEmpty () && (
+        MaybeSetResultToInt32  (rRB, hValue) ||
+        MaybeSetResultToDouble (rRB, hValue) ||
+        MaybeSetResultToString (rRB, hValue) ||
+        MaybeSetResultToObject (rRB, hValue)
+    );
+}
+
+bool VA::Node::Isolate::MaybeSetResultToInt32 (
+    Vxa::VResultBuilder &rRB, local_value_t hValue
+) {
+    int32_t iResult;
+    if (hValue->IsInt32 () && hValue->Int32Value (context ()).To (&iResult)) {
+        rRB = iResult;
+        return true;
+    }
+    return false;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToDouble (
+    Vxa::VResultBuilder &rRB, local_value_t hValue
+) {
+    double iResult;
+    if (hValue->IsNumber () && hValue->NumberValue (context ()).To (&iResult)) {
+        rRB = iResult;
+        return true;
+    }
+    return false;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToString (
+    Vxa::VResultBuilder &rRB, local_value_t hValue
+) {
+    VString iResult;
+    if (hValue->IsString () && UnwrapString (iResult, hValue)) {
+        rRB = iResult;
+        return true;
+    }
+    return false;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToObject (
+    Vxa::VResultBuilder &rRB, local_value_t hValue
+) {
+    ExportReference pResult;
+    if (Attach (pResult, hValue)) {
+        rRB = pResult;
+        return true;
+    }
+    return false;
+}
+
+bool VA::Node::Isolate::SetResultTo (
+    Vxa::VResultBuilder &rRB, maybe_value_t hMaybe
+) {
+    local_value_t hValue;
+    return (
+        GetLocalFor (hValue, hMaybe) && MaybeSetResultTo (rRB, hValue)
+    ) || SetResultToUndefined (rRB);
+}
+
+bool VA::Node::Isolate::SetResultTo (
+    Vxa::VResultBuilder &rRB, local_value_t hValue
+) {
+    return MaybeSetResultTo (rRB, hValue) || SetResultToUndefined (rRB);
+}
+
+bool VA::Node::Isolate::SetResultToUndefined (Vxa::VResultBuilder &rRB) {
+//    V8<v8::Primitive>::local v8::Undefined (m_hIsolate);
+    ExportReference pResult;
+    if (Attach (pResult, local_value_t (v8::Undefined (m_hIsolate)))) {
+        rRB = pResult;
+    } else {
+        rRB = false;
+    }
+    return true;
 }

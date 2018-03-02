@@ -87,7 +87,7 @@ namespace VA {
                 return m_pIsolate->handle ();
             }
             local_context_t context () const {
-                return m_pIsolate->currentContext ();
+                return m_pIsolate->context ();
             }
 
         //  Model Management
@@ -131,6 +131,44 @@ namespace VA {
         protected:
             local_string_t NewString (char const *pString) const {
                 return m_pIsolate->NewString (pString);
+            }
+
+        //  Result Return
+        public:
+            template <typename handle_t> bool MaybeSetResultTo (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            ) const {
+                return m_pIsolate->MaybeSetResultTo (rRB, hValue);
+            }
+            template <typename handle_t> bool MaybeSetResultToInt32 (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            ) const {
+                return m_pIsolate->MaybeSetResultToInt32 (rRB, hValue);
+            }
+            template <typename handle_t> bool MaybeSetResultToDouble (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            ) const {
+                return m_pIsolate->MaybeSetResultToDouble (rRB, hValue);
+            }
+            template <typename handle_t> bool MaybeSetResultToString (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            ) const {
+                return m_pIsolate->MaybeSetResultToString (rRB, hValue);
+            }
+            template <typename handle_t> bool MaybeSetResultToObject (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            ) const {
+                return m_pIsolate->MaybeSetResultToObject (rRB, hValue);
+            }
+
+            template <typename handle_t> bool SetResultTo (
+                Vxa::VResultBuilder &rRB, handle_t hValue
+            ) const {
+                return m_pIsolate->SetResultTo (rRB, hValue);
+            }
+
+            bool SetResultToUndefined (Vxa::VResultBuilder &rRB) const {
+                return m_pIsolate->SetResultToUndefined (rRB);
             }
 
         //  Task Launcher

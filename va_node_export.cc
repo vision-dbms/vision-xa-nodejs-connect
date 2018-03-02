@@ -69,135 +69,13 @@ bool VA::Node::Export::decommision () {
     std::cerr << "VA::Node::Export::decommision: " << this << std::endl;
     return isolate ()->Detach (this) && BaseClass::decommision ();
 }
-
-/****************************
- ****************************
- *****  Return Helpers  *****
- ****************************
- ****************************/
-
-void VA::Node::Export::ReturnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const {
-    Reference pValue;
-    if (Attach (pValue, hValue))
-        rRB = pValue;
-    else
-        rRB = false;
-}
-
-void VA::Node::Export::ReturnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const {
-    Reference pValue;
-    if (Attach (pValue, hValue))
-        rRB = pValue;
-    else
-        rRB = false;
-}
 
 
-/*********************
- *********************
- *****  Methods  *****
- *********************
- *********************/
-
-/*************************
- *----  loopbackAny  ----*
- *************************/
-
-namespace {
-    class LoopbackSink : public Vxa::VAny::Client {
-    public:
-        LoopbackSink (Vxa::VResultBuilder &rRB) : m_rRB (rRB) {
-        }
-        ~LoopbackSink () {
-        }
-    private:
-        template <typename value_t> void onImpl (value_t iValue) {
-            m_rRB = iValue;
-        }
-    public:
-        virtual void on (int iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (double iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (VString const &iValue) override {
-            onImpl (iValue);
-        }
-    private:
-        Vxa::VResultBuilder &m_rRB;
-    };
-}
-
-void VA::Node::Export::loopbackAny (
-    Vxa::VResultBuilder &rRB, Vxa::VAny::value_t rAny
-) {
-    LoopbackSink iAnySink (rRB);
-    rAny.supply (iAnySink);
-}
-
-/*************************
- *----  interceptor  ----*
- *************************/
-
-namespace {
-    class InterceptorSink : public Vxa::VAny::Client {
-    public:
-        InterceptorSink (VString &rMessage) : m_rMessage (rMessage) {
-        }
-        ~InterceptorSink () {
-        }
-    private:
-        template <typename value_t> void onImpl (value_t iValue) {
-            m_rMessage << iValue;
-        }
-    public:
-        virtual void on (int iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (double iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (VString const &iValue) override {
-            onImpl (iValue);
-        }
-    private:
-        VString &m_rMessage;
-    };
-}
-
-void VA::Node::Export::interceptor (
-    Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t rPack
-) {
-    VString iMessage;
-    iMessage
-	<< "Called as '"
-        << (rRB.invokedIntensionally () ? ":" : "")
-	<< rRB.selectorName ()
-	<< "' with parameter count of "
-	<< rRB.parameterCount ()
-	<< " and task size of "
-	<< rRB.taskCardinality ();
-
-    InterceptorSink iAnySink (iMessage);
-    Vxa::cardinality_t const cParameters = rPack.parameterCount ();
-    for (Vxa::cardinality_t xParameter = 0; xParameter < cParameters; xParameter++) {
-        iMessage.printf (
-            "\n %2u: %10s: ", xParameter, rRB.selectorComponent (xParameter).content ()
-        );
-        rPack.parameterValue (xParameter).supply (iAnySink);
-    }
-    iMessage << "\n";
-    rRB = iMessage;
-}
-
-void VA::Node::Export::adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::value_t pack_o_ds) {
-    double result = 0.0;
-    for (unsigned int xD = 0; xD < pack_o_ds.parameterCount (); xD++)
-        result += pack_o_ds[xD];
-    rRB = result;
-}
-
+/************************
+ ************************
+ *****  JS Methods  *****
+ ************************
+ ************************/
 
 /***************************
  *****  JS Operations  *****
@@ -232,7 +110,7 @@ namespace {
             onImpl (iValue);
         }
     private:
-        maybe_value_t      m_rResult;
+        maybe_value_t&     m_rResult;
         Isolate::Reference m_pIsolate;
     };
 }
@@ -240,14 +118,16 @@ namespace {
 void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t) {
     HandleScope iHS (this);
 
-    rRB = false;
     local_object_t hObject;
-    if (GetLocal (hObject)) {
-        maybe_value_t const hPropertyValue = hObject->Get (
-            context (), NewString (rRB.selectorComponent (0))
-        );
-        ReturnUnwrapped (rRB, hPropertyValue);
+    if (!GetLocal (hObject)) {
+        SetResultToUndefined (rRB);
+        return;
     }
+
+    maybe_value_t const hPropertyValue = hObject->Get (
+        context (), NewString (rRB.selectorComponent (0))
+    );
+    SetResultTo (rRB, hPropertyValue);
 }
 
 
@@ -275,7 +155,7 @@ void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
 
 void VA::Node::Export::JSUnwrap (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
-    ReturnUnwrapped (rRB, value ());
+    SetResultTo (rRB, value ());
 }
 
 
@@ -305,12 +185,8 @@ void VA::Node::Export::JSIsNull (Vxa::VResultBuilder &rRB) {
     rRB = value()->IsNull ();
 }
 void VA::Node::Export::JSIsNullOrUndefined (Vxa::VResultBuilder &rRB) {
-#if 0
-    HandleScope iHS (this);
-    rRB = value()->IsNullOrUndefined ();
-#else
-    rRB = false;
-#endif
+    local_value_t hValue = value ();
+    rRB = hValue->IsNull () || hValue->IsUndefined ();
 }
 void VA::Node::Export::JSIsTrue (Vxa::VResultBuilder &rRB) {
     HandleScope iHS (this);
@@ -517,15 +393,6 @@ void VA::Node::Export::JSIsWebAssemblyCompiledModule (Vxa::VResultBuilder &rRB) 
  ***************************/
 
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
-    defineMethod ("loopbackAny:", &Export::loopbackAny);
-
-    defineMethod ("add"		, &Export::adder);
-    defineMethod ("add:"	, &Export::adder);
-    defineMethod ("add:a:"	, &Export::adder);
-    defineMethod ("add:a:a:"	, &Export::adder);
-    defineMethod ("add:a:a:a:"	, &Export::adder);
-    defineMethod ("add:a:a:a:a:", &Export::adder);
-
     defineMethod (".toString"                   , &Export::JSToString);
     defineMethod (".toDetail"                   , &Export::JSToDetail);
 

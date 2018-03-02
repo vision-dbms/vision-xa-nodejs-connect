@@ -40,6 +40,9 @@ namespace VA {
             typedef V8<object_cache_t>::local      object_cache_handle_t;
             typedef V8<object_cache_t>::persistent object_cache_global_t;
 
+            typedef ClassTraits<Export>::retaining_ptr_t ExportReference;
+            typedef ClassTraits<Export>::notaining_ptr_t ExportPointer;
+
         //  Construction
         private:
             Isolate (v8::Isolate *pIsolate);
@@ -68,7 +71,7 @@ namespace VA {
             operator handle_t () const {
                 return m_hIsolate;
             }
-            local_context_t currentContext () const {
+            local_context_t context () const {
                 return m_hIsolate->GetCurrentContext ();
             }
 
@@ -106,33 +109,33 @@ namespace VA {
 
         //  ... handle -> maybe local handle
             bool GetMaybeFrom (V8<v8::Boolean>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToBoolean (currentContext ());
+                rhMaybe = hValue->ToBoolean (context ());
                 return !rhMaybe.IsEmpty ();
             }
             bool GetMaybeFrom (V8<v8::Number>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToNumber (currentContext ());
+                rhMaybe = hValue->ToNumber (context ());
                 return !rhMaybe.IsEmpty ();
             }
             bool GetMaybeFrom (V8<v8::String>::maybe &rhMaybe, local_value_t hValue, bool bToDetailString) const {
                 rhMaybe = bToDetailString
-                    ? hValue->ToDetailString (currentContext ())
-                    : hValue->ToString (currentContext ());
+                    ? hValue->ToDetailString (context ())
+                    : hValue->ToString (context ());
                 return !rhMaybe.IsEmpty ();
             }
             bool GetMaybeFrom (V8<v8::Object>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToObject (currentContext ());
+                rhMaybe = hValue->ToObject (context ());
                 return !rhMaybe.IsEmpty ();
             }
             bool GetMaybeFrom (V8<v8::Integer>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToInteger (currentContext ());
+                rhMaybe = hValue->ToInteger (context ());
                 return !rhMaybe.IsEmpty ();
             }
             bool GetMaybeFrom (V8<v8::Uint32>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToUint32 (currentContext ());
+                rhMaybe = hValue->ToUint32 (context ());
                 return !rhMaybe.IsEmpty ();
             }
             bool GetMaybeFrom (V8<v8::Int32>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToInt32 (currentContext ());
+                rhMaybe = hValue->ToInt32 (context ());
                 return !rhMaybe.IsEmpty ();
             }
 
@@ -163,13 +166,40 @@ namespace VA {
         //  Model Management
         public:
             bool Attach (
-                ClassTraits<Export>::retaining_ptr_t &rpModelObject, maybe_value_t hValue
+                ExportReference &rpModelObject, maybe_value_t hValue
             );
             bool Attach (
-                ClassTraits<Export>::retaining_ptr_t &rpModelObject, local_value_t hValue
+                ExportReference &rpModelObject, local_value_t hValue
             );
         private:
             bool Detach (Export *pModelObject);
+
+        //  Result Return
+        public:
+            bool MaybeSetResultTo (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            );
+            bool MaybeSetResultToInt32 (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            );
+            bool MaybeSetResultToDouble (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            );
+            bool MaybeSetResultToString (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            );
+            bool MaybeSetResultToObject (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            );
+
+            bool SetResultTo (
+                Vxa::VResultBuilder &rRB, maybe_value_t hValue
+            );
+            bool SetResultTo (
+                Vxa::VResultBuilder &rRB, local_value_t hValue
+            );
+
+            bool SetResultToUndefined (Vxa::VResultBuilder &rRB);
 
         //  State
         private:

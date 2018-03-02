@@ -64,18 +64,6 @@ namespace VA {
                 return this->GetMaybeFrom (rhMaybe, m_hValue);
             }
 
-        //  Return Helpers
-        private:
-            void ReturnUnwrapped (Vxa::VResultBuilder &rRB, maybe_value_t hValue) const;
-            void ReturnUnwrapped (Vxa::VResultBuilder &rRB, local_value_t hValue) const;
-
-        //  Test Methods
-        public:
-            void loopbackAny (Vxa::VResultBuilder &rRB, Vxa::VAny::value_t);
-
-	    void interceptor (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
-            void adder (Vxa::VResultBuilder &rRB, Vxa::VPack<double>::value_t pack_o_ds);
-
         //  JS Methods
         public:
             void JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
