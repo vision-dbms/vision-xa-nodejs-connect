@@ -24,9 +24,7 @@
 
 #include "va_node_handle_scope.h"
 
-#include "Vxa_VAny.h"
 #include "Vxa_VCollectable.h"
-#include "Vxa_VResultBuilder.h"
 
 
 /******************************
@@ -115,19 +113,19 @@ namespace {
     };
 }
 
-void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t) {
+void VA::Node::Export::JSCallback (vxa_result_t &rResult, Vxa::VPack<Vxa::VAny::value_t>::value_t) {
     HandleScope iHS (this);
 
     local_object_t hObject;
     if (!GetLocal (hObject)) {
-        SetResultToUndefined (rRB);
+        SetResultToUndefined (rResult);
         return;
     }
 
     maybe_value_t const hPropertyValue = hObject->Get (
-        context (), NewString (rRB.selectorComponent (0))
+        context (), NewString (rResult.selectorComponent (0))
     );
-    SetResultTo (rRB, hPropertyValue);
+    SetResultTo (rResult, hPropertyValue);
 }
 
 
@@ -135,27 +133,27 @@ void VA::Node::Export::JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAn
  *----  Conversions  ----*
  *************************/
 
-void VA::Node::Export::JSToString (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSToString (vxa_result_t &rResult) {
     HandleScope iHS (this);
     VString iResult;
     UnwrapString (iResult, value(), false);
-    rRB = iResult;
+    rResult = iResult;
 }
 
-void VA::Node::Export::JSToDetail (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSToDetail (vxa_result_t &rResult) {
     HandleScope iHS (this);
     VString iResult;
     UnwrapString (iResult, value(), true);
-    rRB = iResult;
+    rResult = iResult;
 }
 
 /****************************
  *----  Return Helpers  ----*
  ****************************/
 
-void VA::Node::Export::JSUnwrap (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSUnwrap (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    SetResultTo (rRB, value ());
+    SetResultTo (rResult, value ());
 }
 
 
@@ -163,10 +161,10 @@ void VA::Node::Export::JSUnwrap (Vxa::VResultBuilder &rRB) {
  *----  Property Query  ----*
  ****************************/
 
-void VA::Node::Export::JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName) {
+void VA::Node::Export::JSHasProperty (vxa_result_t &rResult, VString const &rPropertyName) {
     HandleScope iHS (this);
     local_object_t hObject;
-    rRB = GetLocal (hObject) && hObject->Has (
+    rResult = GetLocal (hObject) && hObject->Has (
         context (), NewString (rPropertyName)
     ).FromMaybe (false);
 }
@@ -176,212 +174,212 @@ void VA::Node::Export::JSHasProperty (Vxa::VResultBuilder &rRB, VString const &r
  *----  Type Query  ----*
  ************************/
 
-void VA::Node::Export::JSIsUndefined (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsUndefined (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsUndefined ();
+    rResult = value()->IsUndefined ();
 }
-void VA::Node::Export::JSIsNull (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsNull (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsNull ();
+    rResult = value()->IsNull ();
 }
-void VA::Node::Export::JSIsNullOrUndefined (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsNullOrUndefined (vxa_result_t &rResult) {
     local_value_t hValue = value ();
-    rRB = hValue->IsNull () || hValue->IsUndefined ();
+    rResult = hValue->IsNull () || hValue->IsUndefined ();
 }
-void VA::Node::Export::JSIsTrue (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsTrue (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsTrue ();
+    rResult = value()->IsTrue ();
 }
-void VA::Node::Export::JSIsFalse (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsFalse (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsFalse ();
+    rResult = value()->IsFalse ();
 }
-void VA::Node::Export::JSIsName (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsName (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsName ();
+    rResult = value()->IsName ();
 }
-void VA::Node::Export::JSIsString (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsString (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsString ();
+    rResult = value()->IsString ();
 }
-void VA::Node::Export::JSIsSymbol (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsSymbol (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsSymbol ();
+    rResult = value()->IsSymbol ();
 }
-void VA::Node::Export::JSIsFunction (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsFunction (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsFunction ();
+    rResult = value()->IsFunction ();
 }
-void VA::Node::Export::JSIsArray (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsArray (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsArray ();
+    rResult = value()->IsArray ();
 }
-void VA::Node::Export::JSIsObject (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsObject (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsObject ();
+    rResult = value()->IsObject ();
 }
-void VA::Node::Export::JSIsBoolean (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsBoolean (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsBoolean ();
+    rResult = value()->IsBoolean ();
 }
-void VA::Node::Export::JSIsNumber (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsNumber (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsNumber ();
+    rResult = value()->IsNumber ();
 }
-void VA::Node::Export::JSIsExternal (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsExternal (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsExternal ();
+    rResult = value()->IsExternal ();
 }
-void VA::Node::Export::JSIsInt32 (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsInt32 (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsInt32 ();
+    rResult = value()->IsInt32 ();
 }
-void VA::Node::Export::JSIsUint32 (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsUint32 (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsUint32 ();
+    rResult = value()->IsUint32 ();
 }
-void VA::Node::Export::JSIsDate (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsDate (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsDate ();
+    rResult = value()->IsDate ();
 }
-void VA::Node::Export::JSIsArgumentsObject (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsArgumentsObject (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsArgumentsObject ();
+    rResult = value()->IsArgumentsObject ();
 }
-void VA::Node::Export::JSIsBooleanObject (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsBooleanObject (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsBooleanObject ();
+    rResult = value()->IsBooleanObject ();
 }
-void VA::Node::Export::JSIsNumberObject (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsNumberObject (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsNumberObject ();
+    rResult = value()->IsNumberObject ();
 }
-void VA::Node::Export::JSIsStringObject (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsStringObject (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsStringObject ();
+    rResult = value()->IsStringObject ();
 }
-void VA::Node::Export::JSIsSymbolObject (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsSymbolObject (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsSymbolObject ();
+    rResult = value()->IsSymbolObject ();
 }
-void VA::Node::Export::JSIsNativeError (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsNativeError (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsNativeError ();
+    rResult = value()->IsNativeError ();
 }
-void VA::Node::Export::JSIsRegExp (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsRegExp (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsRegExp ();
+    rResult = value()->IsRegExp ();
 }
-void VA::Node::Export::JSIsAsyncFunction (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsAsyncFunction (vxa_result_t &rResult) {
 #if 0
     HandleScope iHS (this);
-    rRB = value()->IsAsyncFunction ();
+    rResult = value()->IsAsyncFunction ();
 #else
-    rRB = false;
+    rResult = false;
 #endif
 }
-void VA::Node::Export::JSIsGeneratorFunction (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsGeneratorFunction (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsGeneratorFunction ();
+    rResult = value()->IsGeneratorFunction ();
 }
-void VA::Node::Export::JSIsGeneratorObject (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsGeneratorObject (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsGeneratorObject ();
+    rResult = value()->IsGeneratorObject ();
 }
-void VA::Node::Export::JSIsPromise (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsPromise (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsPromise ();
+    rResult = value()->IsPromise ();
 }
-void VA::Node::Export::JSIsMap (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsMap (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsMap ();
+    rResult = value()->IsMap ();
 }
-void VA::Node::Export::JSIsSet (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsSet (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsSet ();
+    rResult = value()->IsSet ();
 }
-void VA::Node::Export::JSIsMapIterator (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsMapIterator (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsMapIterator ();
+    rResult = value()->IsMapIterator ();
 }
-void VA::Node::Export::JSIsSetIterator (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsSetIterator (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsSetIterator ();
+    rResult = value()->IsSetIterator ();
 }
-void VA::Node::Export::JSIsWeakMap (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsWeakMap (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsWeakMap ();
+    rResult = value()->IsWeakMap ();
 }
-void VA::Node::Export::JSIsWeakSet (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsWeakSet (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsWeakSet ();
+    rResult = value()->IsWeakSet ();
 }
-void VA::Node::Export::JSIsArrayBuffer (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsArrayBuffer (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsArrayBuffer ();
+    rResult = value()->IsArrayBuffer ();
 }
-void VA::Node::Export::JSIsArrayBufferView (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsArrayBufferView (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsArrayBufferView ();
+    rResult = value()->IsArrayBufferView ();
 }
-void VA::Node::Export::JSIsTypedArray (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsTypedArray (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsTypedArray ();
+    rResult = value()->IsTypedArray ();
 }
-void VA::Node::Export::JSIsUint8Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsUint8Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsUint8Array ();
+    rResult = value()->IsUint8Array ();
 }
-void VA::Node::Export::JSIsUint8ClampedArray (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsUint8ClampedArray (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsUint8ClampedArray ();
+    rResult = value()->IsUint8ClampedArray ();
 }
-void VA::Node::Export::JSIsInt8Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsInt8Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsInt8Array ();
+    rResult = value()->IsInt8Array ();
 }
-void VA::Node::Export::JSIsUint16Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsUint16Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsUint16Array ();
+    rResult = value()->IsUint16Array ();
 }
-void VA::Node::Export::JSIsInt16Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsInt16Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsInt16Array ();
+    rResult = value()->IsInt16Array ();
 }
-void VA::Node::Export::JSIsUint32Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsUint32Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsUint32Array ();
+    rResult = value()->IsUint32Array ();
 }
-void VA::Node::Export::JSIsInt32Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsInt32Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsInt32Array ();
+    rResult = value()->IsInt32Array ();
 }
-void VA::Node::Export::JSIsFloat32Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsFloat32Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsFloat32Array ();
+    rResult = value()->IsFloat32Array ();
 }
-void VA::Node::Export::JSIsFloat64Array (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsFloat64Array (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsFloat64Array ();
+    rResult = value()->IsFloat64Array ();
 }
-void VA::Node::Export::JSIsDataView (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsDataView (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsDataView ();
+    rResult = value()->IsDataView ();
 }
-void VA::Node::Export::JSIsSharedArrayBuffer (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsSharedArrayBuffer (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsSharedArrayBuffer ();
+    rResult = value()->IsSharedArrayBuffer ();
 }
-void VA::Node::Export::JSIsProxy (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsProxy (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    rRB = value()->IsProxy ();
+    rResult = value()->IsProxy ();
 }
-void VA::Node::Export::JSIsWebAssemblyCompiledModule (Vxa::VResultBuilder &rRB) {
+void VA::Node::Export::JSIsWebAssemblyCompiledModule (vxa_result_t &rResult) {
 #if 0
     HandleScope iHS (this);
-    rRB = value()->IsWebAssemblyCompiledModule ();
+    rResult = value()->IsWebAssemblyCompiledModule ();
 #else
-    rRB = false;
+    rResult = false;
 #endif
 }
 

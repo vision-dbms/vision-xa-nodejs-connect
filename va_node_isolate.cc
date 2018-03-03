@@ -243,82 +243,82 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  ***************************/
 
 bool VA::Node::Isolate::MaybeSetResultTo (
-    Vxa::VResultBuilder &rRB, local_value_t hValue
+    vxa_result_t &rResult, local_value_t hValue
 ) {
     return !hValue.IsEmpty () && (
-        MaybeSetResultToInt32  (rRB, hValue) ||
-        MaybeSetResultToDouble (rRB, hValue) ||
-        MaybeSetResultToString (rRB, hValue) ||
-        MaybeSetResultToObject (rRB, hValue)
+        MaybeSetResultToInt32  (rResult, hValue) ||
+        MaybeSetResultToDouble (rResult, hValue) ||
+        MaybeSetResultToString (rResult, hValue) ||
+        MaybeSetResultToObject (rResult, hValue)
     );
 }
 
 bool VA::Node::Isolate::MaybeSetResultToInt32 (
-    Vxa::VResultBuilder &rRB, local_value_t hValue
+    vxa_result_t &rResult, local_value_t hValue
 ) {
     int32_t iResult;
     if (hValue->IsInt32 () && hValue->Int32Value (context ()).To (&iResult)) {
-        rRB = iResult;
+        rResult = iResult;
         return true;
     }
     return false;
 }
 
 bool VA::Node::Isolate::MaybeSetResultToDouble (
-    Vxa::VResultBuilder &rRB, local_value_t hValue
+    vxa_result_t &rResult, local_value_t hValue
 ) {
     double iResult;
     if (hValue->IsNumber () && hValue->NumberValue (context ()).To (&iResult)) {
-        rRB = iResult;
+        rResult = iResult;
         return true;
     }
     return false;
 }
 
 bool VA::Node::Isolate::MaybeSetResultToString (
-    Vxa::VResultBuilder &rRB, local_value_t hValue
+    vxa_result_t &rResult, local_value_t hValue
 ) {
     VString iResult;
     if (hValue->IsString () && UnwrapString (iResult, hValue)) {
-        rRB = iResult;
+        rResult = iResult;
         return true;
     }
     return false;
 }
 
 bool VA::Node::Isolate::MaybeSetResultToObject (
-    Vxa::VResultBuilder &rRB, local_value_t hValue
+    vxa_result_t &rResult, local_value_t hValue
 ) {
     ExportReference pResult;
     if (Attach (pResult, hValue)) {
-        rRB = pResult;
+        rResult = pResult;
         return true;
     }
     return false;
 }
 
 bool VA::Node::Isolate::SetResultTo (
-    Vxa::VResultBuilder &rRB, maybe_value_t hMaybe
+    vxa_result_t &rResult, maybe_value_t hMaybe
 ) {
     local_value_t hValue;
     return (
-        GetLocalFor (hValue, hMaybe) && MaybeSetResultTo (rRB, hValue)
-    ) || SetResultToUndefined (rRB);
+        GetLocalFor (hValue, hMaybe) && MaybeSetResultTo (rResult, hValue)
+    ) || SetResultToUndefined (rResult);
 }
 
 bool VA::Node::Isolate::SetResultTo (
-    Vxa::VResultBuilder &rRB, local_value_t hValue
+    vxa_result_t &rResult, local_value_t hValue
 ) {
-    return MaybeSetResultTo (rRB, hValue) || SetResultToUndefined (rRB);
+    return MaybeSetResultTo (rResult, hValue) || SetResultToUndefined (rResult);
 }
 
-bool VA::Node::Isolate::SetResultToUndefined (Vxa::VResultBuilder &rRB) {
+bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
 //    V8<v8::Primitive>::local v8::Undefined (m_hIsolate);
     ExportReference pResult;
     if (Attach (pResult, local_value_t (v8::Undefined (m_hIsolate)))) {
-        rRB = pResult;
+        rResult = pResult;
     } else {
-        rRB = false;
+        rResult = false;
     }
     return true;
 }

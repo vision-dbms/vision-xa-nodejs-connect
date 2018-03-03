@@ -177,29 +177,29 @@ namespace VA {
         //  Result Return
         public:
             bool MaybeSetResultTo (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             );
             bool MaybeSetResultToInt32 (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             );
             bool MaybeSetResultToDouble (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             );
             bool MaybeSetResultToString (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             );
             bool MaybeSetResultToObject (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             );
 
             bool SetResultTo (
-                Vxa::VResultBuilder &rRB, maybe_value_t hValue
+                vxa_result_t &rResult, maybe_value_t hValue
             );
             bool SetResultTo (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             );
 
-            bool SetResultToUndefined (Vxa::VResultBuilder &rRB);
+            bool SetResultToUndefined (vxa_result_t &rResult);
 
         //  State
         private:

@@ -9,11 +9,13 @@
  *****  Declarations  *****
  **************************/
 
-#include "Vxa_VExportable.h"
+#include <iostream>
 
 #include "v8.h"
 
-#include <iostream>
+#include "Vxa_VAny.h"
+#include "Vxa_VPack.h"
+#include "Vxa_VResultBuilder.h"
 
 /*************************
  *****  Definitions  *****
@@ -21,6 +23,11 @@
 
 namespace VA {
     namespace Node {
+
+    /*********************************
+     *----  v8 Traits and Types  ----*
+     *********************************/
+
     /*********************************************************************************
      *****  Handle Access Function Naming Conventions:
      *
@@ -92,6 +99,11 @@ namespace VA {
         typedef V8<context_t>::maybe maybe_context_t;
         typedef V8<context_t>::persistent persistent_context_t;
 
+        typedef v8::Function function_t;
+        typedef V8<function_t>::local local_function_t;
+        typedef V8<function_t>::maybe maybe_function_t;
+        typedef V8<function_t>::persistent persistent_function_t;
+
         typedef v8::Object object_t;
         typedef V8<object_t>::local local_object_t;
         typedef V8<object_t>::maybe maybe_object_t;
@@ -122,9 +134,17 @@ namespace VA {
         typedef V8<value_t>::maybe maybe_value_t;
         typedef V8<value_t>::persistent persistent_value_t;
 
-    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*
-     *>  This needs to move upstream to V or one of its classes  <*
-     *>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+    /**********************************
+     *----  Vxa Traits and Types  ----*
+     **********************************/
+
+        typedef Vxa::VAny::value_t             vxa_any_t;
+        typedef Vxa::VPack<vxa_any_t>::value_t vxa_pack_t;
+        typedef Vxa::VResultBuilder            vxa_result_t;
+
+    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*
+     *>  The following should probably move to somewhere in V  <*
+     *>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
         template <typename T> struct ClassTraits {
             typedef V::VAggregatePointer<T> notaining_ptr_t;
             typedef VReference<T>           retaining_ptr_t;

@@ -136,39 +136,39 @@ namespace VA {
         //  Result Return
         public:
             template <typename handle_t> bool MaybeSetResultTo (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             ) const {
-                return m_pIsolate->MaybeSetResultTo (rRB, hValue);
+                return m_pIsolate->MaybeSetResultTo (rResult, hValue);
             }
             template <typename handle_t> bool MaybeSetResultToInt32 (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             ) const {
-                return m_pIsolate->MaybeSetResultToInt32 (rRB, hValue);
+                return m_pIsolate->MaybeSetResultToInt32 (rResult, hValue);
             }
             template <typename handle_t> bool MaybeSetResultToDouble (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             ) const {
-                return m_pIsolate->MaybeSetResultToDouble (rRB, hValue);
+                return m_pIsolate->MaybeSetResultToDouble (rResult, hValue);
             }
             template <typename handle_t> bool MaybeSetResultToString (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             ) const {
-                return m_pIsolate->MaybeSetResultToString (rRB, hValue);
+                return m_pIsolate->MaybeSetResultToString (rResult, hValue);
             }
             template <typename handle_t> bool MaybeSetResultToObject (
-                Vxa::VResultBuilder &rRB, local_value_t hValue
+                vxa_result_t &rResult, local_value_t hValue
             ) const {
-                return m_pIsolate->MaybeSetResultToObject (rRB, hValue);
+                return m_pIsolate->MaybeSetResultToObject (rResult, hValue);
             }
 
             template <typename handle_t> bool SetResultTo (
-                Vxa::VResultBuilder &rRB, handle_t hValue
+                vxa_result_t &rResult, handle_t hValue
             ) const {
-                return m_pIsolate->SetResultTo (rRB, hValue);
+                return m_pIsolate->SetResultTo (rResult, hValue);
             }
 
-            bool SetResultToUndefined (Vxa::VResultBuilder &rRB) const {
-                return m_pIsolate->SetResultToUndefined (rRB);
+            bool SetResultToUndefined (vxa_result_t &rResult) const {
+                return m_pIsolate->SetResultToUndefined (rResult);
             }
 
         //  Task Launcher

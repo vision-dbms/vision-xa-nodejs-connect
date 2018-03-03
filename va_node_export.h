@@ -11,9 +11,6 @@
  *****  Declarations  *****
  **************************/
 
-#include "Vxa_VAny.h"
-#include "Vxa_VPack.h"
-
 /*************************
  *****  Definitions  *****
  *************************/
@@ -66,64 +63,64 @@ namespace VA {
 
         //  JS Methods
         public:
-            void JSCallback (Vxa::VResultBuilder &rRB, Vxa::VPack<Vxa::VAny::value_t>::value_t);
+            void JSCallback (vxa_result_t &rResult, Vxa::VPack<Vxa::VAny::value_t>::value_t);
 
-            void JSToString (Vxa::VResultBuilder &rRB);
-            void JSToDetail (Vxa::VResultBuilder &rRB);
-            void JSUnwrap (Vxa::VResultBuilder &rRB);
+            void JSToString (vxa_result_t &rResult);
+            void JSToDetail (vxa_result_t &rResult);
+            void JSUnwrap (vxa_result_t &rResult);
 
-            void JSHasProperty (Vxa::VResultBuilder &rRB, VString const &rPropertyName);
+            void JSHasProperty (vxa_result_t &rResult, VString const &rPropertyName);
 
-            void JSIsUndefined (Vxa::VResultBuilder &rRB);
-            void JSIsNull (Vxa::VResultBuilder &rRB);
-            void JSIsNullOrUndefined (Vxa::VResultBuilder &rRB);
-            void JSIsTrue (Vxa::VResultBuilder &rRB);
-            void JSIsFalse (Vxa::VResultBuilder &rRB);
-            void JSIsName (Vxa::VResultBuilder &rRB);
-            void JSIsString (Vxa::VResultBuilder &rRB);
-            void JSIsSymbol (Vxa::VResultBuilder &rRB);
-            void JSIsFunction (Vxa::VResultBuilder &rRB);
-            void JSIsArray (Vxa::VResultBuilder &rRB);
-            void JSIsObject (Vxa::VResultBuilder &rRB);
-            void JSIsBoolean (Vxa::VResultBuilder &rRB);
-            void JSIsNumber (Vxa::VResultBuilder &rRB);
-            void JSIsExternal (Vxa::VResultBuilder &rRB);
-            void JSIsInt32 (Vxa::VResultBuilder &rRB);
-            void JSIsUint32 (Vxa::VResultBuilder &rRB);
-            void JSIsDate (Vxa::VResultBuilder &rRB);
-            void JSIsArgumentsObject (Vxa::VResultBuilder &rRB);
-            void JSIsBooleanObject (Vxa::VResultBuilder &rRB);
-            void JSIsNumberObject (Vxa::VResultBuilder &rRB);
-            void JSIsStringObject (Vxa::VResultBuilder &rRB);
-            void JSIsSymbolObject (Vxa::VResultBuilder &rRB);
-            void JSIsNativeError (Vxa::VResultBuilder &rRB);
-            void JSIsRegExp (Vxa::VResultBuilder &rRB);
-            void JSIsAsyncFunction (Vxa::VResultBuilder &rRB);
-            void JSIsGeneratorFunction (Vxa::VResultBuilder &rRB);
-            void JSIsGeneratorObject (Vxa::VResultBuilder &rRB);
-            void JSIsPromise (Vxa::VResultBuilder &rRB);
-            void JSIsMap (Vxa::VResultBuilder &rRB);
-            void JSIsSet (Vxa::VResultBuilder &rRB);
-            void JSIsMapIterator (Vxa::VResultBuilder &rRB);
-            void JSIsSetIterator (Vxa::VResultBuilder &rRB);
-            void JSIsWeakMap (Vxa::VResultBuilder &rRB);
-            void JSIsWeakSet (Vxa::VResultBuilder &rRB);
-            void JSIsArrayBuffer (Vxa::VResultBuilder &rRB);
-            void JSIsArrayBufferView (Vxa::VResultBuilder &rRB);
-            void JSIsTypedArray (Vxa::VResultBuilder &rRB);
-            void JSIsUint8Array (Vxa::VResultBuilder &rRB);
-            void JSIsUint8ClampedArray (Vxa::VResultBuilder &rRB);
-            void JSIsInt8Array (Vxa::VResultBuilder &rRB);
-            void JSIsUint16Array (Vxa::VResultBuilder &rRB);
-            void JSIsInt16Array (Vxa::VResultBuilder &rRB);
-            void JSIsUint32Array (Vxa::VResultBuilder &rRB);
-            void JSIsInt32Array (Vxa::VResultBuilder &rRB);
-            void JSIsFloat32Array (Vxa::VResultBuilder &rRB);
-            void JSIsFloat64Array (Vxa::VResultBuilder &rRB);
-            void JSIsDataView (Vxa::VResultBuilder &rRB);
-            void JSIsSharedArrayBuffer (Vxa::VResultBuilder &rRB);
-            void JSIsProxy (Vxa::VResultBuilder &rRB);
-            void JSIsWebAssemblyCompiledModule (Vxa::VResultBuilder &rRB);
+            void JSIsUndefined (vxa_result_t &rResult);
+            void JSIsNull (vxa_result_t &rResult);
+            void JSIsNullOrUndefined (vxa_result_t &rResult);
+            void JSIsTrue (vxa_result_t &rResult);
+            void JSIsFalse (vxa_result_t &rResult);
+            void JSIsName (vxa_result_t &rResult);
+            void JSIsString (vxa_result_t &rResult);
+            void JSIsSymbol (vxa_result_t &rResult);
+            void JSIsFunction (vxa_result_t &rResult);
+            void JSIsArray (vxa_result_t &rResult);
+            void JSIsObject (vxa_result_t &rResult);
+            void JSIsBoolean (vxa_result_t &rResult);
+            void JSIsNumber (vxa_result_t &rResult);
+            void JSIsExternal (vxa_result_t &rResult);
+            void JSIsInt32 (vxa_result_t &rResult);
+            void JSIsUint32 (vxa_result_t &rResult);
+            void JSIsDate (vxa_result_t &rResult);
+            void JSIsArgumentsObject (vxa_result_t &rResult);
+            void JSIsBooleanObject (vxa_result_t &rResult);
+            void JSIsNumberObject (vxa_result_t &rResult);
+            void JSIsStringObject (vxa_result_t &rResult);
+            void JSIsSymbolObject (vxa_result_t &rResult);
+            void JSIsNativeError (vxa_result_t &rResult);
+            void JSIsRegExp (vxa_result_t &rResult);
+            void JSIsAsyncFunction (vxa_result_t &rResult);
+            void JSIsGeneratorFunction (vxa_result_t &rResult);
+            void JSIsGeneratorObject (vxa_result_t &rResult);
+            void JSIsPromise (vxa_result_t &rResult);
+            void JSIsMap (vxa_result_t &rResult);
+            void JSIsSet (vxa_result_t &rResult);
+            void JSIsMapIterator (vxa_result_t &rResult);
+            void JSIsSetIterator (vxa_result_t &rResult);
+            void JSIsWeakMap (vxa_result_t &rResult);
+            void JSIsWeakSet (vxa_result_t &rResult);
+            void JSIsArrayBuffer (vxa_result_t &rResult);
+            void JSIsArrayBufferView (vxa_result_t &rResult);
+            void JSIsTypedArray (vxa_result_t &rResult);
+            void JSIsUint8Array (vxa_result_t &rResult);
+            void JSIsUint8ClampedArray (vxa_result_t &rResult);
+            void JSIsInt8Array (vxa_result_t &rResult);
+            void JSIsUint16Array (vxa_result_t &rResult);
+            void JSIsInt16Array (vxa_result_t &rResult);
+            void JSIsUint32Array (vxa_result_t &rResult);
+            void JSIsInt32Array (vxa_result_t &rResult);
+            void JSIsFloat32Array (vxa_result_t &rResult);
+            void JSIsFloat64Array (vxa_result_t &rResult);
+            void JSIsDataView (vxa_result_t &rResult);
+            void JSIsSharedArrayBuffer (vxa_result_t &rResult);
+            void JSIsProxy (vxa_result_t &rResult);
+            void JSIsWebAssemblyCompiledModule (vxa_result_t &rResult);
 
         //  State
         private:
