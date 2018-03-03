@@ -41,7 +41,7 @@
  **************************/
 
 VA::Node::Isolate::Isolate (
-    handle_t hIsolate
+    isolate_handle_t hIsolate
 ) : m_hIsolate (hIsolate), m_hValueCache (hIsolate, object_cache_t::New (hIsolate)) {
 }
 
@@ -93,13 +93,6 @@ bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
  *****  Access Helpers  *****
  ****************************
  ****************************/
-
-bool VA::Node::Isolate::UnwrapString (
-    VString &rString, maybe_value_t hValue, bool bDetail
-) const {
-    local_value_t hLocalValue;
-    return GetLocalFor (hLocalValue, hValue) && UnwrapString (rString, hLocalValue);
-}
 
 bool VA::Node::Isolate::UnwrapString (
     VString &rString, local_value_t hValue, bool bDetail
@@ -242,7 +235,70 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  ***************************
  ***************************/
 
-bool VA::Node::Isolate::MaybeSetResultTo (
+/**************************
+ *****  Call Helpers  *****
+ **************************/
+
+namespace {
+    using namespace VA::Node;
+
+    class JSCallbackSink : public Vxa::VAny::Client {
+    public:
+        JSCallbackSink (
+            maybe_value_t &rResult, Isolate *pIsolate
+        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
+        }
+        ~JSCallbackSink () {
+        }
+    private:
+        template <typename value_t> void onImpl (value_t iValue) {
+        }
+    public:
+        virtual void on (int iValue) override {
+            onImpl (iValue);
+        }
+        virtual void on (double iValue) override {
+            onImpl (iValue);
+        }
+        virtual void on (VString const &iValue) override {
+            onImpl (iValue);
+        }
+    private:
+        maybe_value_t&     m_rResult;
+        Isolate::Reference m_pIsolate;
+    };
+}
+
+
+/**********************
+ ****  Maybe Call  ****
+ **********************/
+
+bool VA::Node::Isolate::MaybeSetResultToFunctionCall (
+    vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return false;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToObjectCall (
+    vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return false;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToCall (
+    vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return MaybeSetResultToFunctionCall (rResult, hReceiver, hCallable, rPack)
+        || MaybeSetResultToObjectCall   (rResult, hReceiver, hCallable, rPack);
+}
+
+
+/*************************
+ *****  Maybe Value  *****
+ *************************/
+
+bool VA::Node::Isolate::MaybeSetResultToValue (
     vxa_result_t &rResult, local_value_t hValue
 ) {
     return !hValue.IsEmpty () && (
@@ -297,23 +353,11 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
     return false;
 }
 
-bool VA::Node::Isolate::SetResultTo (
-    vxa_result_t &rResult, maybe_value_t hMaybe
-) {
-    local_value_t hValue;
-    return (
-        GetLocalFor (hValue, hMaybe) && MaybeSetResultTo (rResult, hValue)
-    ) || SetResultToUndefined (rResult);
-}
-
-bool VA::Node::Isolate::SetResultTo (
-    vxa_result_t &rResult, local_value_t hValue
-) {
-    return MaybeSetResultTo (rResult, hValue) || SetResultToUndefined (rResult);
-}
+/**********************************
+ *****  SetResultToUndefined  *****
+ **********************************/
 
 bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
-//    V8<v8::Primitive>::local v8::Undefined (m_hIsolate);
     ExportReference pResult;
     if (Attach (pResult, local_value_t (v8::Undefined (m_hIsolate)))) {
         rResult = pResult;

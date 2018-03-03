@@ -32,9 +32,9 @@ namespace VA {
 
         //  Aliases
         public:
-            typedef v8::Isolate object_t;
-            typedef object_t*   handle_t;
-            typedef object_t*   global_t;
+            typedef v8::Isolate isolate_t;
+            typedef isolate_t*  isolate_handle_t;
+            typedef isolate_t*  isolate_global_t;
 
             typedef v8::NativeWeakMap              object_cache_t;
             typedef V8<object_cache_t>::local      object_cache_handle_t;
@@ -62,13 +62,13 @@ namespace VA {
 
         //  Access
         public:
-            handle_t isolate () const {
+            isolate_handle_t isolate () const {
                 return m_hIsolate;
             }
-            handle_t handle () const {
+            isolate_handle_t handle () const {
                 return m_hIsolate;
             }
-            operator handle_t () const {
+            operator isolate_handle_t () const {
                 return m_hIsolate;
             }
             local_context_t context () const {
@@ -141,9 +141,12 @@ namespace VA {
 
         //  Access Helpers
         public:
-            bool UnwrapString (
-                VString &rString, maybe_value_t hValue, bool bDetail = false
-            ) const;
+            template <typename handle_t> bool UnwrapString (
+                VString &rString, handle_t hValue, bool bDetail = false
+            ) const {
+                local_value_t hLocalValue;
+                return GetLocalFor (hLocalValue, hValue) && UnwrapString (rString, hLocalValue);
+            }
             bool UnwrapString (
                 VString &rString, local_value_t hValue, bool bDetail = false
             ) const;
@@ -176,9 +179,41 @@ namespace VA {
 
         //  Result Return
         public:
-            bool MaybeSetResultTo (
+        /*----------------------*
+         *----  Maybe Call  ----*
+         *----------------------*/
+            template <typename handle_t> bool MaybeSetResultToCall (
+                vxa_result_t &rResult, local_object_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+            ) {
+                local_value_t hLocalCallable;
+                return GetLocalFor (hLocalCallable, hCallable)
+                    && MaybeSetResultToCall (rResult, hReceiver, hLocalCallable, rPack);
+            }
+            bool MaybeSetResultToCall (
+                vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+            );
+
+            bool MaybeSetResultToFunctionCall (
+                vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+            );
+            bool MaybeSetResultToObjectCall (
+                vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+            );
+
+        /*-----------------------*
+         *----  Maybe Value  ----*
+         *-----------------------*/
+            template <typename handle_t> bool MaybeSetResultToValue (
+                vxa_result_t &rResult, handle_t hValue
+            ) {
+                local_value_t hLocalValue;
+                return GetLocalFor (hLocalValue, hValue)
+                    && MaybeSetResultToValue (rResult, hLocalValue);
+            }
+            bool MaybeSetResultToValue (
                 vxa_result_t &rResult, local_value_t hValue
             );
+
             bool MaybeSetResultToInt32 (
                 vxa_result_t &rResult, local_value_t hValue
             );
@@ -192,19 +227,27 @@ namespace VA {
                 vxa_result_t &rResult, local_value_t hValue
             );
 
-            bool SetResultTo (
-                vxa_result_t &rResult, maybe_value_t hValue
-            );
-            bool SetResultTo (
-                vxa_result_t &rResult, local_value_t hValue
-            );
+        /*--------------------------*
+         *----  SetResultTo...  ----*
+         *--------------------------*/
+            template <typename handle_t> bool SetResultToCall (
+                vxa_result_t &rResult, local_object_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+            ) {
+                return MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack)
+                    || SetResultToUndefined (rResult);
+            }
+            template <typename handle_t> bool SetResultToValue (
+                vxa_result_t &rResult, handle_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue) || SetResultToUndefined (rResult);
+            }
 
             bool SetResultToUndefined (vxa_result_t &rResult);
 
         //  State
         private:
-            global_t        const m_hIsolate;
-            object_cache_global_t m_hValueCache;
+            isolate_handle_t const m_hIsolate;
+            object_cache_global_t  m_hValueCache;
         };
 
     } // namespace VA::Node

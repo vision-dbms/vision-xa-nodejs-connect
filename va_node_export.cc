@@ -83,49 +83,24 @@ bool VA::Node::Export::decommision () {
  *----  Callback  ----*
  **********************/
 
-namespace {
-    using namespace VA::Node;
-
-    class JSCallbackSink : public Vxa::VAny::Client {
-    public:
-        JSCallbackSink (
-            maybe_value_t &rResult, Isolate *pIsolate
-        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
-        }
-        ~JSCallbackSink () {
-        }
-    private:
-        template <typename value_t> void onImpl (value_t iValue) {
-        }
-    public:
-        virtual void on (int iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (double iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (VString const &iValue) override {
-            onImpl (iValue);
-        }
-    private:
-        maybe_value_t&     m_rResult;
-        Isolate::Reference m_pIsolate;
-    };
-}
-
-void VA::Node::Export::JSCallback (vxa_result_t &rResult, Vxa::VPack<Vxa::VAny::value_t>::value_t) {
+void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPack) {
     HandleScope iHS (this);
 
     local_object_t hObject;
-    if (!GetLocal (hObject)) {
+    if (!GetLocal (hObject))
         SetResultToUndefined (rResult);
-        return;
+    else {
+        local_value_t hApplicable; (
+            GetLocalFor (
+                hApplicable, hObject->Get (
+                    context (), NewString (rResult.selectorComponent (0))
+                )
+            ) && (
+                MaybeSetResultToCall (rResult, hObject, hApplicable, rPack) ||
+                SetResultToValue (rResult, hApplicable)
+            )
+        ) || SetResultToUndefined (rResult);
     }
-
-    maybe_value_t const hPropertyValue = hObject->Get (
-        context (), NewString (rResult.selectorComponent (0))
-    );
-    SetResultTo (rResult, hPropertyValue);
 }
 
 
@@ -153,7 +128,7 @@ void VA::Node::Export::JSToDetail (vxa_result_t &rResult) {
 
 void VA::Node::Export::JSUnwrap (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    SetResultTo (rResult, value ());
+    SetResultToValue (rResult, value ());
 }
 
 

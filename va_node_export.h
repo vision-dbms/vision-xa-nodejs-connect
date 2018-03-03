@@ -63,7 +63,7 @@ namespace VA {
 
         //  JS Methods
         public:
-            void JSCallback (vxa_result_t &rResult, Vxa::VPack<Vxa::VAny::value_t>::value_t);
+            void JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPack);
 
             void JSToString (vxa_result_t &rResult);
             void JSToDetail (vxa_result_t &rResult);
