@@ -139,19 +139,38 @@ namespace VA {
          *----  Maybe Call  ----*
          *----------------------*/
             template <typename handle_t> bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_object_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
             ) {
                 return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack);
             }
             template <typename handle_t> bool MaybeSetResultToFunctionCall (
-                vxa_result_t &rResult, local_object_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
             ) {
                 return m_pIsolate->MaybeSetResultToFunctionCall (rResult, hReceiver, hCallable, rPack);
             }
             template <typename handle_t> bool MaybeSetResultToObjectCall (
-                vxa_result_t &rResult, local_object_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
             ) {
                 return m_pIsolate->MaybeSetResultToObjectCall (rResult, hReceiver, hCallable, rPack);
+            }
+
+        /*---------------------*
+         *----  Maybe New  ----*
+         *---------------------*/
+            template <typename handle_t> bool MaybeSetResultToNew (
+                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
+            ) {
+                return m_pIsolate->MaybeSetResultToNew (rResult, hCallable, rPack);
+            }
+            template <typename handle_t> bool MaybeSetResultToFunctionNew (
+                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
+            ) {
+                return m_pIsolate->MaybeSetResultToFunctionNew (rResult, hCallable, rPack);
+            }
+            template <typename handle_t> bool MaybeSetResultToObjectNew (
+                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
+            ) {
+                return m_pIsolate->MaybeSetResultToObjectNew (rResult, hCallable, rPack);
             }
 
         /*-----------------------*
@@ -187,9 +206,14 @@ namespace VA {
          *----  SetResultTo...  ----*
          ****************************/
             template <typename handle_t> bool SetResultToCall (
-                vxa_result_t &rResult, local_object_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
             ) {
                 return m_pIsolate->SetResultToCall (rResult, hReceiver, hCallable, rPack);
+            }
+            template <typename handle_t> bool SetResultToNew (
+                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
+            ) {
+                return m_pIsolate->SetResultToNew (rResult, hCallable, rPack);
             }
             template <typename handle_t> bool SetResultToValue (
                 vxa_result_t &rResult, handle_t hValue

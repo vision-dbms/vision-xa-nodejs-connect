@@ -274,23 +274,71 @@ namespace {
  ****  Maybe Call  ****
  **********************/
 
+bool VA::Node::Isolate::MaybeSetResultToCall (
+    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return MaybeSetResultToFunctionCall (rResult, hReceiver, hCallable, rPack)
+        || MaybeSetResultToObjectCall   (rResult, hReceiver, hCallable, rPack);
+}
+
+bool MaybeSetResultToCall (
+    vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
+) {
+    return false;
+}
+
+bool MaybeSetResultToCall (
+    vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t const &rPack
+) {
+    return false;
+}
+
 bool VA::Node::Isolate::MaybeSetResultToFunctionCall (
-    vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
 ) {
     return false;
 }
 
 bool VA::Node::Isolate::MaybeSetResultToObjectCall (
-    vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return false;
+}
+
+
+/**********************
+ ****  Maybe New  ****
+ **********************/
+
+bool VA::Node::Isolate::MaybeSetResultToNew (
+    vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return MaybeSetResultToFunctionNew (rResult, hCallable, rPack)
+        || MaybeSetResultToObjectNew   (rResult, hCallable, rPack);
+}
+
+bool MaybeSetResultToNew (
+    vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
 ) {
     return false;
 }
 
-bool VA::Node::Isolate::MaybeSetResultToCall (
-    vxa_result_t &rResult, local_object_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+bool MaybeSetResultToNew (
+    vxa_result_t &rResult, local_function_t hCallable, vxa_pack_t const &rPack
 ) {
-    return MaybeSetResultToFunctionCall (rResult, hReceiver, hCallable, rPack)
-        || MaybeSetResultToObjectCall   (rResult, hReceiver, hCallable, rPack);
+    return false;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToFunctionNew (
+    vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return false;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToObjectNew (
+    vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
+) {
+    return false;
 }
 
 

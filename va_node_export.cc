@@ -96,11 +96,30 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPac
                     context (), NewString (rResult.selectorComponent (0))
                 )
             ) && (
-                MaybeSetResultToCall (rResult, hObject, hApplicable, rPack) ||
+                MaybeSetResultToCall (rResult, value (), hApplicable, rPack) ||
                 SetResultToValue (rResult, hApplicable)
             )
         ) || SetResultToUndefined (rResult);
     }
+}
+
+/******************
+ *----  Call  ----*
+ ******************/
+
+void VA::Node::Export::JSCall (vxa_result_t &rResult, vxa_pack_t const &rPack) {
+    HandleScope iHS (this);
+    local_value_t hReceiver;
+    SetResultToCall (rResult, hReceiver, value (), rPack);
+}
+
+/*****************
+ *----  New  ----*
+ *****************/
+
+void VA::Node::Export::JSNew (vxa_result_t &rResult, vxa_pack_t const &rPack) {
+    HandleScope iHS (this);
+    SetResultToNew (rResult, value (), rPack);
 }
 
 
@@ -424,11 +443,7 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object
     defineMethod (".isProxy"                    , &Export::JSIsProxy);
     defineMethod (".isWebAssemblyCompiledModule", &Export::JSIsWebAssemblyCompiledModule);
     
-#if 1
     defineDefault (&Export::JSCallback);
-#else
-    defineDefault (&Export::interceptor);
-#endif
 }
 
 namespace {
