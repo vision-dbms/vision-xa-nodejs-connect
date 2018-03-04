@@ -112,13 +112,6 @@ namespace VA {
                 return m_pIsolate->GetLocalFrom (rhLocal, rhSource);
             }
 
-        //  ... source handle -> maybe local handle
-            template <typename maybe_t, typename source_t> bool GetMaybeFrom (
-                maybe_t &rhMaybe, source_t const &rhSource
-            ) const {
-                return m_pIsolate->GetMaybeFrom (rhMaybe, rhSource);
-            }
-
         //  Object Access
         protected:
             template <typename handle_t> bool UnwrapString (
@@ -143,16 +136,6 @@ namespace VA {
             ) {
                 return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack);
             }
-            template <typename handle_t> bool MaybeSetResultToFunctionCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                return m_pIsolate->MaybeSetResultToFunctionCall (rResult, hReceiver, hCallable, rPack);
-            }
-            template <typename handle_t> bool MaybeSetResultToObjectCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                return m_pIsolate->MaybeSetResultToObjectCall (rResult, hReceiver, hCallable, rPack);
-            }
 
         /*---------------------*
          *----  Maybe New  ----*
@@ -161,16 +144,6 @@ namespace VA {
                 vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
             ) {
                 return m_pIsolate->MaybeSetResultToNew (rResult, hCallable, rPack);
-            }
-            template <typename handle_t> bool MaybeSetResultToFunctionNew (
-                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                return m_pIsolate->MaybeSetResultToFunctionNew (rResult, hCallable, rPack);
-            }
-            template <typename handle_t> bool MaybeSetResultToObjectNew (
-                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                return m_pIsolate->MaybeSetResultToObjectNew (rResult, hCallable, rPack);
             }
 
         /*-----------------------*

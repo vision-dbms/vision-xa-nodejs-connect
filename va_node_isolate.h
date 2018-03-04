@@ -91,52 +91,46 @@ namespace VA {
                 return GetLocalFrom (rhLocal, LocalFor (hValue));
             }
             template <typename local_t> bool GetLocalFrom (local_t &rhLocal, local_value_t const &hValue) const {
-                typename V8<local_t>::maybe hMaybe;
-                return GetMaybeFrom (hMaybe, hValue) && GetLocalFor (rhLocal, hMaybe);
+                return false;
             }
 
-        //  ... handle -> local handle (maybe) fixed points
+        //  ... handle -> local handle (maybe) implementations
             bool GetLocalFrom (local_value_t &rhLocal, local_value_t const &hValue) const {
                 rhLocal = hValue;
                 return true;
             }
 
-        //  ... handle -> maybe local handle fixed points
-            bool GetMaybeFrom (V8<v8::Value>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue;
-                return !rhMaybe.IsEmpty ();
+        //  ... handle -> local handle (maybe)
+            bool GetLocalFrom (V8<v8::Boolean>::local &rhLocal, local_value_t hValue) const {
+                return GetLocalFor (rhLocal, hValue->ToBoolean (context ()));
             }
-
-        //  ... handle -> maybe local handle
-            bool GetMaybeFrom (V8<v8::Boolean>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToBoolean (context ());
-                return !rhMaybe.IsEmpty ();
+            bool GetLocalFrom (V8<v8::Function>::local &rhLocal, local_value_t hValue) const {
+                if (hValue->IsFunction ()) {
+                    rhLocal = local_function_t::Cast (hValue);
+                    return true;
+                }
+                return false;
             }
-            bool GetMaybeFrom (V8<v8::Number>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToNumber (context ());
-                return !rhMaybe.IsEmpty ();
+            bool GetLocalFrom (V8<v8::Integer>::local &rhLocal, local_value_t hValue) const {
+                return GetLocalFor (rhLocal, hValue->ToInteger (context ()));
             }
-            bool GetMaybeFrom (V8<v8::String>::maybe &rhMaybe, local_value_t hValue, bool bToDetailString) const {
-                rhMaybe = bToDetailString
-                    ? hValue->ToDetailString (context ())
-                    : hValue->ToString (context ());
-                return !rhMaybe.IsEmpty ();
+            bool GetLocalFrom (V8<v8::Int32>::local &rhLocal, local_value_t hValue) const {
+                return GetLocalFor (rhLocal, hValue->ToInt32 (context ()));
             }
-            bool GetMaybeFrom (V8<v8::Object>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToObject (context ());
-                return !rhMaybe.IsEmpty ();
+            bool GetLocalFrom (V8<v8::Number>::local &rhLocal, local_value_t hValue) const {
+                return GetLocalFor (rhLocal, hValue->ToNumber (context ()));
             }
-            bool GetMaybeFrom (V8<v8::Integer>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToInteger (context ());
-                return !rhMaybe.IsEmpty ();
+            bool GetLocalFrom (V8<v8::Object>::local &rhLocal, local_value_t hValue) const {
+                return GetLocalFor (rhLocal, hValue->ToObject (context ()));
             }
-            bool GetMaybeFrom (V8<v8::Uint32>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToUint32 (context ());
-                return !rhMaybe.IsEmpty ();
+            bool GetLocalFrom (V8<v8::String>::local &rhLocal, local_value_t hValue, bool bDetailed) const {
+                return GetLocalFor (
+                    rhLocal,
+                    bDetailed ? hValue->ToDetailString (context ()) : hValue->ToString (context ())
+                );
             }
-            bool GetMaybeFrom (V8<v8::Int32>::maybe &rhMaybe, local_value_t hValue) const {
-                rhMaybe = hValue->ToInt32 (context ());
-                return !rhMaybe.IsEmpty ();
+            bool GetLocalFrom (V8<v8::Uint32>::local &rhLocal, local_value_t hValue) const {
+                return GetLocalFor (rhLocal, hValue->ToUint32 (context ()));
             }
 
         //  Access Helpers
@@ -193,18 +187,18 @@ namespace VA {
                 vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
             );
             bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
-            );
-            bool MaybeSetResultToCall (
                 vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t const &rPack
             );
-
-            bool MaybeSetResultToFunctionCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+            bool MaybeSetResultToCall (
+                vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
             );
-            bool MaybeSetResultToObjectCall (
+            template <typename cast_callable_t> bool MaybeSetResultToCallOf (
                 vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
-            );
+            ) {
+                cast_callable_t hCastCallable;
+                return GetLocalFrom (hCastCallable, hCallable)
+                    && MaybeSetResultToCall (rResult, hReceiver, hCastCallable, rPack);
+            }
 
         /*---------------------*
          *----  Maybe New  ----*
@@ -220,18 +214,18 @@ namespace VA {
                 vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
             );
             bool MaybeSetResultToNew (
-                vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
-            );
-            bool MaybeSetResultToNew (
                 vxa_result_t &rResult, local_function_t hCallable, vxa_pack_t const &rPack
             );
-
-            bool MaybeSetResultToFunctionNew (
-                vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
+            bool MaybeSetResultToNew (
+                vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
             );
-            bool MaybeSetResultToObjectNew (
+            template <typename cast_callable_t> bool MaybeSetResultToNewOf (
                 vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
-            );
+            ) {
+                cast_callable_t hCastCallable;
+                return GetLocalFrom (hCastCallable, hCallable)
+                    && MaybeSetResultToNew (rResult, hCastCallable, rPack);
+            }
 
         /*-----------------------*
          *----  Maybe Value  ----*

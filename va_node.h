@@ -43,14 +43,9 @@ namespace VA {
      *                     examination (e.g., Persistent<Value> -> Local<Object>).
      *                     Function return true if successful, handle returned by
      *                     reference argument (typically the first).
-     *      GetMaybeFrom - conditional handle form conversion with referenced content
-     *                     examination (e.g., Persistent<Value> -> MaybeLocal<Object>).
-     *                     Function return true if successful, handle returned by
-     *                     reference argument (typically the first).
-     *      GetLocal/GetMaybe
-     *                   - special cases of GetLocalFrom and GetMaybeFrom typically
-     *                     used as class members in classes that implicitly supply
-     *                     the required 'From' data (e.g., VA::Node::Export).
+     *      GetLocal     - special case of GetLocalFrom typically defined as member
+     *                     functions in classes whose instances contain the required
+     *                     'From' data (e.g., VA::Node::Export).
      *
      **********************************************************************************/
         template <typename T> struct V8 {
@@ -103,6 +98,16 @@ namespace VA {
         typedef V8<function_t>::local local_function_t;
         typedef V8<function_t>::maybe maybe_function_t;
         typedef V8<function_t>::persistent persistent_function_t;
+
+        typedef v8::Integer integer_t;
+        typedef V8<integer_t>::local local_integer_t;
+        typedef V8<integer_t>::maybe maybe_integer_t;
+        typedef V8<integer_t>::persistent persistent_integer_t;
+
+        typedef v8::Number number_t;
+        typedef V8<number_t>::local local_number_t;
+        typedef V8<number_t>::maybe maybe_number_t;
+        typedef V8<number_t>::persistent persistent_number_t;
 
         typedef v8::Object object_t;
         typedef V8<object_t>::local local_object_t;

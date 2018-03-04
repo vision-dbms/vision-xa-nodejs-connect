@@ -95,15 +95,10 @@ bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
  ****************************/
 
 bool VA::Node::Isolate::UnwrapString (
-    VString &rString, local_value_t hValue, bool bDetail
+    VString &rString, local_value_t hValue, bool bDetailed
 ) const {
-    return UnwrapString (
-        rString, bDetail ? hValue->ToDetailString (
-            context ()
-        ) : hValue->ToString (
-            context ()
-        )
-    );
+    local_string_t hString;
+    return GetLocalFrom (hString, hValue, bDetailed) && UnwrapString (rString, hString);
 }
 
 bool VA::Node::Isolate::UnwrapString (VString &rString, maybe_string_t hString) const {
@@ -239,37 +234,6 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *****  Call Helpers  *****
  **************************/
 
-namespace {
-    using namespace VA::Node;
-
-    class JSCallbackSink : public Vxa::VAny::Client {
-    public:
-        JSCallbackSink (
-            maybe_value_t &rResult, Isolate *pIsolate
-        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
-        }
-        ~JSCallbackSink () {
-        }
-    private:
-        template <typename value_t> void onImpl (value_t iValue) {
-        }
-    public:
-        virtual void on (int iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (double iValue) override {
-            onImpl (iValue);
-        }
-        virtual void on (VString const &iValue) override {
-            onImpl (iValue);
-        }
-    private:
-        maybe_value_t&     m_rResult;
-        Isolate::Reference m_pIsolate;
-    };
-}
-
-
 /**********************
  ****  Maybe Call  ****
  **********************/
@@ -277,30 +241,18 @@ namespace {
 bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
 ) {
-    return MaybeSetResultToFunctionCall (rResult, hReceiver, hCallable, rPack)
-        || MaybeSetResultToObjectCall   (rResult, hReceiver, hCallable, rPack);
+    return MaybeSetResultToCallOf<local_function_t> (rResult, hReceiver, hCallable, rPack)
+        || MaybeSetResultToCallOf<local_object_t>   (rResult, hReceiver, hCallable, rPack);
 }
 
-bool MaybeSetResultToCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
-) {
-    return false;
-}
-
-bool MaybeSetResultToCall (
+bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t const &rPack
 ) {
     return false;
 }
 
-bool VA::Node::Isolate::MaybeSetResultToFunctionCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
-) {
-    return false;
-}
-
-bool VA::Node::Isolate::MaybeSetResultToObjectCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+bool VA::Node::Isolate::MaybeSetResultToCall (
+    vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
 ) {
     return false;
 }
@@ -313,30 +265,18 @@ bool VA::Node::Isolate::MaybeSetResultToObjectCall (
 bool VA::Node::Isolate::MaybeSetResultToNew (
     vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
 ) {
-    return MaybeSetResultToFunctionNew (rResult, hCallable, rPack)
-        || MaybeSetResultToObjectNew   (rResult, hCallable, rPack);
+    return MaybeSetResultToNewOf<local_function_t> (rResult, hCallable, rPack)
+        || MaybeSetResultToNewOf<local_object_t>   (rResult, hCallable, rPack);
 }
 
-bool MaybeSetResultToNew (
+bool VA::Node::Isolate::MaybeSetResultToNew (
     vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
 ) {
     return false;
 }
 
-bool MaybeSetResultToNew (
+bool VA::Node::Isolate::MaybeSetResultToNew (
     vxa_result_t &rResult, local_function_t hCallable, vxa_pack_t const &rPack
-) {
-    return false;
-}
-
-bool VA::Node::Isolate::MaybeSetResultToFunctionNew (
-    vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
-) {
-    return false;
-}
-
-bool VA::Node::Isolate::MaybeSetResultToObjectNew (
-    vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
 ) {
     return false;
 }

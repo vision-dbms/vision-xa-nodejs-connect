@@ -56,10 +56,6 @@ namespace VA {
             template <typename handle_t> bool GetLocal (handle_t &rhLocal) const {
                 return this->GetLocalFrom (rhLocal, m_hValue);
             }
-        //  ... this -> maybe local handle
-            template <typename handle_t> bool GetMaybe (handle_t &rhMaybe) const {
-                return this->GetMaybeFrom (rhMaybe, m_hValue);
-            }
 
         //  JS Methods
         public:
