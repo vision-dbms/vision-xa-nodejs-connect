@@ -43,6 +43,10 @@ namespace VA {
             typedef ClassTraits<Export>::retaining_ptr_t ExportReference;
             typedef ClassTraits<Export>::notaining_ptr_t ExportPointer;
 
+        //  class Args
+        public:
+            class Args;
+
         //  Construction
         private:
             Isolate (v8::Isolate *pIsolate);
@@ -77,6 +81,36 @@ namespace VA {
 
         //  Local Access
         public:
+        //  ... isolate constants
+            local_primitive_t LocalUndefined () const {
+                return v8::Undefined (m_hIsolate);
+            }
+            local_primitive_t LocalNull () const {
+                return v8::Null (m_hIsolate);
+            }
+            local_boolean_t LocalTrue () const {
+                return v8::True (m_hIsolate);
+            }
+            local_boolean_t LocalFalse () const {
+                return v8::False (m_hIsolate);
+            }
+            bool GetLocalUndefined (local_value_t &rhLocal) const {
+                rhLocal = LocalUndefined ();
+                return true;
+            }
+            bool GetLocalNull (local_value_t &rhLocal) const {
+                rhLocal = LocalNull ();
+                return true;
+            }
+            bool GetLocalTrue (local_value_t &rhLocal) const {
+                rhLocal = LocalTrue ();
+                return true;
+            }
+            bool GetLocalFalse (local_value_t &rhLocal) const {
+                rhLocal = LocalFalse ();
+                return true;
+            }
+
         //  ... handle -> local handle
             template <typename source_t> typename V8<source_t>::local LocalFor (
                 source_t const &rhSouce
@@ -90,7 +124,9 @@ namespace VA {
             ) const {
                 return GetLocalFrom (rhLocal, LocalFor (hValue));
             }
-            template <typename local_t> bool GetLocalFrom (local_t &rhLocal, local_value_t const &hValue) const {
+            template <typename local_t> bool GetLocalFrom (
+                local_t &rhLocal, local_value_t const &hValue
+            ) const {
                 return false;
             }
 
@@ -100,7 +136,6 @@ namespace VA {
                 return true;
             }
 
-        //  ... handle -> local handle (maybe)
             bool GetLocalFrom (V8<v8::Boolean>::local &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToBoolean (context ()));
             }
@@ -150,8 +185,13 @@ namespace VA {
         //  Creation Helpers
         public:
             local_resolver_t NewResolver () const;
-
-            local_string_t NewString (char const *pString) const;
+            local_string_t   NewString (char const *pString) const;
+            local_integer_t  NewNumber (int iNumber) const {
+                return integer_t::New (handle (), iNumber);
+            }
+            local_number_t  NewNumber (double iNumber) const {
+                return number_t::New (handle (), iNumber);
+            }
 
         //  Exception Helpers
         public:

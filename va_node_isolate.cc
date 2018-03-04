@@ -234,6 +234,73 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *****  Call Helpers  *****
  **************************/
 
+class VA::Node::Isolate::Args {
+//  class ArgSink
+public:
+    class ArgSink : public Vxa::VAny::Client {
+    public:
+        ArgSink (
+            local_value_t &rResult, Isolate *pIsolate
+        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
+        }
+        ~ArgSink () {
+        }
+    public:
+        virtual void on (int iValue) override {
+            m_rResult = m_pIsolate->NewNumber (iValue);
+        }
+        virtual void on (double iValue) override {
+            m_rResult = m_pIsolate->NewNumber (iValue);
+        }
+        virtual void on (VString const &iValue) override {
+            m_rResult = m_pIsolate->NewString (iValue);
+        }
+    private:
+        local_value_t& m_rResult;
+        Isolate* const m_pIsolate;
+    };
+
+//  Construction
+public:
+    Args (Isolate *pIsolate, vxa_pack_t const &rPack);
+
+//  Destruction
+public:
+    ~Args ();
+
+//  Access
+public:
+    int argc () const {
+        return m_aArgs.elementCount ();
+    }
+    local_value_t *argv () {
+        return m_aArgs.elementArray ();
+    }
+
+//  State
+private:
+    VkDynamicArrayOf<local_value_t> m_aArgs;
+};
+
+/*----------------*/
+VA::Node::Isolate::Args::Args (
+    Isolate *pIsolate, vxa_pack_t const &rPack
+) : m_aArgs (rPack.parameterCount ()) {
+    int const cArgs = argc ();
+    for (int xArg = 0; xArg < cArgs; xArg++) {
+        local_value_t &rJSArg = m_aArgs[xArg];
+        ArgSink iArgSink (rJSArg, pIsolate);
+        rPack.parameterValue (xArg).supply (iArgSink);
+        if (rJSArg.IsEmpty ())
+            rJSArg = pIsolate->LocalUndefined ();
+    }
+}
+/*----------------*/
+VA::Node::Isolate::Args::~Args () {
+}
+/*----------------*/
+
+
 /**********************
  ****  Maybe Call  ****
  **********************/
@@ -248,13 +315,19 @@ bool VA::Node::Isolate::MaybeSetResultToCall (
 bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t const &rPack
 ) {
-    return false;
+    Args args (this, rPack);
+    return MaybeSetResultToValue (
+        rResult, hCallable->Call (context (), hReceiver, args.argc (), args.argv ())
+    );
 }
 
 bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
 ) {
-    return false;
+    Args args (this, rPack);
+    return hCallable->IsCallable () && MaybeSetResultToValue (
+        rResult, hCallable->CallAsFunction (context (), hReceiver, args.argc (), args.argv ())
+    );
 }
 
 
@@ -270,15 +343,29 @@ bool VA::Node::Isolate::MaybeSetResultToNew (
 }
 
 bool VA::Node::Isolate::MaybeSetResultToNew (
-    vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
+    vxa_result_t &rResult, local_function_t hCallable, vxa_pack_t const &rPack
 ) {
+#if 0
+    Args args (this, rPack);
+    return MaybeSetResultToValue (
+        rResult, hCallable->NewInstance (context (), args.argc (), args.argv ())
+    );
+#else
     return false;
+#endif
 }
 
 bool VA::Node::Isolate::MaybeSetResultToNew (
-    vxa_result_t &rResult, local_function_t hCallable, vxa_pack_t const &rPack
+    vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
 ) {
+#if 0
+    Args args (this, rPack);
+    return hCallable->IsCallable () && MaybeSetResultToValue (
+        rResult, hCallable->CallAsConstructor (context (), args.argc (), args.argv ())
+    );
+#else
     return false;
+#endif
 }
 
 
@@ -346,8 +433,8 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
  **********************************/
 
 bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
-    ExportReference pResult;
-    if (Attach (pResult, local_value_t (v8::Undefined (m_hIsolate)))) {
+    local_value_t hUndefined; ExportReference pResult;
+    if (GetLocalUndefined (hUndefined) && Attach (pResult, hUndefined)) {
         rResult = pResult;
     } else {
         rResult = false;
