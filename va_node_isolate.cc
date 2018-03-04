@@ -94,6 +94,42 @@ bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
  ****************************
  ****************************/
 
+namespace {
+    template <typename T> bool GetUnwrappedFromMaybe (
+        T &rUnwrapped, v8::Maybe<T> const &rMaybe
+    ) {
+        if (rMaybe.IsJust ()) {
+            rUnwrapped = rMaybe.FromJust ();
+            return true;
+        }
+        return false;
+    }
+}
+
+bool VA::Node::Isolate::GetUnwrapped (
+    bool &rUnwrapped, local_value_t hValue
+) const {
+    return GetUnwrappedFromMaybe (
+        rUnwrapped, hValue->BooleanValue (context ())
+    );
+}
+
+bool VA::Node::Isolate::GetUnwrapped (
+    double &rUnwrapped, local_value_t hValue
+) const {
+    return GetUnwrappedFromMaybe (
+        rUnwrapped, hValue->NumberValue (context ())
+    );
+}
+
+bool VA::Node::Isolate::GetUnwrapped (
+    int32_t &rUnwrapped, local_value_t hValue
+) const {
+    return GetUnwrappedFromMaybe (
+        rUnwrapped, hValue->Int32Value (context ())
+    );
+}
+
 bool VA::Node::Isolate::UnwrapString (
     VString &rString, local_value_t hValue, bool bDetailed
 ) const {
@@ -388,7 +424,7 @@ bool VA::Node::Isolate::MaybeSetResultToInt32 (
     vxa_result_t &rResult, local_value_t hValue
 ) {
     int32_t iResult;
-    if (hValue->IsInt32 () && hValue->Int32Value (context ()).To (&iResult)) {
+    if (hValue->IsInt32 () && GetUnwrapped (iResult, hValue)) {
         rResult = iResult;
         return true;
     }
@@ -399,7 +435,7 @@ bool VA::Node::Isolate::MaybeSetResultToDouble (
     vxa_result_t &rResult, local_value_t hValue
 ) {
     double iResult;
-    if (hValue->IsNumber () && hValue->NumberValue (context ()).To (&iResult)) {
+    if (hValue->IsNumber () && GetUnwrapped (iResult, hValue)) {
         rResult = iResult;
         return true;
     }

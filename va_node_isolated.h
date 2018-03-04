@@ -114,6 +114,11 @@ namespace VA {
 
         //  Object Access
         protected:
+            template <typename unwrapped_t, typename handle_t> bool GetUnwrapped (
+                unwrapped_t &rUnwrapped, handle_t hValue
+            ) const {
+                return m_pIsolate->GetUnwrapped (rUnwrapped, hValue);
+            }
             template <typename handle_t> bool UnwrapString (
                 VString &rString, handle_t hString, bool bDetail = false
             ) const {

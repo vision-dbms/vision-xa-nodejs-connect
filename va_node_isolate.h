@@ -170,17 +170,32 @@ namespace VA {
 
         //  Access Helpers
         public:
-            template <typename handle_t> bool UnwrapString (
-                VString &rString, handle_t hValue, bool bDetail = false
+            template <typename unwrapped_t, typename handle_t> bool GetUnwrapped (
+                unwrapped_t &rUnwrapped, handle_t hValue
             ) const {
                 local_value_t hLocalValue;
-                return GetLocalFor (hLocalValue, hValue) && UnwrapString (rString, hLocalValue);
+                return GetLocalFor (hLocalValue, hValue) && GetUnwrapped (
+                    rUnwrapped, hLocalValue
+                );
+            }
+
+            bool GetUnwrapped (bool    &rUnwrapped, local_value_t hValue) const;
+            bool GetUnwrapped (double  &rUnwrapped, local_value_t hValue) const;
+            bool GetUnwrapped (int32_t &rUnwrapped, local_value_t hValue) const;
+
+            template <typename handle_t> bool UnwrapString (
+                VString &rUnwrapped, handle_t hValue, bool bDetail = false
+            ) const {
+                local_value_t hLocalValue;
+                return GetLocalFor (hLocalValue, hValue) && UnwrapString (
+                    rUnwrapped, hLocalValue, bDetail
+                );
             }
             bool UnwrapString (
-                VString &rString, local_value_t hValue, bool bDetail = false
+                VString &rUnwrapped, local_value_t hValue, bool bDetail = false
             ) const;
-            bool UnwrapString (VString &rString, maybe_string_t hString) const;
-            bool UnwrapString (VString &rString, local_string_t hString) const;
+            bool UnwrapString (VString &rUnwrapped, maybe_string_t hString) const;
+            bool UnwrapString (VString &rUnwrapped, local_string_t hString) const;
 
         //  Creation Helpers
         public:
