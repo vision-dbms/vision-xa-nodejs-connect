@@ -291,6 +291,13 @@ public:
         virtual void on (VString const &iValue) override {
             m_rResult = m_pIsolate->NewString (iValue);
         }
+        virtual void on (VCollectableObject *pObject) override {
+            Export *pExport = dynamic_cast<Export*>(pObject);
+            if (pExport)
+                m_rResult = pExport->value ();
+            else
+                m_rResult = m_pIsolate->LocalUndefined ();
+        }
     private:
         local_value_t& m_rResult;
         Isolate* const m_pIsolate;
