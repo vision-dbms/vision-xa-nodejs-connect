@@ -32,10 +32,20 @@ namespace {
         char const *pValue = getenv (pName);
         return pValue ? pValue : pElse;
     }
+    VE::evaluator_gofer_t *EvaluatorGoferFor (VString const &rEvaluatorName) {
+        VString iProtocol, iEvaluatorName;
+        bool const bUsingNet = rEvaluatorName.getPrefix (
+            ':', iProtocol, iEvaluatorName
+        ) && iProtocol.equalsIgnoreCase ("net");
+        if (bUsingNet)
+            return new Vca::Gofer::Named<Vsa::IEvaluator,Vca::IPipeFactory> (iEvaluatorName);
+        else
+            return new Vca::Gofer::Named<Vsa::IEvaluator,Vca::IDirectory>   (iEvaluatorName);
+    }
+
     VE::evaluator_gofer_t *DefaultEvaluator () {
         static VE::evaluator_gofer_t::Reference const pGofer (
-        //  new Vca::Gofer::Named<Vsa::IEvaluator,Vca::IDirectory> (ValueOrElse ("VxaEvaluator", "Default"))
-            new Vca::Gofer::Named<Vsa::IEvaluator,Vca::IPipeFactory> (ValueOrElse ("VxaEvaluator", "8765"))
+            EvaluatorGoferFor (ValueOrElse ("NodeEvaluator", "dir:NodeEvaluator"))
         );
         return pGofer;
     }
@@ -296,7 +306,13 @@ namespace {
 
     //  Set up the evaluation...
         VE::Gofer::Reference const pGofer (
-            new VE::Gofer (DefaultEvaluator (), iExpression, iExport)
+            new VE::Gofer (
+                [&]() {
+                    VString iEvaluatorName;
+                    return args.Length () >= 3 && pIsolate->UnwrapString (iEvaluatorName, args[2])
+                        ? EvaluatorGoferFor (iEvaluatorName) : DefaultEvaluator ();
+                }(), iExpression, iExport
+            )
         );
 
     //  Start the evaluation...
