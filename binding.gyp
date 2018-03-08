@@ -1,4 +1,7 @@
 {
+  'variables': {
+    'vision_root' : '<!(echo $osv)/software/src/master/src'
+  },
   'targets': [
     {
       'target_name': 'vxanode',
@@ -17,7 +20,7 @@
         'va_node_triggerable.cc'
       ],
       'include_dirs': [
-        'vision/kernel',
+        '<(vision_root)/kernel',
       ],
       'libraries': [
         '-lVcaMain',
@@ -34,7 +37,7 @@
         ['OS=="linux"',
           {
             'include_dirs': [
-              'vision/M_Linux'
+              '<(vision_root)/M_Linux'
             ],
             'cflags': [
               '-U_FORTIFY_SOURCE -frtti',
@@ -47,20 +50,20 @@
             'configurations' : {
               'Debug' : {
                 'cflags' : [
-                  '-L$(srcdir)/vision/lib/dbg',
+                  '-L<(vision_root)/lib/dbg',
                 ],
                 'ldflags': [
-                  '-L$(srcdir)/vision/lib/dbg',
-                  "'-Wl,-rpath=$$ORIGIN/../../vision/lib/dbg'",
+                  '-L<(vision_root)/lib/dbg',
+                  "'-Wl,-rpath=<(vision_root)/lib/dbg'",
                 ],
               },
               'Release' : {
                 'cflags' : [
-                  '-L$(srcdir)/vision/lib',
+                  '-L<(vision_root)/lib',
                 ],
                 'ldflags': [
-                  '-L$(srcdir)/vision/lib',
-                   "'-Wl,-rpath=$$ORIGIN/../../vision/lib'",
+                  '-L<(vision_root)/lib',
+                  "'-Wl,-rpath=<(vision_root)/lib'",
                 ],
               }
             },
@@ -69,7 +72,7 @@
         ['OS=="mac"',
           {
             'include_dirs': [
-              'vision/M_Darwin'
+              '<(vision_root)/M_Darwin'
             ],
             'xcode_settings': {
               'GCC_ENABLE_CPP_RTTI': 'YES',
