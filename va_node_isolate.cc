@@ -282,21 +282,25 @@ public:
         ~ArgSink () {
         }
     public:
-        virtual void on (int iValue) override {
+        virtual bool on (int iValue) override {
             m_rResult = m_pIsolate->NewNumber (iValue);
+            return true;
         }
-        virtual void on (double iValue) override {
+        virtual bool on (double iValue) override {
             m_rResult = m_pIsolate->NewNumber (iValue);
+            return true;
         }
-        virtual void on (VString const &iValue) override {
+        virtual bool on (VString const &iValue) override {
             m_rResult = m_pIsolate->NewString (iValue);
+            return true;
         }
-        virtual void on (VCollectableObject *pObject) override {
+        virtual bool on (VCollectableObject *pObject) override {
             Export *pExport = dynamic_cast<Export*>(pObject);
             if (pExport)
                 m_rResult = pExport->value ();
             else
                 m_rResult = m_pIsolate->LocalUndefined ();
+            return true;
         }
     private:
         local_value_t& m_rResult;
