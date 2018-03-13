@@ -121,6 +121,15 @@ void VA::Node::Export::JSNew (vxa_result_t &rResult, vxa_pack_t const &rPack) {
     HandleScope iHS (this);
     SetResultToNew (rResult, value (), rPack);
 }
+
+void VA::Node::Export::JSObject (vxa_result_t &rResult, Export* pObject) {
+    if (pObject)
+        rResult = pObject;
+    else {
+        VString iNullMessage ("*** NULL ***");
+        rResult = iNullMessage;
+    }
+}
 
 
 /*************************
@@ -385,6 +394,8 @@ void VA::Node::Export::JSIsWebAssemblyCompiledModule (vxa_result_t &rResult) {
  ***************************/
 
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
+    defineMethod (".object:"                    , &Export::JSObject);
+
     defineMethod (".toString"                   , &Export::JSToString);
     defineMethod (".toDetail"                   , &Export::JSToDetail);
 
