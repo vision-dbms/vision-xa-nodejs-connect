@@ -22,6 +22,16 @@ namespace VA {
         class Entity : public Vxa::VCollectableObject {
             DECLARE_ABSTRACT_RTTLITE (Entity, Vxa::VCollectableObject);
 
+        //  Class Builder
+        public:
+            class ClassBuilder
+                : public BaseClass::ClassBuilder
+            {
+            protected:
+                ClassBuilder (Vxa::VClass *pClass);
+            };
+            friend class ClassBuilder;
+
         //  Construction
         protected:
             Entity ();
@@ -31,7 +41,6 @@ namespace VA {
             ~Entity ();
         };
     } // namespace VA::Node
-
 } // namespace VA
 
 

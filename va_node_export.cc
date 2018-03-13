@@ -75,6 +75,24 @@ bool VA::Node::Export::decommision () {
  ************************
  ************************/
 
+/**************************
+ *****  Test Methods  *****
+ **************************/
+
+void VA::Node::Export::TestBool (vxa_result_t &rResult, bool bTrue) {
+    VString message (bTrue ? "Got True" : "Got False");
+    rResult = message;
+}
+
+void VA::Node::Export::TestObject (vxa_result_t &rResult, ThisClass* pObject) {
+    if (pObject)
+        rResult = pObject;
+    else {
+        VString iNullMessage ("*** NULL ***");
+        rResult = iNullMessage;
+    }
+}
+
 /***************************
  *****  JS Operations  *****
  ***************************/
@@ -120,15 +138,6 @@ void VA::Node::Export::JSCall (vxa_result_t &rResult, vxa_pack_t const &rPack) {
 void VA::Node::Export::JSNew (vxa_result_t &rResult, vxa_pack_t const &rPack) {
     HandleScope iHS (this);
     SetResultToNew (rResult, value (), rPack);
-}
-
-void VA::Node::Export::JSObject (vxa_result_t &rResult, Export* pObject) {
-    if (pObject)
-        rResult = pObject;
-    else {
-        VString iNullMessage ("*** NULL ***");
-        rResult = iNullMessage;
-    }
 }
 
 
@@ -393,8 +402,9 @@ void VA::Node::Export::JSIsWebAssemblyCompiledModule (vxa_result_t &rResult) {
  ***************************
  ***************************/
 
-VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : Vxa::Object::ClassBuilder (pClass) {
-    defineMethod (".object:"                    , &Export::JSObject);
+VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::ClassBuilder (pClass) {
+    defineMethod (".bool:"                      , &Export::TestBool);
+    defineMethod (".object:"                    , &Export::TestObject);
 
     defineMethod (".toString"                   , &Export::JSToString);
     defineMethod (".toDetail"                   , &Export::JSToDetail);

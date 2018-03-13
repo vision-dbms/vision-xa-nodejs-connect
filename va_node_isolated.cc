@@ -106,3 +106,13 @@ bool VA::Node::Isolated::launchTask (Vxa::VTask *pTask) {
     pLauncher->trigger ();
     return true;
 }
+
+
+/***************************
+ ***************************
+ *****  Class Builder  *****
+ ***************************
+ ***************************/
+
+VA::Node::Isolated::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::ClassBuilder (pClass) {
+}

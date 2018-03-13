@@ -17,19 +17,20 @@
 
 namespace VA {
     namespace Node {
-
-    /*------------------------*
-     *----  class Export  ----*
-     *------------------------*/
-
         class Export : public Isolated {
             DECLARE_CONCRETE_RTTLITE (Export, Isolated);
 
             friend class Isolate;
 
-	//  class ClassBuilder
-	public:
-            class ClassBuilder;
+        //  Class Builder
+        public:
+            class ClassBuilder
+                : public BaseClass::ClassBuilder
+            {
+            protected:
+                ClassBuilder (Vxa::VClass *pClass);
+            };
+            friend class ClassBuilder;
 
         //  Construction
         private:
@@ -57,13 +58,16 @@ namespace VA {
                 return this->GetLocalFrom (rhLocal, m_hValue);
             }
 
+        //  Test Methods
+        protected:
+            void TestBool   (vxa_result_t &rResult, bool bTrue);
+            void TestObject (vxa_result_t &rResult, Export* pObject);
+
         //  JS Methods
-        public:
+        protected:
             void JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPack);
             void JSCall     (vxa_result_t &rResult, vxa_pack_t const &rPack);
             void JSNew      (vxa_result_t &rResult, vxa_pack_t const &rPack);
-
-            void JSObject   (vxa_result_t &rResult, Export* pObject);
 
             void JSToString (vxa_result_t &rResult);
             void JSToDetail (vxa_result_t &rResult);
@@ -126,16 +130,6 @@ namespace VA {
         private:
             persistent_value_t const m_hValue;
         };
-
-    /*--------------------------------------*
-     *----  class Export::ClassBuilder  ----*
-     *--------------------------------------*/
-
-        class Export::ClassBuilder : public Isolated::ClassBuilder {
-        protected:
-            ClassBuilder (Vxa::VClass *pClass);
-        };
-
     } // namespace Node
 
 } // namespace VA

@@ -50,3 +50,13 @@ VA::Node::Entity::Entity () {
 
 VA::Node::Entity::~Entity () {
 }
+
+
+/***************************
+ ***************************
+ *****  Class Builder  *****
+ ***************************
+ ***************************/
+
+VA::Node::Entity::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::ClassBuilder (pClass) {
+}

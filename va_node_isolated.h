@@ -22,6 +22,16 @@ namespace VA {
         class Isolated : public Entity {
             DECLARE_ABSTRACT_RTTLITE (Isolated, Entity);
 
+        //  Class Builder
+        public:
+            class ClassBuilder
+                : public BaseClass::ClassBuilder
+            {
+            protected:
+                ClassBuilder (Vxa::VClass *pClass);
+            };
+            friend class ClassBuilder;
+
         //  Construction
         protected:
             Isolated (Isolate *pIsolate);
@@ -212,7 +222,6 @@ namespace VA {
             Isolate::Reference const m_pIsolate;
         };
     } // namespace VA::Node
-
 } // namespace VA
 
 
