@@ -211,18 +211,18 @@ bool VA::Node::Isolate::Attach (
 
     if (!hCachedValue.IsEmpty () && hCachedValue->IsExternal ()) {
         rpModelObject.setTo (reinterpret_cast<Export*>(hCachedValue.As<v8::External>()->Value()));
-        std::cerr
-            << "VA::Node::Isolate::Attach: " << this << ", found: " << rpModelObject.referent () << std::endl;
+        // std::cerr
+        //     << "VA::Node::Isolate::Attach: " << this << ", found: " << rpModelObject.referent () << std::endl;
     } else {
         rpModelObject.setTo (new Export (this, hValue));
         hValueCache->Set (hValue, v8::External::New (m_hIsolate, rpModelObject.referent ()));
-        std::cerr
-            << "VA::Node::Isolate["
-            << this
-            << "]::Attach: "
-            << rpModelObject.referent ()
-            << (hValueCache->Has (hValue) ? " attached" : " uncached")
-            << std::endl;
+        // std::cerr
+        //     << "VA::Node::Isolate["
+        //     << this
+        //     << "]::Attach: "
+        //     << rpModelObject.referent ()
+        //     << (hValueCache->Has (hValue) ? " attached" : " uncached")
+        //     << std::endl;
     }
     return rpModelObject.isntNil ();
 }
@@ -243,13 +243,13 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *
  ****************/
     return [&](bool bGone) {
-        std::cerr
-            << "VA::Node::Isolate["
-            << this
-            << "]::Detach: "
-            << pModelObject
-            << (bGone ? " detached" : " retained")
-            << std::endl;
+        // std::cerr
+        //     << "VA::Node::Isolate["
+        //     << this
+        //     << "]::Detach: "
+        //     << pModelObject
+        //     << (bGone ? " detached" : " retained")
+        //     << std::endl;
         return bGone;
     } (
         hCache->Delete (hModelValue)                         ||

@@ -44,7 +44,7 @@
 VA::Node::Export::Export (
     Isolate *pIsolate, local_value_t hValue
 ) : BaseClass (pIsolate), m_hValue (*pIsolate, hValue) {
-    std::cerr << "VA::Node::Export::Export: " << this << std::endl;
+//    std::cerr << "VA::Node::Export::Export: " << this << std::endl;
 }
 
 /*************************
@@ -54,7 +54,7 @@ VA::Node::Export::Export (
  *************************/
 
 VA::Node::Export::~Export () {
-    std::cerr << "VA::Node::Export::~Export: " << this << std::endl;
+//    std::cerr << "VA::Node::Export::~Export: " << this << std::endl;
 }
 
 /*****************************
@@ -64,7 +64,7 @@ VA::Node::Export::~Export () {
  *****************************/
 
 bool VA::Node::Export::decommision () {
-    std::cerr << "VA::Node::Export::decommision: " << this << std::endl;
+//    std::cerr << "VA::Node::Export::decommision: " << this << std::endl;
     return isolate ()->Detach (this) && BaseClass::decommision ();
 }
 
@@ -80,16 +80,14 @@ bool VA::Node::Export::decommision () {
  **************************/
 
 void VA::Node::Export::TestBool (vxa_result_t &rResult, bool bTrue) {
-    VString message (bTrue ? "Got True" : "Got False");
-    rResult = message;
+    rResult = bTrue ? "Got True" : "Got False";
 }
 
 void VA::Node::Export::TestObject (vxa_result_t &rResult, ThisClass* pObject) {
     if (pObject)
         rResult = pObject;
     else {
-        VString iNullMessage ("*** NULL ***");
-        rResult = iNullMessage;
+        rResult = "*** NULL ***";
     }
 }
 
@@ -113,7 +111,9 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPac
                 hApplicable, hObject->Get (
                     context (), NewString (rResult.selectorComponent (0))
                 )
-            ) && (
+            ) && rResult.invokedIntensionally () ? (
+                SetResultToValue (rResult, hApplicable)
+            ) : (
                 MaybeSetResultToCall (rResult, value (), hApplicable, rPack) ||
                 SetResultToValue (rResult, hApplicable)
             )
