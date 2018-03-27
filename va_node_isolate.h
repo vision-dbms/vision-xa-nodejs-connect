@@ -256,6 +256,11 @@ namespace VA {
             }
 
         /*-----------------------*
+         *----  Maybe Error  ----*
+         *-----------------------*/
+            bool MaybeSetResultToError (vxa_result_t &rResult, v8::TryCatch &rCatcher);
+
+        /*-----------------------*
          *----  Maybe Value  ----*
          *-----------------------*/
             template <typename handle_t> bool MaybeSetResultToValue (

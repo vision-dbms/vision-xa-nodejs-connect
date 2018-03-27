@@ -362,18 +362,37 @@ bool VA::Node::Isolate::MaybeSetResultToCall (
 bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t const &rPack
 ) {
+    v8::TryCatch iCatcher (*this);
     Args args (this, rPack);
     return MaybeSetResultToValue (
         rResult, hCallable->Call (context (), hReceiver, args.argc (), args.argv ())
-    );
+    ) || MaybeSetResultToError (rResult, iCatcher);
 }
 
 bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
 ) {
+    v8::TryCatch iCatcher (*this);
     Args args (this, rPack);
-    return hCallable->IsCallable () && MaybeSetResultToValue (
-        rResult, hCallable->CallAsFunction (context (), hReceiver, args.argc (), args.argv ())
+    return hCallable->IsCallable () && (
+        MaybeSetResultToValue (
+            rResult, hCallable->CallAsFunction (
+                context (), hReceiver, args.argc (), args.argv ()
+            )
+        ) || MaybeSetResultToError (rResult, iCatcher)
+    );
+}
+
+
+/*************************
+ *****  Maybe Error  *****
+ *************************/
+
+bool VA::Node::Isolate::MaybeSetResultToError (
+    vxa_result_t &rResult, v8::TryCatch &rCatcher
+) {
+    return rCatcher.HasCaught () && MaybeSetResultToValue (
+        rResult, rCatcher.Exception ()
     );
 }
 
