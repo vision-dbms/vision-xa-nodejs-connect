@@ -152,15 +152,6 @@ namespace VA {
                 return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack);
             }
 
-        /*---------------------*
-         *----  Maybe New  ----*
-         *---------------------*/
-            template <typename handle_t> bool MaybeSetResultToNew (
-                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                return m_pIsolate->MaybeSetResultToNew (rResult, hCallable, rPack);
-            }
-
         /*-----------------------*
          *----  Maybe Value  ----*
          *-----------------------*/
@@ -198,17 +189,15 @@ namespace VA {
             ) {
                 return m_pIsolate->SetResultToCall (rResult, hReceiver, hCallable, rPack);
             }
-            template <typename handle_t> bool SetResultToNew (
-                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                return m_pIsolate->SetResultToNew (rResult, hCallable, rPack);
-            }
             template <typename handle_t> bool SetResultToValue (
                 vxa_result_t &rResult, handle_t hValue
             ) const {
                 return m_pIsolate->SetResultToValue (rResult, hValue);
             }
 
+            bool SetResultToGlobal (vxa_result_t &rResult) {
+                return m_pIsolate->SetResultToGlobal (rResult);
+            }
             bool SetResultToUndefined (vxa_result_t &rResult) {
                 return m_pIsolate->SetResultToUndefined (rResult);
             }

@@ -378,44 +378,6 @@ bool VA::Node::Isolate::MaybeSetResultToCall (
 }
 
 
-/**********************
- ****  Maybe New  ****
- **********************/
-
-bool VA::Node::Isolate::MaybeSetResultToNew (
-    vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
-) {
-    return MaybeSetResultToNewOf<local_function_t> (rResult, hCallable, rPack)
-        || MaybeSetResultToNewOf<local_object_t>   (rResult, hCallable, rPack);
-}
-
-bool VA::Node::Isolate::MaybeSetResultToNew (
-    vxa_result_t &rResult, local_function_t hCallable, vxa_pack_t const &rPack
-) {
-#if 0
-    Args args (this, rPack);
-    return MaybeSetResultToValue (
-        rResult, hCallable->NewInstance (context (), args.argc (), args.argv ())
-    );
-#else
-    return false;
-#endif
-}
-
-bool VA::Node::Isolate::MaybeSetResultToNew (
-    vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
-) {
-#if 0
-    Args args (this, rPack);
-    return hCallable->IsCallable () && MaybeSetResultToValue (
-        rResult, hCallable->CallAsConstructor (context (), args.argc (), args.argv ())
-    );
-#else
-    return false;
-#endif
-}
-
-
 /*************************
  *****  Maybe Value  *****
  *************************/
@@ -473,6 +435,15 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
         return true;
     }
     return false;
+}
+
+/*******************************
+ *****  SetResultToGlobal  *****
+ *******************************/
+
+bool VA::Node::Isolate::SetResultToGlobal (vxa_result_t &rResult) {
+    local_value_t hGlobal = context()->Global ();
+    return SetResultToValue (rResult, hGlobal);
 }
 
 /**********************************

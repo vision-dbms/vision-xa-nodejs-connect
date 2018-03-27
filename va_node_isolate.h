@@ -255,33 +255,6 @@ namespace VA {
                     && MaybeSetResultToCall (rResult, hReceiver, hCastCallable, rPack);
             }
 
-        /*---------------------*
-         *----  Maybe New  ----*
-         *---------------------*/
-            template <typename handle_t> bool MaybeSetResultToNew (
-                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                local_value_t hLocalCallable;
-                return GetLocalFor (hLocalCallable, hCallable)
-                    && MaybeSetResultToNew (rResult, hLocalCallable, rPack);
-            }
-            bool MaybeSetResultToNew (
-                vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
-            );
-            bool MaybeSetResultToNew (
-                vxa_result_t &rResult, local_function_t hCallable, vxa_pack_t const &rPack
-            );
-            bool MaybeSetResultToNew (
-                vxa_result_t &rResult, local_object_t hCallable, vxa_pack_t const &rPack
-            );
-            template <typename cast_callable_t> bool MaybeSetResultToNewOf (
-                vxa_result_t &rResult, local_value_t hCallable, vxa_pack_t const &rPack
-            ) {
-                cast_callable_t hCastCallable;
-                return GetLocalFrom (hCastCallable, hCallable)
-                    && MaybeSetResultToNew (rResult, hCastCallable, rPack);
-            }
-
         /*-----------------------*
          *----  Maybe Value  ----*
          *-----------------------*/
@@ -318,18 +291,13 @@ namespace VA {
                 return MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack)
                     || SetResultToUndefined (rResult);
             }
-            template <typename handle_t> bool SetResultToNew (
-                vxa_result_t &rResult, handle_t hCallable, vxa_pack_t const &rPack
-            ) {
-                return MaybeSetResultToNew (rResult, hCallable, rPack)
-                    || SetResultToUndefined (rResult);
-            }
             template <typename handle_t> bool SetResultToValue (
                 vxa_result_t &rResult, handle_t hValue
             ) {
                 return MaybeSetResultToValue (rResult, hValue) || SetResultToUndefined (rResult);
             }
 
+            bool SetResultToGlobal (vxa_result_t &rResult);
             bool SetResultToUndefined (vxa_result_t &rResult);
 
         //  State

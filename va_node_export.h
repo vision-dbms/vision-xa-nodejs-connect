@@ -58,20 +58,18 @@ namespace VA {
                 return this->GetLocalFrom (rhLocal, m_hValue);
             }
 
-        //  Test Methods
-        protected:
-            void TestBool   (vxa_result_t &rResult, bool bTrue);
-            void TestObject (vxa_result_t &rResult, Export* pObject);
-
         //  JS Methods
         protected:
             void JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPack);
-            void JSCall     (vxa_result_t &rResult, vxa_pack_t const &rPack);
-            void JSNew      (vxa_result_t &rResult, vxa_pack_t const &rPack);
+
+            void JSGlobal (vxa_result_t &rResult);
 
             void JSToString (vxa_result_t &rResult);
             void JSToDetail (vxa_result_t &rResult);
+
             void JSUnwrap (vxa_result_t &rResult);
+
+            void JSStrictEquals (vxa_result_t &rResult, ThisClass *pOther);
 
             void JSHasProperty (vxa_result_t &rResult, VString const &rPropertyName);
 
@@ -124,7 +122,6 @@ namespace VA {
             void JSIsDataView (vxa_result_t &rResult);
             void JSIsSharedArrayBuffer (vxa_result_t &rResult);
             void JSIsProxy (vxa_result_t &rResult);
-            void JSIsWebAssemblyCompiledModule (vxa_result_t &rResult);
 
         //  State
         private:

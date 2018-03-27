@@ -75,22 +75,6 @@ bool VA::Node::Export::decommision () {
  ************************
  ************************/
 
-/**************************
- *****  Test Methods  *****
- **************************/
-
-void VA::Node::Export::TestBool (vxa_result_t &rResult, bool bTrue) {
-    rResult = bTrue ? "Got True" : "Got False";
-}
-
-void VA::Node::Export::TestObject (vxa_result_t &rResult, ThisClass* pObject) {
-    if (pObject)
-        rResult = pObject;
-    else {
-        rResult = "*** NULL ***";
-    }
-}
-
 /***************************
  *****  JS Operations  *****
  ***************************/
@@ -121,25 +105,14 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPac
     }
 }
 
-/******************
- *----  Call  ----*
- ******************/
+/*********************
+ *----  Context  ----*
+ *********************/
 
-void VA::Node::Export::JSCall (vxa_result_t &rResult, vxa_pack_t const &rPack) {
+void VA::Node::Export::JSGlobal (vxa_result_t &rResult) {
     HandleScope iHS (this);
-    local_value_t hReceiver;
-    SetResultToCall (rResult, hReceiver, value (), rPack);
+    SetResultToGlobal (rResult);
 }
-
-/*****************
- *----  New  ----*
- *****************/
-
-void VA::Node::Export::JSNew (vxa_result_t &rResult, vxa_pack_t const &rPack) {
-    HandleScope iHS (this);
-    SetResultToNew (rResult, value (), rPack);
-}
-
 
 /*************************
  *----  Conversions  ----*
@@ -157,6 +130,7 @@ void VA::Node::Export::JSToDetail (vxa_result_t &rResult) {
     VString iResult;
     UnwrapString (iResult, value(), true);
     rResult = iResult;
+    SetResultToGlobal (rResult);
 }
 
 /****************************
@@ -168,6 +142,15 @@ void VA::Node::Export::JSUnwrap (vxa_result_t &rResult) {
     SetResultToValue (rResult, value ());
 }
 
+
+/****************************
+ *----  Equality Query  ----*
+ ****************************/
+
+void VA::Node::Export::JSStrictEquals (vxa_result_t &rResult, ThisClass *pThat) {
+    HandleScope iHS (this);
+    rResult = value ()->StrictEquals (pThat->value ());
+}
 
 /****************************
  *----  Property Query  ----*
@@ -282,14 +265,6 @@ void VA::Node::Export::JSIsRegExp (vxa_result_t &rResult) {
     HandleScope iHS (this);
     rResult = value()->IsRegExp ();
 }
-void VA::Node::Export::JSIsAsyncFunction (vxa_result_t &rResult) {
-#if 0
-    HandleScope iHS (this);
-    rResult = value()->IsAsyncFunction ();
-#else
-    rResult = false;
-#endif
-}
 void VA::Node::Export::JSIsGeneratorFunction (vxa_result_t &rResult) {
     HandleScope iHS (this);
     rResult = value()->IsGeneratorFunction ();
@@ -386,14 +361,6 @@ void VA::Node::Export::JSIsProxy (vxa_result_t &rResult) {
     HandleScope iHS (this);
     rResult = value()->IsProxy ();
 }
-void VA::Node::Export::JSIsWebAssemblyCompiledModule (vxa_result_t &rResult) {
-#if 0
-    HandleScope iHS (this);
-    rResult = value()->IsWebAssemblyCompiledModule ();
-#else
-    rResult = false;
-#endif
-}
 
 
 /***************************
@@ -403,13 +370,14 @@ void VA::Node::Export::JSIsWebAssemblyCompiledModule (vxa_result_t &rResult) {
  ***************************/
 
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::ClassBuilder (pClass) {
-    defineMethod (".bool:"                      , &Export::TestBool);
-    defineMethod (".object:"                    , &Export::TestObject);
+    defineMethod (".global"                     , &Export::JSGlobal);
 
     defineMethod (".toString"                   , &Export::JSToString);
     defineMethod (".toDetail"                   , &Export::JSToDetail);
 
     defineMethod (".unwrap"                     , &Export::JSUnwrap);
+
+    defineMethod (".strictEquals:"              , &Export::JSStrictEquals);
 
     defineMethod (".hasProperty:"               , &Export::JSHasProperty);
 
@@ -437,7 +405,6 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::
     defineMethod (".isSymbolObject"             , &Export::JSIsSymbolObject);
     defineMethod (".isNativeError"              , &Export::JSIsNativeError);
     defineMethod (".isRegExp"                   , &Export::JSIsRegExp);
-    defineMethod (".isAsyncFunction"            , &Export::JSIsAsyncFunction);
     defineMethod (".isGeneratorFunction"        , &Export::JSIsGeneratorFunction);
     defineMethod (".isGeneratorObject"          , &Export::JSIsGeneratorObject);
     defineMethod (".isPromise"                  , &Export::JSIsPromise);
@@ -462,8 +429,7 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::
     defineMethod (".isDataView"                 , &Export::JSIsDataView);
     defineMethod (".isSharedArrayBuffer"        , &Export::JSIsSharedArrayBuffer);
     defineMethod (".isProxy"                    , &Export::JSIsProxy);
-    defineMethod (".isWebAssemblyCompiledModule", &Export::JSIsWebAssemblyCompiledModule);
-    
+
     defineDefault (&Export::JSCallback);
 }
 
