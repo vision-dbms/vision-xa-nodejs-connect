@@ -147,7 +147,7 @@ namespace VA {
          *----  Maybe Call  ----*
          *----------------------*/
             template <typename handle_t> bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
             ) {
                 return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack);
             }
@@ -185,7 +185,7 @@ namespace VA {
          *----  SetResultTo...  ----*
          ****************************/
             template <typename handle_t> bool SetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
             ) {
                 return m_pIsolate->SetResultToCall (rResult, hReceiver, hCallable, rPack);
             }

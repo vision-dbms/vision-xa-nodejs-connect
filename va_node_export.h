@@ -60,7 +60,7 @@ namespace VA {
 
         //  JS Methods
         protected:
-            void JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPack);
+            void JSCallback (vxa_result_t &rResult, vxa_pack_t rPack);
 
             void JSGlobal (vxa_result_t &rResult);
 
