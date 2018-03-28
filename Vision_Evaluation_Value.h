@@ -17,6 +17,9 @@
 
 namespace Vision {
     namespace Evaluation {
+
+        using V::VString;
+
         class Value {
             DECLARE_NUCLEAR_FAMILY (Value);
 

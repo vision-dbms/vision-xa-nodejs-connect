@@ -18,6 +18,7 @@
 #include "Vca_VServerApplication.h"
 
 namespace {
+    using V::VString;
 
     using v8::FunctionCallbackInfo;
     using v8::Value;
