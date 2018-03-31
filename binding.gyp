@@ -29,7 +29,6 @@
         '-lVca',
         '-lV',
         '-lpthread',
-        '-luuid',
       ],
       
       ################
@@ -39,6 +38,9 @@
             'include_dirs': [
               '<(vision_root)/M_Linux'
             ],
+	    'libraries': [
+              '-luuid',
+	    ],
             'cflags': [
               '-U_FORTIFY_SOURCE -frtti',
               '-Wno-delete-non-virtual-dtor',
@@ -73,6 +75,9 @@
           {
             'include_dirs': [
               '<(vision_root)/M_Darwin'
+            ],
+            'library_dirs': [
+              '<(vision_root)/lib',
             ],
             'xcode_settings': {
               'GCC_ENABLE_CPP_RTTI': 'YES',

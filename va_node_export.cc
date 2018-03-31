@@ -83,7 +83,7 @@ bool VA::Node::Export::decommision () {
  *----  Callback  ----*
  **********************/
 
-void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t const &rPack) {
+void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t rPack) {
     HandleScope iHS (this);
 
     local_object_t hObject;

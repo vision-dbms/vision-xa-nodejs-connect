@@ -23,6 +23,7 @@
 
 namespace VA {
     namespace Node {
+        using V::VString;
 
     /*********************************
      *----  v8 Traits and Types  ----*

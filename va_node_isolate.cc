@@ -309,7 +309,7 @@ public:
 
 //  Construction
 public:
-    Args (Isolate *pIsolate, vxa_pack_t const &rPack);
+    Args (Isolate *pIsolate, vxa_pack_t rPack);
 
 //  Destruction
 public:
@@ -331,7 +331,7 @@ private:
 
 /*----------------*/
 VA::Node::Isolate::Args::Args (
-    Isolate *pIsolate, vxa_pack_t const &rPack
+    Isolate *pIsolate, vxa_pack_t rPack
 ) : m_aArgs (rPack.parameterCount ()) {
     int const cArgs = argc ();
     for (int xArg = 0; xArg < cArgs; xArg++) {
@@ -353,14 +353,14 @@ VA::Node::Isolate::Args::~Args () {
  **********************/
 
 bool VA::Node::Isolate::MaybeSetResultToCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t rPack
 ) {
     return MaybeSetResultToCallOf<local_function_t> (rResult, hReceiver, hCallable, rPack)
         || MaybeSetResultToCallOf<local_object_t>   (rResult, hReceiver, hCallable, rPack);
 }
 
 bool VA::Node::Isolate::MaybeSetResultToCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t const &rPack
+    vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t rPack
 ) {
     v8::TryCatch iCatcher (*this);
     Args args (this, rPack);
@@ -370,7 +370,7 @@ bool VA::Node::Isolate::MaybeSetResultToCall (
 }
 
 bool VA::Node::Isolate::MaybeSetResultToCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
+    vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t rPack
 ) {
     v8::TryCatch iCatcher (*this);
     Args args (this, rPack);

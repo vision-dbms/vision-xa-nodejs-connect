@@ -232,23 +232,23 @@ namespace VA {
          *----  Maybe Call  ----*
          *----------------------*/
             template <typename handle_t> bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
             ) {
                 local_value_t hLocalCallable;
                 return GetLocalFor (hLocalCallable, hCallable)
                     && MaybeSetResultToCall (rResult, hReceiver, hLocalCallable, rPack);
             }
             bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t rPack
             );
             bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t rPack
             );
             bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t rPack
             );
             template <typename cast_callable_t> bool MaybeSetResultToCallOf (
-                vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t rPack
             ) {
                 cast_callable_t hCastCallable;
                 return GetLocalFrom (hCastCallable, hCallable)
@@ -291,7 +291,7 @@ namespace VA {
          *----  SetResultTo...  ----*
          *--------------------------*/
             template <typename handle_t> bool SetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t const &rPack
+                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
             ) {
                 return MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack)
                     || SetResultToUndefined (rResult);
