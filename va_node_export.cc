@@ -114,54 +114,13 @@ void VA::Node::Export::JSGlobal (vxa_result_t &rResult) {
     SetResultToGlobal (rResult);
 }
 
-/*************************
- *----  Conversions  ----*
- *************************/
-
-void VA::Node::Export::JSToString (vxa_result_t &rResult) {
-    HandleScope iHS (this);
-    VString iResult;
-    UnwrapString (iResult, value(), false);
-    rResult = iResult;
-}
-
-void VA::Node::Export::JSToDetail (vxa_result_t &rResult) {
-    HandleScope iHS (this);
-    VString iResult;
-    UnwrapString (iResult, value(), true);
-    rResult = iResult;
-    SetResultToGlobal (rResult);
-}
-
-/****************************
- *----  Return Helpers  ----*
- ****************************/
-
-void VA::Node::Export::JSUnwrap (vxa_result_t &rResult) {
-    HandleScope iHS (this);
-    SetResultToValue (rResult, value ());
-}
-
-
-/****************************
- *----  Equality Query  ----*
- ****************************/
+/************************
+ *----  Comparison  ----*
+ ************************/
 
 void VA::Node::Export::JSStrictEquals (vxa_result_t &rResult, ThisClass *pThat) {
     HandleScope iHS (this);
     rResult = value ()->StrictEquals (pThat->value ());
-}
-
-/****************************
- *----  Property Query  ----*
- ****************************/
-
-void VA::Node::Export::JSHasProperty (vxa_result_t &rResult, VString const &rPropertyName) {
-    HandleScope iHS (this);
-    local_object_t hObject;
-    rResult = GetLocal (hObject) && hObject->Has (
-        context (), NewString (rPropertyName)
-    ).FromMaybe (false);
 }
 
 
@@ -372,14 +331,7 @@ void VA::Node::Export::JSIsProxy (vxa_result_t &rResult) {
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::ClassBuilder (pClass) {
     defineMethod (".global"                     , &Export::JSGlobal);
 
-    defineMethod (".toString"                   , &Export::JSToString);
-    defineMethod (".toDetail"                   , &Export::JSToDetail);
-
-    defineMethod (".unwrap"                     , &Export::JSUnwrap);
-
     defineMethod (".strictEquals:"              , &Export::JSStrictEquals);
-
-    defineMethod (".hasProperty:"               , &Export::JSHasProperty);
 
     defineMethod (".isUndefined"                , &Export::JSIsUndefined);
     defineMethod (".isNull"                     , &Export::JSIsNull);

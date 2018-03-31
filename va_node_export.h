@@ -64,14 +64,7 @@ namespace VA {
 
             void JSGlobal (vxa_result_t &rResult);
 
-            void JSToString (vxa_result_t &rResult);
-            void JSToDetail (vxa_result_t &rResult);
-
-            void JSUnwrap (vxa_result_t &rResult);
-
             void JSStrictEquals (vxa_result_t &rResult, ThisClass *pOther);
-
-            void JSHasProperty (vxa_result_t &rResult, VString const &rPropertyName);
 
             void JSIsUndefined (vxa_result_t &rResult);
             void JSIsNull (vxa_result_t &rResult);
