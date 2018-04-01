@@ -66,6 +66,8 @@ namespace VA {
 
             void JSStrictEquals (vxa_result_t &rResult, ThisClass *pOther);
 
+            void JSToString (vxa_result_t &rResult);
+
             void JSIsUndefined (vxa_result_t &rResult);
             void JSIsNull (vxa_result_t &rResult);
             void JSIsNullOrUndefined (vxa_result_t &rResult);

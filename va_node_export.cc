@@ -122,6 +122,17 @@ void VA::Node::Export::JSStrictEquals (vxa_result_t &rResult, ThisClass *pThat) 
     HandleScope iHS (this);
     rResult = value ()->StrictEquals (pThat->value ());
 }
+
+/************************
+ *----  Conversion  ----*
+ ************************/
+
+void VA::Node::Export::JSToString (vxa_result_t &rResult) {
+    HandleScope iHS (this);
+    VString iResult;
+    UnwrapString (iResult, value(), false);
+    rResult = iResult;
+}
 
 
 /************************
@@ -332,6 +343,8 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::
     defineMethod (".global"                     , &Export::JSGlobal);
 
     defineMethod (".strictEquals:"              , &Export::JSStrictEquals);
+
+    defineMethod (".toString"                   , &Export::JSToString);
 
     defineMethod (".isUndefined"                , &Export::JSIsUndefined);
     defineMethod (".isNull"                     , &Export::JSIsNull);
