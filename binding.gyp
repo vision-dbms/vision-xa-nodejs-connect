@@ -1,6 +1,6 @@
 {
   'variables': {
-    'vision_root' : '<!(echo $osv)/software/src/master/src'
+    'vision_root' : '<!(node -p process.env.osv)/software/src/master/src'
   },
   'targets': [
     {
@@ -27,8 +27,7 @@
         '-lVxa',
         '-lVsa',
         '-lVca',
-        '-lV',
-        '-lpthread',
+        '-lV'
       ],
       
       ################
@@ -38,9 +37,10 @@
             'include_dirs': [
               '<(vision_root)/M_Linux'
             ],
-	    'libraries': [
+            'libraries': [
+              '-lpthread',
               '-luuid',
-	    ],
+            ],
             'cflags': [
               '-U_FORTIFY_SOURCE -frtti',
               '-Wno-delete-non-virtual-dtor',
@@ -76,6 +76,9 @@
             'include_dirs': [
               '<(vision_root)/M_Darwin'
             ],
+            'libraries': [
+              '-lpthread'
+            ],
             'library_dirs': [
               '<(vision_root)/lib',
             ],
@@ -98,9 +101,39 @@
             },
           },
         ],
-      ],
+        ['OS=="win"', {
+            'include_dirs': [
+              '<(vision_root)/M_Windows'
+            ],
+            'configurations': {
+              'Debug': {
+                'library_dirs': [
+                  '<(vision_root)/Debugx64'
+                ],
+                'msvs_settings': {
+                  'VCCLCompilerTool': {
+                    'RuntimeTypeInfo': 'true',
+                    'ExceptionHandling': 1, # /EHsc
+                  }
+                }
+              },
+              'Release': {
+                'library_dirs': [
+                  '<(vision_root)/Releasex64'
+                ],
+                'msvs_settings': {
+                  'VCCLCompilerTool': {
+                    'RuntimeTypeInfo': 'true',
+                    'ExceptionHandling': 1, # /EHsc
+                  }
+                }
+              }
+            }
+          }
+        ]
+      ]
       ################
-    },
-  ],
+    }
+  ]
 }
 
