@@ -36,7 +36,7 @@ namespace VA {
             typedef isolate_t*  isolate_handle_t;
             typedef isolate_t*  isolate_global_t;
 
-            typedef v8::NativeWeakMap              object_cache_t;
+            typedef v8::Map                        object_cache_t;
             typedef V8<object_cache_t>::local      object_cache_handle_t;
             typedef V8<object_cache_t>::persistent object_cache_global_t;
 

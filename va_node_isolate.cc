@@ -205,17 +205,18 @@ bool VA::Node::Isolate::Attach (
     ExportReference &rpModelObject, local_value_t hValue
 ) {
     HandleScope iHS (this);
+    local_context_t       const hContext = context ();
+    object_cache_handle_t const hValueCache (LocalFor (m_hValueCache));
+    maybe_value_t         const hMaybeCached (hValueCache->Get (hContext, hValue));
 
-    object_cache_handle_t hValueCache (LocalFor (m_hValueCache));
-    local_value_t hCachedValue (hValueCache->Get (hValue));
-
-    if (!hCachedValue.IsEmpty () && hCachedValue->IsExternal ()) {
-        rpModelObject.setTo (reinterpret_cast<Export*>(hCachedValue.As<v8::External>()->Value()));
+    local_value_t hLocalCached;
+    if (GetLocalFor (hLocalCached, hMaybeCached) && !hLocalCached.IsEmpty () && hLocalCached->IsExternal ()) {
+        rpModelObject.setTo (reinterpret_cast<Export*>(hLocalCached.As<v8::External>()->Value()));
         // std::cerr
         //     << "VA::Node::Isolate::Attach: " << this << ", found: " << rpModelObject.referent () << std::endl;
     } else {
         rpModelObject.setTo (new Export (this, hValue));
-        hValueCache->Set (hValue, v8::External::New (m_hIsolate, rpModelObject.referent ()));
+        hValueCache->Set (hContext, hValue, v8::External::New (m_hIsolate, rpModelObject.referent ()));
         // std::cerr
         //     << "VA::Node::Isolate["
         //     << this
@@ -229,9 +230,11 @@ bool VA::Node::Isolate::Attach (
 
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
     HandleScope iHS (this);
+    local_context_t       const hContext = context ();
     object_cache_handle_t const hCache = LocalFor (m_hValueCache);
     local_value_t         const hModelValue = pModelObject->value ();
     local_value_t               hCacheValue;
+    bool                        bDeleted;
 
 /*****************
  ****  Consider the model object gone if:
@@ -252,9 +255,13 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
         //     << std::endl;
         return bGone;
     } (
-        hCache->Delete (hModelValue)                         ||
-        (hCacheValue = hCache->Get (hModelValue)).IsEmpty () ||
-        !hCacheValue->IsExternal ()                          ||
+        !GetUnwrappedFromMaybe(
+            bDeleted, hCache->Delete (hContext, hModelValue)
+        )                                                              ||
+        bDeleted                                                       ||
+        !GetLocalFor (hCacheValue, hCache->Get(hContext, hModelValue)) ||
+        hCacheValue.IsEmpty ()                                         ||
+        !hCacheValue->IsExternal ()                                    ||
         hCacheValue.As<v8::External>()->Value() != pModelObject
     );
 }
