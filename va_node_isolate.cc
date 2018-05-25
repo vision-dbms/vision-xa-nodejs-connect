@@ -184,6 +184,24 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t 
         return false;
 
     rExport.setTo (Vxa::Export (pValue));
+/************************************************/
+    std::cerr
+        << "VA::Node::Isolate["
+        << std::setw(14) << this
+        << ","
+        << std::setw(6) << callCount ()
+        << "] GetExport "
+        << pValue
+        << " ["
+        << pValue->objectCluster ()
+        << " "
+        << pValue->objectIndex ()
+        << " / "
+        << pValue->objectCluster ()->cardinality ()
+        << "] "
+        << rExport
+        << std::endl;
+
     return true;
 }
 
