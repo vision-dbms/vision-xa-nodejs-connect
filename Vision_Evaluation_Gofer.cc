@@ -12,6 +12,8 @@
 
 #include "Vk.h"
 
+#include <iostream>
+
 /******************
  *****  Self  *****
  ******************/
@@ -38,7 +40,7 @@ class Vision::Evaluation::Gofer::EvaluatorClient : public Vsa::VEvaluatorClient 
 
 //  Construction
 public:
-    EvaluatorClient (Gofer *pGofer, Vxa::ICollection *pContext);
+    EvaluatorClient (Gofer *pGofer, export_t *pExport);
 
 //  Destruction
 private:
@@ -63,9 +65,16 @@ private:
  **************************/
 
 Vision::Evaluation::Gofer::EvaluatorClient::EvaluatorClient (
-    Gofer *pGofer, Vxa::ICollection *pContext
+    Gofer *pGofer, export_t *pExport
 ) : m_pGofer (pGofer) {
-    aggregate (pContext);
+    std::cerr
+        << "Vision::Evaluation::Gofer::EvaluatorClient::EvaluatorClient::aggregate: EC="
+        << this
+        << ", IC="
+        << pExport
+        << std::endl;
+
+    aggregate (pExport);
 }
 
 /***********************
@@ -100,13 +109,13 @@ void Vision::Evaluation::Gofer::EvaluatorClient::OnResult_(Vsa::IEvaluationResul
  ***********************/
 
 void Vision::Evaluation::Gofer::onNeed () {
-    m_iEvaluator.materializeFor (this);
+    m_pEvaluator.materializeFor (this);
     m_iExpression.materializeFor (this);
-    m_iContext.materializeFor (this);
+    m_pExport.materializeFor (this);
     BaseClass::onNeed ();
 }
 
 void Vision::Evaluation::Gofer::onData () {
-    EvaluatorClient::Reference const pEvaluatorClient (new EvaluatorClient (this, m_iContext));
-    pEvaluatorClient->onQuery (m_iEvaluator, m_iExpression);
+    EvaluatorClient::Reference const pEvaluatorClient (new EvaluatorClient (this, m_pExport));
+    pEvaluatorClient->onQuery (m_pEvaluator, m_iExpression);
 }

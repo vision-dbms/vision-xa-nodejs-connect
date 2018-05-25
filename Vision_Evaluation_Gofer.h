@@ -23,11 +23,11 @@
 
 namespace Vision {
     namespace Evaluation {
-        typedef Vxa::ICollection context_t;
+        typedef Vxa::ICollection export_t;
 
         typedef Vca::VGoferInterface<Vsa::IEvaluator>  evaluator_gofer_t;
         typedef Vca::VGoferInstance<Value>             evaluation_result_gofer_t;
-        typedef Vca::VGoferInterface<context_t>        context_gofer_t;
+        typedef Vca::VGoferInterface<export_t>         export_gofer_t;
 
         class Gofer : public Vca::VGoferInstance<Value> {
             DECLARE_CONCRETE_RTTLITE (Gofer, evaluation_result_gofer_t);
@@ -38,9 +38,9 @@ namespace Vision {
 
         //  Construction
         public:
-            template <typename evaluator_t, typename expression_t, typename context_t> Gofer (
-                evaluator_t iEvaluator, expression_t iExpression, context_t iContext
-            ) : m_iEvaluator (iEvaluator), m_iExpression (iExpression), m_iContext (iContext) {
+            template <typename evaluator_t, typename expression_t, typename export_t> Gofer (
+                evaluator_t pEvaluator, expression_t iExpression, export_t pExport
+            ) : m_pEvaluator (pEvaluator), m_iExpression (iExpression), m_pExport (pExport) {
             }
         //  Destruction
         private:
@@ -54,9 +54,9 @@ namespace Vision {
 
         //  State
         private:
-            Vca::VInstanceOfInterface<Vsa::IEvaluator> m_iEvaluator;
+            Vca::VInstanceOfInterface<Vsa::IEvaluator> m_pEvaluator;
             Vca::VInstanceOf_String                    m_iExpression;
-            Vca::VInstanceOfInterface<Vxa::ICollection>m_iContext;
+            Vca::VInstanceOfInterface<export_t>        m_pExport;
         };
     } // namespace Evaluation
 } // namespace Vision
