@@ -185,6 +185,7 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t 
 
     rExport.setTo (Vxa::Export (pValue));
 /************************************************/
+/*
     std::cerr
         << "VA::Node::Isolate["
         << std::setw(14) << this
@@ -201,7 +202,7 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t 
         << "] "
         << rExport
         << std::endl;
-
+*/
     return true;
 }
 
@@ -235,6 +236,7 @@ bool VA::Node::Isolate::Attach (
     if (GetLocalFor (hModelObject, hCache->Get (hContext, hValue)) && hModelObject->IsExternal ()) {
         rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<v8::External>()->Value()));
 
+    /*
         std::cerr
             << "VA::Node::Isolate["
             << std::setw(14) << this
@@ -242,11 +244,8 @@ bool VA::Node::Isolate::Attach (
             << std::setw(6) << callCount ()
             << "] Getting   "
             << rpModelObject.referent ()
-        //          << " SameValue? "
-        //          << (hValue->SameValue (rpModelObject->value ()) ? "OK" : ">>> WRONG  <<<")
-        //          << " StrictEqual? "
-        //          << (hValue->StrictEquals (rpModelObject->value ()) ? "OK" : ">>> WRONG  <<<")
             << std::endl;
+    */
     } else {
         rpModelObject.setTo (new Export (this, hValue));
         Sink (
@@ -255,6 +254,7 @@ bool VA::Node::Isolate::Attach (
             )
         );
 
+    /*
         std::cerr
             << "VA::Node::Isolate["
             << std::setw(14) << this
@@ -263,6 +263,7 @@ bool VA::Node::Isolate::Attach (
             << "] Setting   "
             << rpModelObject.referent ()
             << std::endl;
+    */
     }
     return rpModelObject.isntNil ();
 }
@@ -285,6 +286,7 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *
  ****************/
     return [&](bool bGone) {
+    /*
         std::cerr
             << "VA::Node::Isolate["
             << std::setw(14) << this
@@ -294,6 +296,7 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
             << pModelObject
             << (bGone ? " Gone" : " Kept")
             << std::endl;
+    */
         return bGone;
     } (
         !GetUnwrappedFromMaybe(
