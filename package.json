@@ -2,7 +2,7 @@
     "name": "vxanode",
     "version": "1.0.0",
     "description": "VisionDBMS External Adapter",
-    "main": "./build/Debug/vxanode",
+    "main": "./build/Release/vxanode",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "install": "node-gyp rebuild"
