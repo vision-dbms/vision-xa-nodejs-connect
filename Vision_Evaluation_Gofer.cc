@@ -67,13 +67,6 @@ private:
 Vision::Evaluation::Gofer::EvaluatorClient::EvaluatorClient (
     Gofer *pGofer, export_t *pExport
 ) : m_pGofer (pGofer) {
-    std::cerr
-        << "Vision::Evaluation::Gofer::EvaluatorClient::EvaluatorClient::aggregate: EC="
-        << this
-        << ", IC="
-        << pExport
-        << std::endl;
-
     aggregate (pExport);
 }
 
