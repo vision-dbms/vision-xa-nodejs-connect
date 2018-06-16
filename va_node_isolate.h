@@ -7,6 +7,8 @@
 
 #include "va_node_entity.h"
 
+#include "V_VCounter.h"
+
 /**************************
  *****  Declarations  *****
  **************************/
@@ -32,13 +34,17 @@ namespace VA {
 
         //  Aliases
         public:
+            typedef V::counter32nil_t       call_counter_t;
+            typedef call_counter_t::value_t call_count_t;
+
             typedef v8::Isolate isolate_t;
             typedef isolate_t*  isolate_handle_t;
             typedef isolate_t*  isolate_global_t;
 
             typedef v8::Map                        object_cache_t;
-            typedef V8<object_cache_t>::local      object_cache_handle_t;
-            typedef V8<object_cache_t>::persistent object_cache_global_t;
+            typedef V8<object_cache_t>::local      local_object_cache_t;
+            typedef V8<object_cache_t>::maybe      maybe_object_cache_t;
+            typedef V8<object_cache_t>::persistent persistent_object_cache_t;
 
             typedef ClassTraits<Export>::retaining_ptr_t ExportReference;
             typedef ClassTraits<Export>::notaining_ptr_t ExportPointer;
@@ -66,6 +72,10 @@ namespace VA {
 
         //  Access
         public:
+            call_count_t callCount () const {
+                return m_iCallCount;
+            }
+
             isolate_handle_t isolate () const {
                 return m_hIsolate;
             }
@@ -307,8 +317,9 @@ namespace VA {
 
         //  State
         private:
-            isolate_handle_t const m_hIsolate;
-            object_cache_global_t  m_hValueCache;
+            isolate_handle_t    const m_hIsolate;
+            persistent_object_cache_t m_hValueCache;
+            call_counter_t            m_iCallCount;
         };
 
     } // namespace VA::Node

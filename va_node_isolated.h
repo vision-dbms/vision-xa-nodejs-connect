@@ -90,6 +90,10 @@ namespace VA {
 
         //  Access
         public:
+            Isolate::call_count_t callCount () const {
+                return m_pIsolate->callCount ();
+            }
+
             Isolate *isolate () const {
                 return m_pIsolate;
             }

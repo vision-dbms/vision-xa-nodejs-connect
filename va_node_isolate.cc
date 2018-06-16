@@ -184,6 +184,25 @@ bool VA::Node::Isolate::GetExport (Vxa::export_return_t &rExport, local_value_t 
         return false;
 
     rExport.setTo (Vxa::Export (pValue));
+/************************************************/
+/*
+    std::cerr
+        << "VA::Node::Isolate["
+        << std::setw(14) << this
+        << ","
+        << std::setw(6) << callCount ()
+        << "] GetExport "
+        << pValue
+        << " ["
+        << pValue->objectCluster ()
+        << " "
+        << pValue->objectIndex ()
+        << " / "
+        << pValue->objectCluster ()->cardinality ()
+        << "] "
+        << rExport
+        << std::endl;
+*/
     return true;
 }
 
@@ -201,29 +220,50 @@ bool VA::Node::Isolate::Attach (
     return GetLocalFor (hLocalValue, hValue) && Attach (rpModelObject, hLocalValue);
 }
 
+namespace {
+    template <typename T> void Sink (T t) {
+    }
+}
+
 bool VA::Node::Isolate::Attach (
     ExportReference &rpModelObject, local_value_t hValue
 ) {
     HandleScope iHS (this);
-    local_context_t       const hContext = context ();
-    object_cache_handle_t const hValueCache (LocalFor (m_hValueCache));
-    maybe_value_t         const hMaybeCached (hValueCache->Get (hContext, hValue));
+    local_context_t      const hContext = context ();
+    local_object_cache_t const hCache (LocalFor (m_hValueCache));
 
-    local_value_t hLocalCached;
-    if (GetLocalFor (hLocalCached, hMaybeCached) && !hLocalCached.IsEmpty () && hLocalCached->IsExternal ()) {
-        rpModelObject.setTo (reinterpret_cast<Export*>(hLocalCached.As<v8::External>()->Value()));
-        // std::cerr
-        //     << "VA::Node::Isolate::Attach: " << this << ", found: " << rpModelObject.referent () << std::endl;
+    local_value_t hModelObject;
+    if (GetLocalFor (hModelObject, hCache->Get (hContext, hValue)) && hModelObject->IsExternal ()) {
+        rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<v8::External>()->Value()));
+
+    /*
+        std::cerr
+            << "VA::Node::Isolate["
+            << std::setw(14) << this
+            << ","
+            << std::setw(6) << callCount ()
+            << "] Getting   "
+            << rpModelObject.referent ()
+            << std::endl;
+    */
     } else {
         rpModelObject.setTo (new Export (this, hValue));
-        hValueCache->Set (hContext, hValue, v8::External::New (m_hIsolate, rpModelObject.referent ()));
-        // std::cerr
-        //     << "VA::Node::Isolate["
-        //     << this
-        //     << "]::Attach: "
-        //     << rpModelObject.referent ()
-        //     << (hValueCache->Has (hValue) ? " attached" : " uncached")
-        //     << std::endl;
+        Sink (
+            hCache->Set (
+                hContext, hValue, v8::External::New (m_hIsolate, rpModelObject.referent ())
+            )
+        );
+
+    /*
+        std::cerr
+            << "VA::Node::Isolate["
+            << std::setw(14) << this
+            << ","
+            << std::setw(6) << callCount ()
+            << "] Setting   "
+            << rpModelObject.referent ()
+            << std::endl;
+    */
     }
     return rpModelObject.isntNil ();
 }
@@ -231,7 +271,7 @@ bool VA::Node::Isolate::Attach (
 bool VA::Node::Isolate::Detach (Export *pModelObject) {
     HandleScope iHS (this);
     local_context_t       const hContext = context ();
-    object_cache_handle_t const hCache = LocalFor (m_hValueCache);
+    local_object_cache_t  const hCache = LocalFor (m_hValueCache);
     local_value_t         const hModelValue = pModelObject->value ();
     local_value_t               hCacheValue;
     bool                        bDeleted;
@@ -246,13 +286,17 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *
  ****************/
     return [&](bool bGone) {
-        // std::cerr
-        //     << "VA::Node::Isolate["
-        //     << this
-        //     << "]::Detach: "
-        //     << pModelObject
-        //     << (bGone ? " detached" : " retained")
-        //     << std::endl;
+    /*
+        std::cerr
+            << "VA::Node::Isolate["
+            << std::setw(14) << this
+            << ","
+            << std::setw(6) << callCount ()
+            << "] Clearing  "
+            << pModelObject
+            << (bGone ? " Gone" : " Kept")
+            << std::endl;
+    */
         return bGone;
     } (
         !GetUnwrappedFromMaybe(
@@ -369,6 +413,7 @@ bool VA::Node::Isolate::MaybeSetResultToCall (
 bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t rPack
 ) {
+    m_iCallCount++;
     v8::TryCatch iCatcher (*this);
     Args args (this, rPack);
     return MaybeSetResultToValue (
@@ -379,6 +424,7 @@ bool VA::Node::Isolate::MaybeSetResultToCall (
 bool VA::Node::Isolate::MaybeSetResultToCall (
     vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t rPack
 ) {
+    m_iCallCount++;
     v8::TryCatch iCatcher (*this);
     Args args (this, rPack);
     return hCallable->IsCallable () && (

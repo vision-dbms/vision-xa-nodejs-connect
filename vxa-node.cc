@@ -17,7 +17,7 @@
 
 #include "Vca_VServerApplication.h"
 
-namespace {
+namespace VA {
     using V::VString;
 
     using v8::FunctionCallbackInfo;
@@ -265,8 +265,8 @@ namespace {
             pIsolate->ThrowTypeError ("Missing Object");
             return;
         }
-        Vxa::export_return_t iExport;
-        pIsolate->GetExport (iExport, args[0]);
+        Vxa::export_return_t pExport;
+        pIsolate->GetExport (pExport, args[0]);
 
         ServerContext::arg_storage_t aServerArgs (args.Length ());
         aServerArgs[0] = "-node-";
@@ -278,7 +278,7 @@ namespace {
             }
         }
 
-        Server::Reference pServer (new Server (new ServerContext (aServerArgs), iExport));
+        Server::Reference pServer (new Server (new ServerContext (aServerArgs), pExport));
         args.GetReturnValue ().Set (pServer->start ());
     }
 
@@ -300,9 +300,9 @@ namespace {
         }
 
     //  Access the client export if supplied...
-        Vxa::export_return_t iExport;
+        Vxa::export_return_t pExport;
         if (args.Length () >= 2) {
-            pIsolate->GetExport (iExport, args[1]);
+            pIsolate->GetExport (pExport, args[1]);
         }
 
     //  Set up the evaluation...
@@ -312,7 +312,7 @@ namespace {
                     VString iEvaluatorName;
                     return args.Length () >= 3 && pIsolate->UnwrapString (iEvaluatorName, args[2])
                         ? EvaluatorGoferFor (iEvaluatorName) : DefaultEvaluator ();
-                }(), iExpression, iExport
+                }(), iExpression, pExport
             )
         );
 

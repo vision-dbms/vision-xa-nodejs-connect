@@ -90,6 +90,16 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t rPack) {
     if (!GetLocal (hObject))
         SetResultToUndefined (rResult);
     else {
+    /*
+        std::cerr
+            << "VA::Node::Export ["
+            << std::setw(14) << this
+            << ","
+            << std::setw(6) << callCount () + 1
+            << "] Calling   "
+            << rResult.selectorComponent (0)
+            << std::endl;
+    */
         local_value_t hApplicable; (
             GetLocalFor (
                 hApplicable, hObject->Get (
@@ -111,6 +121,15 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t rPack) {
 
 void VA::Node::Export::JSGlobal (vxa_result_t &rResult) {
     HandleScope iHS (this);
+/*
+    std::cerr
+        << "VA::Node::Export ["
+        << std::setw(14) << this
+        << ","
+        << std::setw(6) << callCount ()
+        << "] Getting   .global"
+        << std::endl;
+*/
     SetResultToGlobal (rResult);
 }
 
