@@ -1,7 +1,6 @@
 {
   'variables': {
     'vision_root' : '<!(node -p process.env.osv)/software/src/master/src',
-    'vision_lib' : '<!(node -p process.env.osv)/software/src/master/src/lib',
     'vision_src' : 'deps/vision/src'
   },
   'target_defaults': {
@@ -44,13 +43,12 @@
           '<(vision_src)/M_Darwin'
         ],
         'libraries': [
-          '-lpthread'
-        ],
-        'library_dirs': [
-          '<(vision_lib)',
+          '-lpthread',
         ],
         'xcode_settings': {
           'GCC_ENABLE_CPP_RTTI': 'YES',
+          'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+          'LD_DYLIB_INSTALL_NAME': '@loader_path/>(_target_name).dylib',
           'OTHER_CPLUSPLUSFLAGS': [
             '-Wno-delete-non-virtual-dtor',
             '-Wno-trigraphs',
@@ -64,6 +62,11 @@
             '-Wno-parentheses',
             '-Wno-deprecated-declarations',
             '-Wno-inconsistent-missing-override',
+	    '-Wno-char-subscripts',
+	    '-Wno-sign-compare',
+	    '-Wno-unused-private-field',
+	    '-Wno-unused-variable',
+	    '-Wno-unused-function',
           ],
         },
       }],
@@ -99,6 +102,9 @@
     ]
   },
   'targets': [
+    ################
+    ####  vxanode
+    ################
     {
       'target_name': 'vxanode',
       'sources': [
@@ -122,72 +128,12 @@
         'Vca',
         'V'
       ],
-      
-      ################
-      'conditions': [
-        ['OS=="mac"',
-          {
-            'include_dirs': [
-              '<(vision_src)/M_Darwin'
-            ],
-            'libraries': [
-              '-lpthread'
-            ],
-            'library_dirs': [
-              '<(vision_lib)',
-            ],
-            'xcode_settings': {
-              'GCC_ENABLE_CPP_RTTI': 'YES',
-              'OTHER_CPLUSPLUSFLAGS': [
-                '-Wno-delete-non-virtual-dtor',
-                '-Wno-trigraphs',
-                '-Wno-undefined-bool-conversion',
-                '-Wno-format',
-                '-Wno-reorder',
-                '-Wno-logical-op-parentheses',
-                '-Wno-switch',
-                '-Wno-shift-op-parentheses',
-                '-Wno-shift-negative-value',
-                '-Wno-parentheses',
-                '-Wno-deprecated-declarations',
-                '-Wno-inconsistent-missing-override',
-              ],
-            },
-          },
-        ],
-        ['OS=="win"', {
-            'include_dirs': [
-              '<(vision_src)/M_Windows'
-            ],
-            'configurations': {
-              'Debug': {
-                'library_dirs': [
-                  '<(vision_root)/Debugx64'
-                ],
-                'msvs_settings': {
-                  'VCCLCompilerTool': {
-                    'RuntimeTypeInfo': 'true',
-                    'ExceptionHandling': 1, # /EHsc
-                  }
-                }
-              },
-              'Release': {
-                'library_dirs': [
-                  '<(vision_root)/Releasex64'
-                ],
-                'msvs_settings': {
-                  'VCCLCompilerTool': {
-                    'RuntimeTypeInfo': 'true',
-                    'ExceptionHandling': 1, # /EHsc
-                  }
-                }
-              }
-            }
-          }
-        ]
-      ]
-      ################
-    }, {
+    },
+
+    ################
+    ####  V
+    ################
+    {
       'target_name' : 'V',
       'type' : 'shared_library',
       'sources' : [
@@ -241,7 +187,12 @@
         '<(vision_src)/kernel/VTransientServices.cpp',
         '<(vision_src)/kernel/cam.cpp',
       ]
-    }, {
+    },
+
+    ################
+    ####  Vca
+    ################
+    {
       'target_name': 'Vca',
       'type': 'shared_library',
       'dependencies': [
@@ -420,7 +371,12 @@
         '<(vision_src)/kernel/VPeerDataArray.cpp',
         '<(vision_src)/kernel/VTypeInfo.cpp',
       ],
-    }, {
+    },
+
+    ################
+    ####  VcaMain
+    ################
+    {
       'target_name': 'VcaMain',
       'type': 'shared_library',
       'dependencies': [
@@ -441,7 +397,12 @@
         '<(vision_src)/kernel/Vca_VProgramContext.cpp',
         '<(vision_src)/kernel/Vca_VServerApplication.cpp',
       ]
-    }, {
+    },
+
+    ################
+    ####  Vsa
+    ################
+    {
       'target_name': 'Vsa',
       'type': 'shared_library',
       'dependencies': [
@@ -490,13 +451,13 @@
         '<(vision_src)/kernel/Vsa_VEvaluatorClient.cpp',
         '<(vision_src)/kernel/Vsa_VOdometer.cpp',
         '<(vision_src)/kernel/Vsa_VEvaluatorPool.cpp',
-        '<(vision_src)/kernel/Vsa_VEvaluatorPump.ocpp',
+        '<(vision_src)/kernel/Vsa_VEvaluatorPump.cpp',
         '<(vision_src)/kernel/Vsa_VEvaluatorPumpSource.cpp',
         '<(vision_src)/kernel/Vsa_VEvaluatorSource.cpp',
         '<(vision_src)/kernel/Vsa_VGenericEvaluation.cpp',
         '<(vision_src)/kernel/Vsa_VPathQuery.cpp',
         '<(vision_src)/kernel/Vsa_VPoolBroadcast.cpp',
-        '<(vision_src)/kernel/Vsa_VPoolBroadcastEvaluation.ocpp',
+        '<(vision_src)/kernel/Vsa_VPoolBroadcastEvaluation.cpp',
         '<(vision_src)/kernel/Vsa_VPoolEvaluation.cpp',
         '<(vision_src)/kernel/Vsa_VPoolWorker.cpp',
         '<(vision_src)/kernel/Vsa_VPoolWorkerGeneration.cpp',
@@ -504,7 +465,12 @@
         '<(vision_src)/kernel/Vsa_VsaDirectoryBuilder.cpp',
         '<(vision_src)/kernel/Vsa_VSmartEvaluatorSource.cpp',
       ]
-    }, {
+    },
+
+    ################
+    ####  Vxa
+    ################
+    {
       'target_name': 'Vxa',
       'type': 'shared_library',
       'dependencies': [
@@ -561,6 +527,6 @@
         '<(vision_src)/kernel/Vxa_VTicketManager.cpp',
         '<(vision_src)/kernel/Vxa_VType.cpp',
       ]
-    } ####
+    }
   ]
 }
