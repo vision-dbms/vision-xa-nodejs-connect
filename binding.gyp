@@ -1,6 +1,5 @@
 {
   'variables': {
-    'vision_root' : '<!(node -p process.env.osv)/software/src/master/src',
     'vision_src' : 'deps/vision/src'
   },
   'target_defaults': {
@@ -74,11 +73,15 @@
         'include_dirs': [
           '<(vision_src)/M_Windows'
         ],
+        'msvs_disabled_warnings': [
+           '4018',
+           '4244',
+           '4477',
+           '4700',
+           '4910',
+        ],
         'configurations': {
           'Debug': {
-            'library_dirs': [
-              '<(vision_root)/Debugx64'
-            ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeTypeInfo': 'true',
@@ -87,13 +90,11 @@
             }
           },
           'Release': {
-            'library_dirs': [
-              '<(vision_root)/Releasex64'
-            ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeTypeInfo': 'true',
-                'ExceptionHandling': 1, # /EHsc
+                'ExceptionHandling': 1, # /EHsc',
+                'InlineFunctionExpansion': 1,
               }
             }
           }
@@ -136,6 +137,13 @@
     {
       'target_name' : 'V',
       'type' : 'shared_library',
+      'conditions': [
+        ['OS=="win"', {
+          'defines': [
+            'V_EXPORTS'
+          ]
+        }]
+      ],
       'sources' : [
         '<(vision_src)/kernel/gopt.cpp',
         '<(vision_src)/kernel/V.cpp',
@@ -168,6 +176,7 @@
         '<(vision_src)/kernel/V_VThread.cpp',
         '<(vision_src)/kernel/V_VThreadSpecific.cpp',
         '<(vision_src)/kernel/V_VTime.cpp',
+        '<(vision_src)/kernel/V_VTwiddler.cpp',
         '<(vision_src)/kernel/V_VUnmanagedThread.cpp',
         '<(vision_src)/kernel/VdbNetwork.cpp',
         '<(vision_src)/kernel/Vk.cpp',
@@ -195,6 +204,13 @@
     {
       'target_name': 'Vca',
       'type': 'shared_library',
+      'conditions': [
+        ['OS=="win"', {
+          'defines': [
+            'VCA_EXPORTS'
+          ]
+        }]
+      ],
       'dependencies': [
         'V'
       ],
@@ -379,6 +395,13 @@
     {
       'target_name': 'VcaMain',
       'type': 'shared_library',
+      'conditions': [
+        ['OS=="win"', {
+          'defines': [
+            'VCAMAIN_EXPORTS'
+          ]
+        }]
+      ],
       'dependencies': [
         'V',
         'Vca'
@@ -405,6 +428,13 @@
     {
       'target_name': 'Vsa',
       'type': 'shared_library',
+      'conditions': [
+        ['OS=="win"', {
+          'defines': [
+            'VSA_EXPORTS'
+          ]
+        }]
+      ],
       'dependencies': [
         'V',
         'Vca'
@@ -476,6 +506,13 @@
       'dependencies': [
         'V',
         'Vca'
+      ],
+      'conditions': [
+        ['OS=="win"', {
+          'defines': [
+            'VXA_EXPORTS'
+          ]
+        }]
       ],
       'sources': [
         '<(vision_src)/kernel/Vxa.cpp',
