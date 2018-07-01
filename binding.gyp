@@ -60,7 +60,6 @@
             '-Wno-shift-negative-value',
             '-Wno-parentheses',
             '-Wno-deprecated-declarations',
-            '-Wno-inconsistent-missing-override',
 	    '-Wno-char-subscripts',
 	    '-Wno-sign-compare',
 	    '-Wno-unused-private-field',

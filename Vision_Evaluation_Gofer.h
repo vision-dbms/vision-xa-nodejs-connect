@@ -49,8 +49,8 @@ namespace Vision {
 
         //  Callbacks and Triggers
         private:
-            void onData ();
-            void onNeed ();
+            void onData () override;
+            void onNeed () override;
 
         //  State
         private:

@@ -50,7 +50,7 @@ private:
 //  Callbacks
 protected:
     void OnError_(Vca::IError *pInterface, VString const &rMessage) override;
-    void OnResult_(Vsa::IEvaluationResult *pInterface, VString const &rOutput);
+    void OnResult_(Vsa::IEvaluationResult *pInterface, VString const &rOutput) override;
 
 //  State
 private:
