@@ -311,20 +311,17 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
 }
 
 
-/***************************
- ***************************
- *****  Result Return  *****
- ***************************
- ***************************/
-
 /**************************
+ **************************
  *****  Call Helpers  *****
+ **************************
  **************************/
 
-class VA::Node::Isolate::Args {
-//  class ArgSink
-public:
-    class ArgSink : public Vxa::VAny::Client {
+/*********************
+ *****  ArgSink  *****
+ *********************/
+
+class VA::Node::Isolate::Args::ArgSink : public Vxa::VAny::Client {
     public:
         ArgSink (
             local_value_t &rResult, Isolate *pIsolate
@@ -358,27 +355,9 @@ public:
         Isolate* const m_pIsolate;
     };
 
-//  Construction
-public:
-    Args (Isolate *pIsolate, vxa_pack_t rPack);
-
-//  Destruction
-public:
-    ~Args ();
-
-//  Access
-public:
-    int argc () const {
-        return m_aArgs.elementCount ();
-    }
-    local_value_t *argv () {
-        return m_aArgs.elementArray ();
-    }
-
-//  State
-private:
-    VkDynamicArrayOf<local_value_t> m_aArgs;
-};
+/******************
+ *****  Args  *****
+ ******************/
 
 /*----------------*/
 VA::Node::Isolate::Args::Args (
@@ -396,59 +375,13 @@ VA::Node::Isolate::Args::Args (
 /*----------------*/
 VA::Node::Isolate::Args::~Args () {
 }
-/*----------------*/
 
 
-/**********************
- ****  Maybe Call  ****
- **********************/
-
-bool VA::Node::Isolate::MaybeSetResultToCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t rPack
-) {
-    return MaybeSetResultToCallOf<local_function_t> (rResult, hReceiver, hCallable, rPack)
-        || MaybeSetResultToCallOf<local_object_t>   (rResult, hReceiver, hCallable, rPack);
-}
-
-bool VA::Node::Isolate::MaybeSetResultToCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t rPack
-) {
-    m_iCallCount++;
-    v8::TryCatch iCatcher (*this);
-    Args args (this, rPack);
-    return MaybeSetResultToValue (
-        rResult, hCallable->Call (context (), hReceiver, args.argc (), args.argv ())
-    ) || MaybeSetResultToError (rResult, iCatcher);
-}
-
-bool VA::Node::Isolate::MaybeSetResultToCall (
-    vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t rPack
-) {
-    m_iCallCount++;
-    v8::TryCatch iCatcher (*this);
-    Args args (this, rPack);
-    return hCallable->IsCallable () && (
-        MaybeSetResultToValue (
-            rResult, hCallable->CallAsFunction (
-                context (), hReceiver, args.argc (), args.argv ()
-            )
-        ) || MaybeSetResultToError (rResult, iCatcher)
-    );
-}
-
-
-/*************************
- *****  Maybe Error  *****
- *************************/
-
-bool VA::Node::Isolate::MaybeSetResultToError (
-    vxa_result_t &rResult, v8::TryCatch &rCatcher
-) {
-    return rCatcher.HasCaught () && MaybeSetResultToValue (
-        rResult, rCatcher.Exception ()
-    );
-}
-
+/***************************
+ ***************************
+ *****  Result Return  *****
+ ***************************
+ ***************************/
 
 /*************************
  *****  Maybe Value  *****
@@ -507,15 +440,6 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
         return true;
     }
     return false;
-}
-
-/*******************************
- *****  SetResultToGlobal  *****
- *******************************/
-
-bool VA::Node::Isolate::SetResultToGlobal (vxa_result_t &rResult) {
-    local_value_t hGlobal = context()->Global ();
-    return SetResultToValue (rResult, hGlobal);
 }
 
 /**********************************

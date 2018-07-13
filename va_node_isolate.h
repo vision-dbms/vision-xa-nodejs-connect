@@ -51,7 +51,32 @@ namespace VA {
 
         //  class Args
         public:
-            class Args;
+            class Args {
+            //  class ArgSink
+            public:
+                class ArgSink;
+
+            //  Construction
+            public:
+                Args (Isolate *pIsolate, vxa_pack_t rPack);
+
+            //  Destruction
+            public:
+                ~Args ();
+
+            //  Access
+            public:
+                int argc () const {
+                    return m_aArgs.elementCount ();
+                }
+                local_value_t *argv () const {
+                    return const_cast<local_value_t*>(m_aArgs.elementArray ());
+                }
+
+            //  State
+            private:
+                VkDynamicArrayOf<local_value_t> m_aArgs;
+            };
 
         //  Construction
         private:
@@ -241,40 +266,78 @@ namespace VA {
         /*----------------------*
          *----  Maybe Call  ----*
          *----------------------*/
-            template <typename handle_t> bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
+            template <typename result_t, typename callable_t> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, vxa_pack_t rPack
+            ) {
+                return MaybeSetResultToCall (rResult, hReceiver, hCallable, Args (this, rPack));
+            }
+
+            template <typename result_t, typename callable_t> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, Args const &rArgs
             ) {
                 local_value_t hLocalCallable;
                 return GetLocalFor (hLocalCallable, hCallable)
-                    && MaybeSetResultToCall (rResult, hReceiver, hLocalCallable, rPack);
+                    && MaybeSetResultToCall (rResult, hReceiver, hLocalCallable, rArgs);
             }
-            bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t rPack
-            );
-            bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_function_t hCallable, vxa_pack_t rPack
-            );
-            bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, local_object_t hCallable, vxa_pack_t rPack
-            );
-            template <typename cast_callable_t> bool MaybeSetResultToCallOf (
-                vxa_result_t &rResult, local_value_t hReceiver, local_value_t hCallable, vxa_pack_t rPack
+
+            template <typename result_t> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, Args const &rArgs
+            ) {
+                return MaybeSetResultToCallOf<result_t,local_function_t> (
+                    rResult, hReceiver, hCallable, rArgs
+                ) || MaybeSetResultToCallOf<result_t,local_object_t> (
+                    rResult, hReceiver, hCallable, rArgs
+                );
+            }
+
+            template <typename result_t> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, local_function_t hCallable, Args const &rArgs
+            ) {
+                m_iCallCount++;
+                v8::TryCatch iCatcher (*this);
+                return MaybeSetResultToValue (
+                    rResult, hCallable->Call (context (), hReceiver, rArgs.argc (), rArgs.argv ())
+                ) || MaybeSetResultToError (rResult, iCatcher);
+            }
+
+            template <typename result_t> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, local_object_t hCallable, Args const &rArgs
+            ) {
+                m_iCallCount++;
+                v8::TryCatch iCatcher (*this);
+                return hCallable->IsCallable () && (
+                    MaybeSetResultToValue (
+                        rResult, hCallable->CallAsFunction (
+                            context (), hReceiver, rArgs.argc (), rArgs.argv ()
+                        )
+                    ) || MaybeSetResultToError (rResult, iCatcher)
+                );
+            }
+
+            template <typename result_t, typename cast_callable_t> bool MaybeSetResultToCallOf (
+                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, Args const &rArgs
             ) {
                 cast_callable_t hCastCallable;
                 return GetLocalFrom (hCastCallable, hCallable)
-                    && MaybeSetResultToCall (rResult, hReceiver, hCastCallable, rPack);
+                    && MaybeSetResultToCall (rResult, hReceiver, hCastCallable, rArgs);
             }
 
         /*-----------------------*
          *----  Maybe Error  ----*
          *-----------------------*/
-            bool MaybeSetResultToError (vxa_result_t &rResult, v8::TryCatch &rCatcher);
+            template <typename result_t> bool MaybeSetResultToError (
+                result_t &rResult, v8::TryCatch &rCatcher
+            ) {
+                return rCatcher.HasCaught () && MaybeSetResultToValue (
+                    rResult, rCatcher.Exception ()
+                );
+            }
 
         /*-----------------------*
          *----  Maybe Value  ----*
          *-----------------------*/
-            template <typename handle_t> bool MaybeSetResultToValue (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool MaybeSetResultToValue (
+                result_t &rResult, handle_t hValue
             ) {
                 local_value_t hLocalValue;
                 return GetLocalFor (hLocalValue, hValue)
@@ -300,19 +363,23 @@ namespace VA {
         /*--------------------------*
          *----  SetResultTo...  ----*
          *--------------------------*/
-            template <typename handle_t> bool SetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
+            template <typename result_t, typename callable_t, typename pack_t> bool SetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, pack_t &rPack
             ) {
                 return MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack)
                     || SetResultToUndefined (rResult);
             }
-            template <typename handle_t> bool SetResultToValue (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool SetResultToValue (
+                result_t &rResult, handle_t hValue
             ) {
                 return MaybeSetResultToValue (rResult, hValue) || SetResultToUndefined (rResult);
             }
 
-            bool SetResultToGlobal (vxa_result_t &rResult);
+            template <typename result_t> bool SetResultToGlobal (result_t &rResult) {
+                local_value_t hGlobal = context()->Global ();
+                return SetResultToValue (rResult, hGlobal);
+            }
+
             bool SetResultToUndefined (vxa_result_t &rResult);
 
         //  State

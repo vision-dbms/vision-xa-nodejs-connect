@@ -150,8 +150,8 @@ namespace VA {
         /*----------------------*
          *----  Maybe Call  ----*
          *----------------------*/
-            template <typename handle_t> bool MaybeSetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
+            template <typename result_t, typename callable_t, typename pack_t> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, pack_t &rPack
             ) {
                 return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack);
             }
@@ -159,28 +159,28 @@ namespace VA {
         /*-----------------------*
          *----  Maybe Value  ----*
          *-----------------------*/
-            template <typename handle_t> bool MaybeSetResultToValue (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool MaybeSetResultToValue (
+                result_t &rResult, handle_t hValue
             ) const {
                 return m_pIsolate->MaybeSetResultToValue (rResult, hValue);
             }
-            template <typename handle_t> bool MaybeSetResultToInt32 (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool MaybeSetResultToInt32 (
+                result_t &rResult, handle_t hValue
             ) const {
                 return m_pIsolate->MaybeSetResultToInt32 (rResult, hValue);
             }
-            template <typename handle_t> bool MaybeSetResultToDouble (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool MaybeSetResultToDouble (
+                result_t &rResult, handle_t hValue
             ) const {
                 return m_pIsolate->MaybeSetResultToDouble (rResult, hValue);
             }
-            template <typename handle_t> bool MaybeSetResultToString (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool MaybeSetResultToString (
+                result_t &rResult, handle_t hValue
             ) const {
                 return m_pIsolate->MaybeSetResultToString (rResult, hValue);
             }
-            template <typename handle_t> bool MaybeSetResultToObject (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool MaybeSetResultToObject (
+                result_t &rResult, handle_t hValue
             ) const {
                 return m_pIsolate->MaybeSetResultToObject (rResult, hValue);
             }
@@ -188,21 +188,21 @@ namespace VA {
         /****************************
          *----  SetResultTo...  ----*
          ****************************/
-            template <typename handle_t> bool SetResultToCall (
-                vxa_result_t &rResult, local_value_t hReceiver, handle_t hCallable, vxa_pack_t rPack
+            template <typename result_t, typename callable_t, typename pack_t> bool SetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, pack_t &rPack
             ) {
                 return m_pIsolate->SetResultToCall (rResult, hReceiver, hCallable, rPack);
             }
-            template <typename handle_t> bool SetResultToValue (
-                vxa_result_t &rResult, handle_t hValue
+            template <typename result_t, typename handle_t> bool SetResultToValue (
+                result_t &rResult, handle_t hValue
             ) const {
                 return m_pIsolate->SetResultToValue (rResult, hValue);
             }
 
-            bool SetResultToGlobal (vxa_result_t &rResult) {
+            template <typename result_t> bool SetResultToGlobal (result_t &rResult) {
                 return m_pIsolate->SetResultToGlobal (rResult);
             }
-            bool SetResultToUndefined (vxa_result_t &rResult) {
+            template <typename result_t> bool SetResultToUndefined (result_t &rResult) {
                 return m_pIsolate->SetResultToUndefined (rResult);
             }
 
