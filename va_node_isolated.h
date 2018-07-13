@@ -105,7 +105,7 @@ namespace VA {
             }
 
         //  Model Management
-        protected:
+        public:
             template <typename handle_t> bool Attach (
                 ClassTraits<Export>::retaining_ptr_t &rpModelObject, handle_t hValue
             ) const {
@@ -113,13 +113,42 @@ namespace VA {
             }
 
         //  Local Access
-        protected:
-        //  ... source handle -> local handle
-            template <typename source_t> typename V8<source_t>::local LocalFor (source_t const &rHandle) const {
+        public:
+        //  ... isolate constants
+            local_primitive_t LocalUndefined () const {
+                return m_pIsolate->LocalUndefined ();
+            }
+            local_primitive_t LocalNull () const {
+                return m_pIsolate->LocalNull ();
+            }
+            local_boolean_t LocalTrue () const {
+                return m_pIsolate->LocalTrue ();;
+            }
+            local_boolean_t LocalFalse () const {
+                return m_pIsolate->LocalFalse ();
+            }
+            bool GetLocalUndefined (local_value_t &rhLocal) const {
+                return m_pIsolate->GetLocalUndefined (rhLocal);
+            }
+            bool GetLocalNull (local_value_t &rhLocal) const {
+                return m_pIsolate->GetLocalNull (rhLocal);
+            }
+            bool GetLocalTrue (local_value_t &rhLocal) const {
+                return m_pIsolate->GetLocalTrue (rhLocal);
+            }
+            bool GetLocalFalse (local_value_t &rhLocal) const {
+                return m_pIsolate->GetLocalFalse (rhLocal);
+            }
+
+        public:
+        //  ... handle -> local handle
+            template <typename source_t> typename V8<source_t>::local LocalFor (
+                source_t const &rHandle
+            ) const {
                 return m_pIsolate->LocalFor (rHandle);
             }
 
-        //  ... source handle -> local handle (maybe)
+        //  ... handle -> local handle (maybe)
             template <typename local_t, typename source_t> bool GetLocalFrom (
                 local_t &rhLocal, source_t const &rhSource
             ) const {
@@ -127,7 +156,7 @@ namespace VA {
             }
 
         //  Object Access
-        protected:
+        public:
             template <typename unwrapped_t, typename handle_t> bool GetUnwrapped (
                 unwrapped_t &rUnwrapped, handle_t hValue
             ) const {
@@ -140,7 +169,7 @@ namespace VA {
             }
 
         //  Object Creation
-        protected:
+        public:
             local_string_t NewString (char const *pString) const {
                 return m_pIsolate->NewString (pString);
             }
