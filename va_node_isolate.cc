@@ -321,7 +321,7 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *****  ArgSink  *****
  *********************/
 
-class VA::Node::Isolate::Args::ArgSink : public Vxa::VAny::Client {
+class VA::Node::Isolate::ArgPack::ArgSink : public Vxa::VAny::Client {
     public:
         ArgSink (
             local_value_t &rResult, Isolate *pIsolate
@@ -355,12 +355,12 @@ class VA::Node::Isolate::Args::ArgSink : public Vxa::VAny::Client {
         Isolate* const m_pIsolate;
     };
 
-/******************
- *****  Args  *****
- ******************/
+/*********************
+ *****  ArgPack  *****
+ *********************/
 
 /*----------------*/
-VA::Node::Isolate::Args::Args (
+VA::Node::Isolate::ArgPack::ArgPack (
     Isolate *pIsolate, vxa_pack_t rPack
 ) : m_aArgs (rPack.parameterCount ()) {
     int const cArgs = argc ();
@@ -373,7 +373,7 @@ VA::Node::Isolate::Args::Args (
     }
 }
 /*----------------*/
-VA::Node::Isolate::Args::~Args () {
+VA::Node::Isolate::ArgPack::~ArgPack () {
 }
 
 
@@ -386,6 +386,13 @@ VA::Node::Isolate::Args::~Args () {
 /*************************
  *****  Maybe Value  *****
  *************************/
+
+bool VA::Node::Isolate::MaybeSetResultToValue (
+    local_value_t &rResult, local_value_t hValue
+) {
+    rResult = hValue;
+    return true;
+}
 
 bool VA::Node::Isolate::MaybeSetResultToValue (
     vxa_result_t &rResult, local_value_t hValue
@@ -446,9 +453,13 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
  *****  SetResultToUndefined  *****
  **********************************/
 
+bool VA::Node::Isolate::SetResultToUndefined (local_value_t &rResult) {
+    return GetLocalUndefined (rResult);
+}
+
 bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
     local_value_t hUndefined; ExportReference pResult;
-    if (GetLocalUndefined (hUndefined) && Attach (pResult, hUndefined)) {
+    if (SetResultToUndefined (hUndefined) && Attach (pResult, hUndefined)) {
         rResult = pResult;
     } else {
         rResult = false;

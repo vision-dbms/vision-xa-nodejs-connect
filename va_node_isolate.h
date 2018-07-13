@@ -49,20 +49,52 @@ namespace VA {
             typedef ClassTraits<Export>::retaining_ptr_t ExportReference;
             typedef ClassTraits<Export>::notaining_ptr_t ExportPointer;
 
-        //  class Args
+        //  class ArgPack
         public:
-            class Args {
+            class ArgPack {
             //  class ArgSink
             public:
                 class ArgSink;
 
             //  Construction
             public:
-                Args (Isolate *pIsolate, vxa_pack_t rPack);
+                template <typename ...Ts> ArgPack (
+                    Isolate *pIsolate, Ts ...args
+                ) : m_aArgs (sizeof... (Ts)) {
+                    PunPackRest (pIsolate, m_aArgs.elementArray (), args...);
+                }
+                ArgPack (Isolate *pIsolate, vxa_pack_t rPack);
+
+            //  PunPack
+            private:
+                template <typename T, typename... Ts> static void PunPackRest (
+                    Isolate *pIsolate, local_value_t *pResult, T tHere, Ts ...tRest
+                ) {
+                    PunPackHere (pIsolate, *pResult, tHere);
+                    PunPackRest (pIsolate, pResult+1,tRest...);
+                }
+                static void PunPackRest (Isolate*, local_value_t*) {
+                }
+
+                static void PunPackHere (Isolate *pIsolate, local_value_t &rResult, local_value_t iT) {
+                    rResult = iT;
+                }
+                static void PunPackHere (Isolate *pIsolate, local_value_t &rResult, int32_t iT) {
+                    rResult = pIsolate->NewNumber(iT);
+                }
+                static void PunPackHere (Isolate *pIsolate, local_value_t &rResult, uint32_t iT) {
+                    rResult = pIsolate->NewNumber(iT);
+                }
+                static void PunPackHere (Isolate *pIsolate, local_value_t &rResult, double iT) {
+                    rResult = pIsolate->NewNumber(iT);
+                }
+                static void PunPackHere (Isolate *pIsolate, local_value_t &rResult, char const *iT) {
+                    rResult = pIsolate->NewString(iT);
+                }
 
             //  Destruction
             public:
-                ~Args ();
+                ~ArgPack ();
 
             //  Access
             public:
@@ -239,6 +271,9 @@ namespace VA {
             local_integer_t  NewNumber (int iNumber) const {
                 return integer_t::New (handle (), iNumber);
             }
+            local_integer_t  NewNumber (unsigned int iNumber) const {
+                return integer_t::NewFromUnsigned (handle (), iNumber);
+            }
             local_number_t  NewNumber (double iNumber) const {
                 return number_t::New (handle (), iNumber);
             }
@@ -266,32 +301,42 @@ namespace VA {
         /*----------------------*
          *----  Maybe Call  ----*
          *----------------------*/
-            template <typename result_t, typename callable_t> bool MaybeSetResultToCall (
-                result_t &rResult, local_value_t hReceiver, callable_t hCallable, vxa_pack_t rPack
+            template <typename result_t, typename callable_t, typename... arg_ts> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, arg_ts ...args
             ) {
-                return MaybeSetResultToCall (rResult, hReceiver, hCallable, Args (this, rPack));
+                return MaybeSetResultToApply (rResult, hReceiver, hCallable, ArgPack (this, args...));
             }
 
-            template <typename result_t, typename callable_t> bool MaybeSetResultToCall (
-                result_t &rResult, local_value_t hReceiver, callable_t hCallable, Args const &rArgs
+        public:
+        /*-----------------------*
+         *----  Maybe Apply  ----*
+         *-----------------------*/
+            template <typename result_t, typename callable_t> bool MaybeSetResultToApply (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, vxa_pack_t rPack
+            ) {
+                return MaybeSetResultToApply (rResult, hReceiver, hCallable, ArgPack (this, rPack));
+            }
+
+            template <typename result_t, typename callable_t> bool MaybeSetResultToApply (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, ArgPack const &rArgs
             ) {
                 local_value_t hLocalCallable;
                 return GetLocalFor (hLocalCallable, hCallable)
-                    && MaybeSetResultToCall (rResult, hReceiver, hLocalCallable, rArgs);
+                    && MaybeSetResultToApply (rResult, hReceiver, hLocalCallable, rArgs);
             }
 
-            template <typename result_t> bool MaybeSetResultToCall (
-                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, Args const &rArgs
+            template <typename result_t> bool MaybeSetResultToApply (
+                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, ArgPack const &rArgs
             ) {
-                return MaybeSetResultToCallOf<result_t,local_function_t> (
+                return MaybeSetResultToApplyOf<result_t,local_function_t> (
                     rResult, hReceiver, hCallable, rArgs
-                ) || MaybeSetResultToCallOf<result_t,local_object_t> (
+                ) || MaybeSetResultToApplyOf<result_t,local_object_t> (
                     rResult, hReceiver, hCallable, rArgs
                 );
             }
 
-            template <typename result_t> bool MaybeSetResultToCall (
-                result_t &rResult, local_value_t hReceiver, local_function_t hCallable, Args const &rArgs
+            template <typename result_t> bool MaybeSetResultToApply (
+                result_t &rResult, local_value_t hReceiver, local_function_t hCallable, ArgPack const &rArgs
             ) {
                 m_iCallCount++;
                 v8::TryCatch iCatcher (*this);
@@ -300,8 +345,8 @@ namespace VA {
                 ) || MaybeSetResultToError (rResult, iCatcher);
             }
 
-            template <typename result_t> bool MaybeSetResultToCall (
-                result_t &rResult, local_value_t hReceiver, local_object_t hCallable, Args const &rArgs
+            template <typename result_t> bool MaybeSetResultToApply (
+                result_t &rResult, local_value_t hReceiver, local_object_t hCallable, ArgPack const &rArgs
             ) {
                 m_iCallCount++;
                 v8::TryCatch iCatcher (*this);
@@ -314,12 +359,12 @@ namespace VA {
                 );
             }
 
-            template <typename result_t, typename cast_callable_t> bool MaybeSetResultToCallOf (
-                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, Args const &rArgs
+            template <typename result_t, typename cast_callable_t> bool MaybeSetResultToApplyOf (
+                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, ArgPack const &rArgs
             ) {
                 cast_callable_t hCastCallable;
                 return GetLocalFrom (hCastCallable, hCallable)
-                    && MaybeSetResultToCall (rResult, hReceiver, hCastCallable, rArgs);
+                    && MaybeSetResultToApply (rResult, hReceiver, hCastCallable, rArgs);
             }
 
         /*-----------------------*
@@ -343,6 +388,10 @@ namespace VA {
                 return GetLocalFor (hLocalValue, hValue)
                     && MaybeSetResultToValue (rResult, hLocalValue);
             }
+
+            bool MaybeSetResultToValue (
+                local_value_t &rResult, local_value_t hValue
+            );
             bool MaybeSetResultToValue (
                 vxa_result_t &rResult, local_value_t hValue
             );
@@ -363,10 +412,16 @@ namespace VA {
         /*--------------------------*
          *----  SetResultTo...  ----*
          *--------------------------*/
-            template <typename result_t, typename callable_t, typename pack_t> bool SetResultToCall (
+            template <typename result_t, typename callable_t, typename... arg_ts> bool SetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, arg_ts ...args
+            ) {
+                return MaybeSetResultToCall (rResult, hReceiver, hCallable, args...)
+                    || SetResultToUndefined (rResult);
+            }
+            template <typename result_t, typename callable_t, typename pack_t> bool SetResultToApply (
                 result_t &rResult, local_value_t hReceiver, callable_t hCallable, pack_t &rPack
             ) {
-                return MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack)
+                return MaybeSetResultToApply (rResult, hReceiver, hCallable, rPack)
                     || SetResultToUndefined (rResult);
             }
             template <typename result_t, typename handle_t> bool SetResultToValue (
@@ -380,6 +435,7 @@ namespace VA {
                 return SetResultToValue (rResult, hGlobal);
             }
 
+            bool SetResultToUndefined (local_value_t &rResult);
             bool SetResultToUndefined (vxa_result_t &rResult);
 
         //  State

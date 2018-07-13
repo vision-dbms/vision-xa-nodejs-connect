@@ -58,6 +58,19 @@ namespace VA {
                 return this->GetLocalFrom (rhLocal, m_hValue);
             }
 
+        //  Local Methods
+        public:
+            template <typename... arg_ts> bool Call (
+                local_value_t &rResult, local_value_t hReceiver, arg_ts ...args
+            ) const {
+                return MaybeSetResultToCall (rResult, hReceiver, value (), args...);
+            }
+            template <typename pack_t> bool Apply (
+                local_value_t &rResult, local_value_t hReceiver, pack_t &rPack
+            ) const {
+                return MaybeSetResultToApply (rResult, hReceiver, rPack);
+            }
+
         //  JS Methods
         protected:
             void JSCallback (vxa_result_t &rResult, vxa_pack_t rPack);

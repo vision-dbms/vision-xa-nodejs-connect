@@ -108,7 +108,7 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t rPack) {
             ) && rResult.invokedIntensionally () ? (
                 SetResultToValue (rResult, hApplicable)
             ) : (
-                MaybeSetResultToCall (rResult, value (), hApplicable, rPack) ||
+                MaybeSetResultToApply (rResult, value (), hApplicable, rPack) ||
                 SetResultToValue (rResult, hApplicable)
             )
         ) || SetResultToUndefined (rResult);

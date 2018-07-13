@@ -147,13 +147,19 @@ namespace VA {
 
         //  Result Return
         public:
-        /*----------------------*
-         *----  Maybe Call  ----*
-         *----------------------*/
-            template <typename result_t, typename callable_t, typename pack_t> bool MaybeSetResultToCall (
+        /*----------------------------*
+         *----  Maybe Call/Apply  ----*
+         *----------------------------*/
+            template <typename result_t, typename callable_t, typename... arg_ts> bool MaybeSetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, arg_ts ...args
+            ) const {
+                return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, args...);
+            }
+
+            template <typename result_t, typename callable_t, typename pack_t> bool MaybeSetResultToApply (
                 result_t &rResult, local_value_t hReceiver, callable_t hCallable, pack_t &rPack
-            ) {
-                return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, rPack);
+            ) const {
+                return m_pIsolate->MaybeSetResultToApply (rResult, hReceiver, hCallable, rPack);
             }
 
         /*-----------------------*
@@ -188,10 +194,15 @@ namespace VA {
         /****************************
          *----  SetResultTo...  ----*
          ****************************/
-            template <typename result_t, typename callable_t, typename pack_t> bool SetResultToCall (
+            template <typename result_t, typename callable_t, typename... arg_ts> bool SetResultToCall (
+                result_t &rResult, local_value_t hReceiver, callable_t hCallable, arg_ts ...args
+            ) const {
+                return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, args...);
+            }
+            template <typename result_t, typename callable_t, typename pack_t> bool SetResultToApply (
                 result_t &rResult, local_value_t hReceiver, callable_t hCallable, pack_t &rPack
-            ) {
-                return m_pIsolate->SetResultToCall (rResult, hReceiver, hCallable, rPack);
+            ) const {
+                return m_pIsolate->SetResultToApply (rResult, hReceiver, hCallable, rPack);
             }
             template <typename result_t, typename handle_t> bool SetResultToValue (
                 result_t &rResult, handle_t hValue
@@ -199,10 +210,10 @@ namespace VA {
                 return m_pIsolate->SetResultToValue (rResult, hValue);
             }
 
-            template <typename result_t> bool SetResultToGlobal (result_t &rResult) {
+            template <typename result_t> bool SetResultToGlobal (result_t &rResult) const {
                 return m_pIsolate->SetResultToGlobal (rResult);
             }
-            template <typename result_t> bool SetResultToUndefined (result_t &rResult) {
+            template <typename result_t> bool SetResultToUndefined (result_t &rResult) const {
                 return m_pIsolate->SetResultToUndefined (rResult);
             }
 
