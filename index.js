@@ -21,4 +21,4 @@ module.exports.v2 = function (...args) {
     );
 }
 
-module.exports.v = module.exports.v1;
+module.exports.v = module.exports.v2;

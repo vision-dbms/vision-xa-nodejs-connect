@@ -391,7 +391,8 @@ namespace VA {
         void run () override {
             VN::HandleScope iHS (m_pCallback);
             VN::local_value_t hResult;
-            m_pCallback->Call (hResult, m_pCallback->LocalUndefined (), m_iResult);
+            node::async_context aContext = {0,0};
+            m_pCallback->Call (hResult, aContext, m_pCallback->NewObject (), m_iResult);
         }
 
     //  State

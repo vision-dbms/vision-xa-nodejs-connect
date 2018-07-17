@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include "node.h"
 #include "v8.h"
 
 #include "Vxa_VAny.h"

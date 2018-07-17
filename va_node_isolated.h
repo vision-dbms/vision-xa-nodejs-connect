@@ -173,9 +173,39 @@ namespace VA {
             local_string_t NewString (char const *pString) const {
                 return m_pIsolate->NewString (pString);
             }
+            local_object_t NewObject () const {
+                return m_pIsolate->NewObject ();
+            }
 
         //  Result Return
         public:
+        /*--------------------------*
+         *----  Maybe Callback  ----*
+         *--------------------------*/
+            template<typename result_t,typename callable_t,typename... arg_ts> bool MaybeSetResultToCall (
+                result_t &rResult,
+                node::async_context aContext,
+                local_object_t hReceiver,
+                callable_t hCallable,
+                arg_ts ...args
+            ) const {
+                return m_pIsolate->MaybeSetResultToCall (
+                    rResult, aContext, hReceiver, hCallable, args...
+                );
+            }
+
+            template<typename result_t,typename callable_t,typename pack_t> bool MaybeSetResultToApply (
+                result_t &rResult,
+                node::async_context aContext,
+                local_object_t hReceiver,
+                callable_t hCallable,
+                pack_t &rPack
+            ) const {
+                return m_pIsolate->MaybeSetResultToApply (
+                    rResult, aContext, hReceiver, hCallable, rPack
+                );
+            }
+
         /*----------------------------*
          *----  Maybe Call/Apply  ----*
          *----------------------------*/

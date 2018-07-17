@@ -58,8 +58,21 @@ namespace VA {
                 return this->GetLocalFrom (rhLocal, m_hValue);
             }
 
-        //  Local Methods
+        //  Local Call (assumes 'this' references a function or equivalent)
         public:
+        //  ... MakeCallback
+            template <typename... arg_ts> bool Call (
+                local_value_t &rResult, node::async_context aContext, local_object_t hReceiver, arg_ts ...args
+            ) const {
+                return MaybeSetResultToCall (rResult, aContext, hReceiver, value (), args...);
+            }
+            template <typename pack_t> bool Apply (
+                local_value_t &rResult, node::async_context aContext, local_object_t hReceiver, pack_t &rPack
+            ) const {
+                return MaybeSetResultToApply (rResult, aContext, hReceiver, value (), rPack);
+            }
+
+        //  ... Call
             template <typename... arg_ts> bool Call (
                 local_value_t &rResult, local_value_t hReceiver, arg_ts ...args
             ) const {

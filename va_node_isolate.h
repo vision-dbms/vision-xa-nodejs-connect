@@ -277,6 +277,9 @@ namespace VA {
             local_number_t  NewNumber (double iNumber) const {
                 return number_t::New (handle (), iNumber);
             }
+            local_object_t NewObject () const {
+                return object_t::New (handle ());
+            }
 
         //  Exception Helpers
         public:
@@ -298,6 +301,47 @@ namespace VA {
 
         //  Result Return
         public:
+        /*--------------------------*
+         *----  Maybe Callback  ----*
+         *--------------------------*/
+            template<typename result_t,typename callable_t,typename... arg_ts> bool MaybeSetResultToCall (
+                result_t &rResult,
+                node::async_context aContext,
+                local_object_t hReceiver,
+                callable_t hCallable,
+                arg_ts ...args
+            ) {
+                return MaybeSetResultToApply (
+                    rResult, aContext, hReceiver, hCallable, ArgPack (this, args...)
+                );
+            }
+            template <typename result_t, typename callable_t> bool MaybeSetResultToApply (
+                result_t &rResult,
+                node::async_context aContext,
+                local_object_t hReceiver,
+                callable_t hCallable,
+                ArgPack const &rArgs
+            ) {
+                local_function_t hFunction;
+                return GetLocalFrom (hFunction, hCallable) && MaybeSetResultToApply (
+                    rResult, aContext, hReceiver, hFunction, rArgs
+                );
+            }
+            template <typename result_t> bool MaybeSetResultToApply (
+                result_t &rResult,
+                node::async_context aContext,
+                local_object_t hReceiver,
+                local_function_t hFunction,
+                ArgPack const &rArgs
+            ) {
+                v8::TryCatch iCatcher (*this);
+                return MaybeSetResultToValue (
+                    rResult, node::MakeCallback (
+                        handle (), hReceiver, hFunction, rArgs.argc (), rArgs.argv (), aContext
+                    )
+                );
+            }
+
         /*----------------------*
          *----  Maybe Call  ----*
          *----------------------*/
