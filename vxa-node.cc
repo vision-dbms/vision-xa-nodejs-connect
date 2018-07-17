@@ -7,9 +7,10 @@
 
 #include "Vision_Evaluation_Gofer.h"
 
+#include "va_node_callback.h"
 #include "va_node_export.h"
+#include "va_node_handle_scope.h"
 #include "va_node_resolver.h"
-#include "va_node_triggerable.h"
 
 #include "Vca_VcaGofer.h"
 #include "Vca_IDirectory.h"
@@ -50,121 +51,6 @@ namespace VA {
         );
         return pGofer;
     }
-
-/************************
- *----  ResultSink  ----*
- ************************/
-
-    class ResultSink : public Vca::VRolePlayer {
-        DECLARE_CONCRETE_RTTLITE (ResultSink, Vca::VRolePlayer);
-
-    //  Aliases
-    public:
-        typedef VN::Resolver Resolver;
-
-    //  class Resolution
-    public:
-        class Resolution : public Resolver::Resolution {
-            DECLARE_CONCRETE_RTTLITE (Resolution, Resolver::Resolution);
-
-        //  Friends
-            friend class ResultSink;
-
-        //  Construction
-        public:
-            Resolution (
-                Resolver *pResolver, VE::Value iResult
-            ) : BaseClass (pResolver), m_iResult (iResult) {
-            }
-
-        //  Destruction
-        private:
-            ~Resolution () {
-            }
-
-        //  Execution
-        private:
-            void run () override {
-                Resolve (NewString (m_iResult.output ()));
-            }
-
-        //  State
-        private:
-            VE::Value const m_iResult;
-        }; // class ResultSink::Resolution
-
-    //  class Rejection
-    public:
-        class Rejection : public Resolver::Resolution {
-            DECLARE_CONCRETE_RTTLITE (Rejection, Resolver::Resolution);
-
-        //  Friends
-            friend class ResultSink;
-
-        //  Construction
-        public:
-            Rejection (
-                Resolver *pResolver, Vca::IError *pInterface, VString const &rMessage
-            ) : BaseClass (pResolver), m_pInterface (pInterface), m_iMessage (rMessage) {
-            }
-
-        //  Destruction
-        private:
-            ~Rejection () {
-            }
-
-        //  Execution
-        private:
-            void run () override {
-                Reject (NewString (m_iMessage));
-            }
-
-        //  State
-        private:
-            Vca::IError::Reference m_pInterface;
-            VString const          m_iMessage;
-        }; // class ResultSink::Rejection
-
-    //  Construction
-    public:
-        ResultSink (
-            Resolver *pResolver, VE::evaluation_result_gofer_t *pResultGofer
-        ) : m_pResolver (pResolver) {
-            retain (); {
-                pResultGofer->supplyMembers (this, &ThisClass::onData, &ThisClass::onError);
-            } untain ();
-        }
-
-    //  Destruction
-    private:
-        ~ResultSink () {
-        }
-
-    //  Access
-    public:
-        Resolver::local_promise_t GetPromise () const {
-            return m_pResolver->promise ();
-        }
-
-    //  Outcomes
-    private:
-        void onData (VE::Value iResult) {
-            Resolution::Reference const pOutcome (
-                new Resolution (m_pResolver, iResult)
-            );
-            pOutcome->trigger ();
-        }
-        void onError (Vca::IError *pInterface, VString const &rMessage) {
-            Rejection::Reference const pOutcome (
-                new Rejection (m_pResolver, pInterface, rMessage)
-            );
-            pOutcome->trigger ();
-        }
-
-    //  State
-    private:
-        Resolver::Reference m_pResolver;
-    };
 
 /**********************************
  *----  class ServerContext  -----*
@@ -282,47 +168,333 @@ namespace VA {
         args.GetReturnValue ().Set (pServer->start ());
     }
 
-/**********************
- *----  Evaluate  ----*
- **********************/
+/*******************************
+ *----  InternalEvaluator  ----*
+ *******************************/
 
-    void Evaluate(FunctionCallbackInfo<Value> const& args) {
+    class InternalEvaluator final : public Vca::VRolePlayer {
+        DECLARE_CONCRETE_RTTLITE (InternalEvaluator, Vca::VRolePlayer);
+
+    //  Evaluate
+    public:
+        static void Evaluate(FunctionCallbackInfo<Value> const& args);
+
+    //  class Resolution
+    public:
+        class Resolution : public VN::Resolver::Resolution {
+            DECLARE_CONCRETE_RTTLITE (Resolution, VN::Resolver::Resolution);
+
+        //  Friends
+            friend class InternalEvaluator;
+
+        //  Construction
+        public:
+            Resolution (
+                VN::Resolver *pResolver, VE::Value iResult
+            ) : BaseClass (pResolver), m_iResult (iResult) {
+            }
+
+        //  Destruction
+        private:
+            ~Resolution () {
+            }
+
+        //  Execution
+        private:
+            void run () override {
+                Resolve (NewString (m_iResult.output ()));
+            }
+
+        //  State
+        private:
+            VE::Value const m_iResult;
+        }; // class InternalEvaluator::Resolution
+
+    //  class Rejection
+    public:
+        class Rejection : public VN::Resolver::Resolution {
+            DECLARE_CONCRETE_RTTLITE (Rejection, VN::Resolver::Resolution);
+
+        //  Friends
+            friend class InternalEvaluator;
+
+        //  Construction
+        public:
+            Rejection (
+                VN::Resolver *pResolver, Vca::IError *pInterface, VString const &rMessage
+            ) : BaseClass (pResolver), m_pInterface (pInterface), m_iMessage (rMessage) {
+            }
+
+        //  Destruction
+        private:
+            ~Rejection () {
+            }
+
+        //  Execution
+        private:
+            void run () override {
+                Reject (NewString (m_iMessage));
+            }
+
+        //  State
+        private:
+            Vca::IError::Reference m_pInterface;
+            VString const          m_iMessage;
+        }; // class InternalEvaluator::Rejection
+
+    //  Construction
+    private:
+        InternalEvaluator (VN::Isolate *pIsolate) : m_pResolver (new VN::Resolver (pIsolate)) {
+        };
+    //  Destruction
+    private:
+        ~InternalEvaluator () {
+        }
+
+    //  Access
+    public:
+        VN::Resolver::local_promise_t promise () const {
+            return m_pResolver->promise ();
+        }
+
+    //  Resolution
+    public:
+        void resolveUsing (VE::Gofer *pGofer) {
+            pGofer->supplyMembers (this, &ThisClass::onData, &ThisClass::onError);
+        }
+
+        void onData (VE::Value iResult) {
+            Resolution::Reference const pOutcome (
+                new Resolution (m_pResolver, iResult)
+            );
+            pOutcome->trigger ();
+        }
+        void onError (Vca::IError *pInterface, VString const &rMessage) {
+            Rejection::Reference const pOutcome (
+                new Rejection (m_pResolver, pInterface, rMessage)
+            );
+            pOutcome->trigger ();
+        }
+
+    //  State
+    private:
+        VN::Resolver::Reference const m_pResolver;
+    };
+
+/*************************************************************************
+ *-----  Arguments:
+ *
+ *    arg[0]:  vision expression
+ *    arg[1]:  optional client object
+ *    arg[2]:  optional evaluator name
+ *
+ *************************************************************************/
+    void InternalEvaluator::Evaluate(FunctionCallbackInfo<Value> const& args) {
+        static const int xa_VisionExpression = 0;
+        static const int xa_ExportedObject   = 1;
+        static const int xa_EvaluatorName    = 2;
+
         Vca::VCohortClaim cohortClaim;
 
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
 
-    //  Access the required expression argument...
+    //  Create a resolver...
+        InternalEvaluator::Reference const pResolver (new InternalEvaluator (pIsolate));
+        args.GetReturnValue().Set (pResolver->promise ());
+
+    //  Access the Vision expression (required)...
         VString iExpression;
-        if (args.Length () < 1 || !pIsolate->UnwrapString (iExpression, args[0])) {
-            pIsolate->ThrowTypeError ("Missing Expression");
+        if (args.Length () <= xa_VisionExpression || !pIsolate->UnwrapString (
+                iExpression, args[xa_VisionExpression]
+            )
+        ) {
+            pResolver->onError (0, "Missing Expression");
+            return;
+        }
+
+    //  Access the client export (optional)...
+        Vxa::export_return_t pExport;
+        if (args.Length () > xa_ExportedObject) {
+            pIsolate->GetExport (pExport, args[xa_ExportedObject]);
+        }
+
+    //  Prepare the evaluation...
+        VE::Gofer::Reference const pGofer (
+            new VE::Gofer (
+                [&]() {
+                    VString iEvaluatorName;
+                    return args.Length () > xa_EvaluatorName && pIsolate->UnwrapString (
+                            iEvaluatorName, args[xa_EvaluatorName]
+                    ) ? EvaluatorGoferFor (iEvaluatorName) : DefaultEvaluator ();
+                }(), iExpression, pExport
+            )
+        );
+
+    //  And start it:
+        pResolver->resolveUsing (pGofer);
+    }
+
+
+/*******************************
+ *----  ExternalEvaluator  ----*
+ *******************************/
+
+    class ExternalEvaluator : public Vca::VRolePlayer {
+        DECLARE_CONCRETE_RTTLITE (ExternalEvaluator, Vca::VRolePlayer);
+
+    //  Resolution
+    public:
+        class Resolution;
+
+    //  Evaluate
+    public:
+        static void Evaluate(FunctionCallbackInfo<Value> const& args);
+
+    //  Construction
+    private:
+        ExternalEvaluator (
+            VN::Export *pRejectCallback, VN::Export *pResolveCallback, VE::Gofer *pGofer
+        );
+        ~ExternalEvaluator () {
+        }
+
+    //  Resolution
+    private:
+        void onData (VE::Value iResult);
+        void onError (Vca::IError *pInterface, VString const &rMessage);
+
+    //  State
+    private:
+        VN::Export::Reference m_pRejectCallback, m_pResolveCallback;
+    };
+
+/******************************************************************/
+    class ExternalEvaluator::Resolution final : public VN::Callback {
+        DECLARE_CONCRETE_RTTLITE (Resolution, VN::Callback);
+
+    //  Construction
+    public:
+        Resolution (
+            VN::Export *pCallback, VString const &rResult
+        ) : m_pCallback (pCallback), m_iResult (rResult) {
+            retain (); {
+                trigger ();
+            } untain ();
+        }
+    private:
+        ~Resolution () {
+        }
+
+    //  Execution
+    private:
+        void run () override {
+            VN::HandleScope iHS (m_pCallback);
+            VN::local_value_t hResult;
+            m_pCallback->Call (hResult, m_pCallback->LocalUndefined (), m_iResult);
+        }
+
+    //  State
+    private:
+        VN::Export::Reference const m_pCallback;
+        VString               const m_iResult;
+    };
+
+/******************************************************************/
+    ExternalEvaluator::ExternalEvaluator (
+        VN::Export *pRejectCallback, VN::Export *pResolveCallback, VE::Gofer *pGofer
+    ) : m_pRejectCallback (pRejectCallback), m_pResolveCallback (pResolveCallback) {
+        retain (); {
+            pGofer->supplyMembers (this, &ThisClass::onData, &ThisClass::onError);
+        } untain ();
+    };
+
+/******************************************************************/
+    void ExternalEvaluator::onData (VE::Value iResult) {
+        (new Resolution (m_pResolveCallback, iResult.output()))->discard ();
+    }
+    void ExternalEvaluator::onError (Vca::IError *pInterface, VString const &rMessage) {
+        (new Resolution (m_pRejectCallback, rMessage))->discard ();
+    }
+
+/*************************************************************************
+ *-----  Arguments:
+ *
+ *    arg[0]:  promise constructor's 'resolve' callback
+ *    arg[1]:  promise constructor's 'reject'  callback
+ *    arg[2]:  vision expression
+ *    arg[3]:  optional client object
+ *    arg[4]:  optional evaluator name
+ *
+ *************************************************************************/
+    void ExternalEvaluator::Evaluate(FunctionCallbackInfo<Value> const& args) {
+        static const int xa_RejectCallback   = 0;
+        static const int xa_ResolveCallback  = 1;
+        static const int xa_VisionExpression = 2;
+        static const int xa_ExportedObject   = 3;
+        static const int xa_EvaluatorName    = 4;
+
+        Vca::VCohortClaim cohortClaim;
+
+        VN::Isolate::Reference pIsolate;
+        VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
+
+    //  Access the promise reject callback (required) ...
+        VN::Export::Reference pRejectCallback;
+        if (args.Length () <= xa_RejectCallback || !pIsolate->Attach (
+                pRejectCallback, args[xa_RejectCallback]
+            )
+        ) {
+            pIsolate->ThrowTypeError ("Missing Reject Callback");
+            return;
+        }
+
+    //  Access the promise resolve callback (required) ...
+        VN::Export::Reference pResolveCallback;
+        if (args.Length () <= xa_ResolveCallback || !pIsolate->Attach (
+                pResolveCallback, args[xa_ResolveCallback]
+            )
+        ) {
+            VN::local_value_t hResult;
+            pRejectCallback->Call (
+                hResult, pIsolate->LocalUndefined (), "Missing Resolve Callback"
+            );
+            return;
+        }
+
+    //  Access the Vision expression (required)...
+        VString iExpression;
+        if (args.Length () <= xa_VisionExpression || !pIsolate->UnwrapString (
+                iExpression, args[xa_VisionExpression]
+            )
+        ) {
+            VN::local_value_t hResult;
+            pRejectCallback->Call (
+                hResult, pIsolate->LocalUndefined (), "Missing Expression"
+            );
             return;
         }
 
     //  Access the client export if supplied...
         Vxa::export_return_t pExport;
-        if (args.Length () >= 2) {
-            pIsolate->GetExport (pExport, args[1]);
+        if (args.Length () > xa_ExportedObject) {
+            pIsolate->GetExport (pExport, args[xa_ExportedObject]);
         }
 
-    //  Set up the evaluation...
+    //  Prepare the evaluation...
         VE::Gofer::Reference const pGofer (
             new VE::Gofer (
                 [&]() {
                     VString iEvaluatorName;
-                    return args.Length () >= 3 && pIsolate->UnwrapString (iEvaluatorName, args[2])
-                        ? EvaluatorGoferFor (iEvaluatorName) : DefaultEvaluator ();
+                    return args.Length () > xa_EvaluatorName && pIsolate->UnwrapString (
+                        iEvaluatorName, args[xa_EvaluatorName]
+                    ) ? EvaluatorGoferFor (iEvaluatorName) : DefaultEvaluator ();
                 }(), iExpression, pExport
             )
         );
 
-    //  Start the evaluation...
-        ResultSink::Reference const pResultSink (
-            new ResultSink (new VN::Resolver (pIsolate), pGofer)
-        );
-
-    //  And return the promise:
-        args.GetReturnValue().Set (pResultSink->GetPromise ());
+    //  ... and start it:
+        (new ExternalEvaluator (pRejectCallback, pResolveCallback, pGofer))->discard ();
     }
 
 /**************************
@@ -339,7 +511,8 @@ namespace VA {
  *----  Module Initialization ----*
  **********************************/
     void Init (VN::local_object_t exports, VN::local_object_t module) {
-        NODE_SET_METHOD(exports, "v", Evaluate);
+        NODE_SET_METHOD(exports, "v" , InternalEvaluator::Evaluate);
+        NODE_SET_METHOD(exports, "v2", ExternalEvaluator::Evaluate);
         NODE_SET_METHOD(exports, "o", Offer);
         NODE_SET_METHOD(exports, "cachedIsolateCount", CachedIsolateCount);
     }
