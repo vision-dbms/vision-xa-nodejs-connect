@@ -9,7 +9,7 @@ module.exports.v1 = function (...args) {
         clearInterval(prodId);
         return r;
     }
-    return primitive.v(...args).then (
+    return primitive.v1(...args).then (
         response=>stopProdding(response),
         response=>stopProdding(response)
     );
@@ -18,6 +18,14 @@ module.exports.v1 = function (...args) {
 module.exports.v2 = function (...args) {
     return new Promise (
         (resolve,reject)=>primitive.v2(reject,resolve,...args)
+    );
+}
+
+module.exports.o = function (...args) {
+    return primitive.o2(
+        s=>{
+            console.log ("OnStop: ", ...args, s);
+        }, ...args
     );
 }
 

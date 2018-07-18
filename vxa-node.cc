@@ -65,6 +65,10 @@ namespace VA {
 
     //  Construction
     public:
+        static ServerContext *New (
+            VN::Isolate *pIsolate, FunctionCallbackInfo<Value> const& args, int xFirstArg
+        );
+
         ServerContext (arg_storage_t const &rArgs);
 
     //  Destruction
@@ -83,10 +87,26 @@ namespace VA {
     };
 
 /****************/
+    ServerContext *ServerContext::New (
+        VN::Isolate *pIsolate, FunctionCallbackInfo<Value> const& args, int xFirstArg
+    ) {
+        int const cArgs = args.Length () > xFirstArg ? args.Length () - xFirstArg : 0;
+        ServerContext::arg_storage_t aServerArgs (cArgs + 1);
+        aServerArgs[0] = "-node-";
+        for (int xArg = 0; xArg < cArgs; xArg++) {
+            if (!pIsolate->UnwrapString (aServerArgs[xArg + 1], args[xArg + xFirstArg])) {
+                VString iMessage;
+                iMessage << "Invalid Argument: " << xArg;
+                pIsolate->ThrowTypeError (iMessage);
+            }
+        }
+        return new ServerContext (aServerArgs);
+    }
+
     ServerContext::ServerContext (
         arg_storage_t const &rArgs
     ) : m_aArgs (rArgs), m_pArgs (new char* [rArgs.elementCount ()]) {
-        for (unsigned int xArg = 1; xArg < m_aArgs.elementCount (); xArg++) {
+        for (unsigned int xArg = 0; xArg < m_aArgs.elementCount (); xArg++) {
             m_pArgs[xArg] = m_aArgs[xArg].storage ();
         }
     }
@@ -103,9 +123,51 @@ namespace VA {
     class Server final : public Vca::VServerApplication {
         DECLARE_CONCRETE_RTTLITE (Server, VServerApplication);
 
-    //  Construction
+    //  StopCallback
     public:
-        Server (ServerContext *pContext, Vxa::export_return_t const &rExport);
+        class StopCallback final : public VN::Callback {
+            DECLARE_CONCRETE_RTTLITE (StopCallback, VN::Callback);
+
+        //  Construction
+        public:
+            StopCallback (
+                VN::Export *pCallback, VString const &rStateName
+            ) : m_pCallback (pCallback), m_iStateName (rStateName) {
+                retain (); {
+                    trigger ();
+                } untain ();
+            }
+        private:
+            ~StopCallback () {
+            }
+
+        //  Execution
+        private:
+            void run () override {
+                VN::HandleScope iHS (m_pCallback);
+                VN::local_value_t hResult;
+                node::async_context aContext = {0,0};
+                m_pCallback->Call (hResult, aContext, m_pCallback->NewObject (), m_iStateName);
+            }
+
+        //  State
+        private:
+            VN::Export::Reference const m_pCallback;
+            VString               const m_iStateName;
+        };
+
+    //  Offer
+    public:
+        static void Offer1(FunctionCallbackInfo<Value> const& args);
+        static void Offer2(FunctionCallbackInfo<Value> const& args);
+
+    //  Construction
+    private:
+        Server (
+            ServerContext *pContext,
+            Vxa::export_return_t const &rExport,
+            VN::Export *pStopCallback = 0
+        );
 
     //  Destruction
     private:
@@ -114,16 +176,20 @@ namespace VA {
     //  Control
     private:
         virtual bool start_() override;
+        virtual bool stop_(bool bHardStop) override;
 
     //  State
     private:
         ServerContext::Reference const m_pServerContext;
+        VN::Export::Reference    const m_pStopCallback;
     };
 
 /****************/
     Server::Server (
-        ServerContext *pContext, Vxa::export_return_t const &rExport
-    ) : BaseClass (pContext->applicationContext ()), m_pServerContext (pContext) {
+        ServerContext *pContext, Vxa::export_return_t const &rExport, VN::Export *pStopCallback
+    ) : BaseClass (pContext->applicationContext ()), m_pServerContext (
+        pContext
+    ), m_pStopCallback (pStopCallback) {
         aggregate (rExport);
     }
 
@@ -135,36 +201,88 @@ namespace VA {
     bool Server::start_() {
         return BaseClass::start_() && offerSelf () && isStarting ();
     }
+    bool Server::stop_(bool bHardStop) {
+        BaseClass::stop_(bHardStop);
+        if (m_pStopCallback)
+            (new StopCallback (m_pStopCallback, runStateName ()))->discard ();
+        return isStopping (bHardStop);
+    }
 
-/*******************
- *----  Offer  ----*
- *******************/
+/*************************************************************************
+ *-----  Arguments:
+ *
+ *    arg[0]:  offered object
+ *    arg[1+]: server command options
+ *
+ *************************************************************************/
+    void Server::Offer1(FunctionCallbackInfo<Value> const& args) {
+        static const int xa_ExportedObject   = 0;
+        static const int xa_ServerOptions    = 1;
 
-    void Offer(FunctionCallbackInfo<Value> const& args) {
         Vca::VCohortClaim cohortClaim;
 
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
 
     //  Access the server export...
-        if (args.Length () < 1) {
+        if (args.Length () <= xa_ExportedObject) {
             pIsolate->ThrowTypeError ("Missing Object");
             return;
         }
         Vxa::export_return_t pExport;
         pIsolate->GetExport (pExport, args[0]);
 
-        ServerContext::arg_storage_t aServerArgs (args.Length ());
-        aServerArgs[0] = "-node-";
-        for (unsigned int xArg = 1; xArg < aServerArgs.elementCount (); xArg++) {
-            if (!pIsolate->UnwrapString (aServerArgs[xArg], args[xArg])) {
-                VString iMessage;
-                iMessage << "Invalid Argument: " << xArg;
-                pIsolate->ThrowTypeError (iMessage);
-            }
+    //  ... and start the server:
+        Server::Reference pServer (
+            new Server (
+                ServerContext::New (pIsolate, args, xa_ServerOptions), pExport
+            )
+        );
+        args.GetReturnValue ().Set (pServer->start ());
+    }
+
+/*************************************************************************
+ *-----  Arguments:
+ *
+ *    arg[0]:  on stop callback
+ *    arg[1]:  offered object
+ *    arg[2+]: server command options
+ *
+ *************************************************************************/
+    void Server::Offer2(FunctionCallbackInfo<Value> const& args) {
+        static const int xa_StopCallback     = 0;
+        static const int xa_ExportedObject   = 1;
+        static const int xa_ServerOptions    = 2;
+
+        Vca::VCohortClaim cohortClaim;
+
+        VN::Isolate::Reference pIsolate;
+        VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
+
+    //  Access the onStop callback (required) ...
+        VN::Export::Reference pStopCallback;
+        if (args.Length () <= xa_StopCallback || !pIsolate->Attach (
+                pStopCallback, args[xa_StopCallback]
+            )
+        ) {
+            pIsolate->ThrowTypeError ("Missing Stop Callback");
+            return;
         }
 
-        Server::Reference pServer (new Server (new ServerContext (aServerArgs), pExport));
+    //  Access the server export (required) ...
+        if (args.Length () <= xa_ExportedObject) {
+            pIsolate->ThrowTypeError ("Missing Object");
+            return;
+        }
+        Vxa::export_return_t pExport;
+        pIsolate->GetExport (pExport, args[0]);
+
+    //  ... and start the server:
+        Server::Reference pServer (
+            new Server (
+                ServerContext::New (pIsolate, args, xa_ServerOptions), pExport, pStopCallback
+            )
+        );
         args.GetReturnValue ().Set (pServer->start ());
     }
 
@@ -512,9 +630,13 @@ namespace VA {
  *----  Module Initialization ----*
  **********************************/
     void Init (VN::local_object_t exports, VN::local_object_t module) {
-        NODE_SET_METHOD(exports, "v" , InternalEvaluator::Evaluate);
+        NODE_SET_METHOD(exports, "v" , ExternalEvaluator::Evaluate);
+        NODE_SET_METHOD(exports, "v1", InternalEvaluator::Evaluate);
         NODE_SET_METHOD(exports, "v2", ExternalEvaluator::Evaluate);
-        NODE_SET_METHOD(exports, "o", Offer);
+
+        NODE_SET_METHOD(exports, "o" , Server::Offer1);
+        NODE_SET_METHOD(exports, "o1", Server::Offer1);
+        NODE_SET_METHOD(exports, "o2", Server::Offer2);
         NODE_SET_METHOD(exports, "cachedIsolateCount", CachedIsolateCount);
     }
 
