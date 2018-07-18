@@ -55,17 +55,17 @@ VA::Node::Isolated::Isolated (
 VA::Node::Isolated::~Isolated () {
 }
 
-/****************************
- ****************************
- *****  Decommisioning  *****
- ****************************
- ****************************/
+/*****************************
+ *****************************
+ *****  Decommissioning  *****
+ *****************************
+ *****************************/
 
 bool VA::Node::Isolated::onDeleteThis () {
-    return m_pIsolate->okToDecommision (this) && decommision ();
+    return m_pIsolate->okToDecommission (this) && decommission ();
 }
 
-bool VA::Node::Isolated::decommision () {
+bool VA::Node::Isolated::decommission () {
     return true;
 }
 

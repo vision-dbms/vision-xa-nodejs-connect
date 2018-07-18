@@ -70,13 +70,13 @@ namespace VA {
         //  Lifetime Management ...
         //  ... Interface
         private:
-            static bool OkToDecommision (Isolated *pIsolated) {
-                return Implementation ()->okToDecommision (pIsolated);
+            static bool OkToDecommission (Isolated *pIsolated) {
+                return Implementation ()->okToDecommission (pIsolated);
             }
 
         //  ... Implementation
         private:
-            virtual bool okToDecommision (Isolated *pIsolated) = 0;
+            virtual bool okToDecommission (Isolated *pIsolated) = 0;
 
         //  Callback Management ...
         //  ... Interface

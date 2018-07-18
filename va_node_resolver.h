@@ -44,7 +44,7 @@ namespace VA {
 
         //  Decommissioning
         protected:
-            virtual bool decommision () override;
+            virtual bool decommission () override;
 
         //  Access
         public:

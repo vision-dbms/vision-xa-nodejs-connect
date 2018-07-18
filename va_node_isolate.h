@@ -122,10 +122,10 @@ namespace VA {
         public:
             static bool GetInstance (Reference &rpInstance, v8::Isolate *pIsolate);
 
-        //  Decommisioning
+        //  Decommissioning
         protected:
-            bool onDeleteThis ();                             // ... myself
-            bool okToDecommision (Isolated *pIsolated) const; // ... others
+            bool onDeleteThis ();                              // ... myself
+            bool okToDecommission (Isolated *pIsolated) const; // ... others
 
         //  Access
         public:

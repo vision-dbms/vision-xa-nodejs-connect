@@ -32,9 +32,9 @@ namespace VA {
         protected:
             ~Triggerable ();
 
-        //  Decommisioning
+        //  Decommissioning
         protected:
-            virtual bool decommision () override;
+            virtual bool decommission () override;
 
         //  Triggering
         protected:

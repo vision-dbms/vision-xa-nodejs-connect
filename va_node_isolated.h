@@ -40,7 +40,7 @@ namespace VA {
         protected:
             ~Isolated ();
 
-        //  Decommisioning
+        //  Decommissioning
 /************************************************************************************
  *  An 'Isolated's destructor may be called from any thread.  As of this writing,
  *  it is not safe to destroy 'node', 'v8' or 'uv' objects (e.g., 'Reset' a
@@ -54,9 +54,9 @@ namespace VA {
  *  process (* SEE BELOW *) that arranges for the reclamation of resources in the
  *  correct thread. To take advantage of that process, every derived class with
  *  resources to reclaim must define a 'protected' ('private' is ok for 'final'
- *  classes) virtual override of this class' 'decommision' member that releases
+ *  classes) virtual override of this class' 'decommission' member that releases
  *  the resources allocated by this class and calls the base class version of
- *  'decommision':
+ *  'decommission':
  *  
  *    bool VA::Node::DerivedClass::decommission () {
  *    //  Free the resources held by this instance ...
@@ -64,15 +64,15 @@ namespace VA {
  *        somethingMoreComplicated ();
  *        etc ();
  *
- *    //  Call the base class' version of 'decommision':
- *        return BaseClass::decommision ();
+ *    //  Call the base class' version of 'decommission':
+ *        return BaseClass::decommission ();
  *    }
  *
  *--------------------------------------------------------------------------------
  *
  *  (*) IMPORTANT IMPLEMENTATION NOTE (*)
  *
- *  The decommisioning process is implemented using the 'onDeleteThis' hook provided
+ *  The decommissioning process is implemented using the 'onDeleteThis' hook provided
  *  by the object lifetime management infrastructure inherited from 'Isolated's base
  *  class(es).  That hook gives derived classes an opportunity to approve an object's
  *  destruction (by returning 'true') or to defer or cancel that destruction (by
@@ -80,13 +80,13 @@ namespace VA {
  *  here:
  *
  *    bool VA::Node::Isolated::onDeleteThis () {
- *        return m_pIsolate->okToDecommision (this) && decommision ();
+ *        return m_pIsolate->okToDecommission (this) && decommission ();
  *    }
  *
  ************************************************************************************/
         protected:
             bool onDeleteThis ();
-            virtual bool decommision ();
+            virtual bool decommission ();
 
         //  Access
         public:

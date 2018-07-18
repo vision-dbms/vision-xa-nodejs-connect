@@ -40,9 +40,9 @@ namespace VA {
         private:
             ~Export ();
 
-        //  Decommisioning
+        //  Decommissioning
         private:
-            virtual bool decommision () override;
+            virtual bool decommission () override;
 
         //  Local Access
         private:

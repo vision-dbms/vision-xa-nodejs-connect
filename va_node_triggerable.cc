@@ -70,9 +70,9 @@ VA::Node::Triggerable::~Triggerable () {
  *****************************
  *****************************/
 
-bool VA::Node::Triggerable::decommision () {
+bool VA::Node::Triggerable::decommission () {
     uv_close (reinterpret_cast<uv_handle_t*>(&m_iTrigger), NULL);
-    return BaseClass::decommision ();
+    return BaseClass::decommission ();
 }
 
 

@@ -57,9 +57,9 @@ VA::Node::Resolver::~Resolver () {
  *****************************
  *****************************/
 
-bool VA::Node::Resolver::decommision () {
+bool VA::Node::Resolver::decommission () {
     m_hResolver.Reset ();
-    return BaseClass::decommision ();
+    return BaseClass::decommission ();
 }
 
 

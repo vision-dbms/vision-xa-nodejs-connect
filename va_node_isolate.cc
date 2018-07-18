@@ -64,11 +64,11 @@ bool VA::Node::Isolate::GetInstance (Reference &rpInstance, v8::Isolate *pIsolat
     return Process::Attach (rpInstance, pIsolate);
 }
 
-/****************************
- ****************************
- *****  Decommisioning  *****
- ****************************
- ****************************/
+/*****************************
+ *****************************
+ *****  Decommissioning  *****
+ *****************************
+ *****************************/
 
 /********************
  *----  MySelf  ----*
@@ -83,8 +83,8 @@ bool VA::Node::Isolate::onDeleteThis () {
  *----  Others  ----*
  ********************/
 
-bool VA::Node::Isolate::okToDecommision (Isolated *pIsolated) const {
-    return Process::OkToDecommision (pIsolated);
+bool VA::Node::Isolate::okToDecommission (Isolated *pIsolated) const {
+    return Process::OkToDecommission (pIsolated);
 }
 
 

@@ -63,9 +63,9 @@ VA::Node::Export::~Export () {
  *****************************
  *****************************/
 
-bool VA::Node::Export::decommision () {
-//    std::cerr << "VA::Node::Export::decommision: " << this << std::endl;
-    return isolate ()->Detach (this) && BaseClass::decommision ();
+bool VA::Node::Export::decommission () {
+//    std::cerr << "VA::Node::Export::decommission: " << this << std::endl;
+    return isolate ()->Detach (this) && BaseClass::decommission ();
 }
 
 

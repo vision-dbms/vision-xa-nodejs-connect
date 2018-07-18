@@ -102,14 +102,14 @@ public:
 
 //  Object Management
 private:
-    virtual bool okToDecommision (Isolated *pIsolated) override;
+    virtual bool okToDecommission (Isolated *pIsolated) override;
 
 //  Queue Management
 public:
     void enqueueDecommission (Isolated *pIsolated);
 private:
-    static void ProcessDecommisions (uv_async_t *pAsyncHandle);
-    void processDecommisions ();
+    static void ProcessDecommissions (uv_async_t *pAsyncHandle);
+    void processDecommissions ();
 
 //  Callback Management
 public:
@@ -121,7 +121,7 @@ private:
 //  State
 private:
     std::unordered_map<v8::Isolate*,ClassTraits<Isolate>::notaining_ptr_t> m_iIsolateCache;
-    UVQueue<Isolated::Reference> m_qDecommisions;
+    UVQueue<Isolated::Reference> m_qDecommissions;
     UVQueue<Callback::Reference> m_qCallbacks;
 };
 
@@ -133,8 +133,8 @@ private:
  **************************/
 
 VA::Node::Process::Primary::Primary (
-) : m_qDecommisions (
-    &ThisClass::ProcessDecommisions, this
+) : m_qDecommissions (
+    &ThisClass::ProcessDecommissions, this
 ), m_qCallbacks (
     &ThisClass::ProcessCallbacks, this
 ) {
@@ -178,23 +178,23 @@ bool VA::Node::Process::Primary::detach (Isolate *pModelObject) {
  *******************************
  *******************************/
 
-bool VA::Node::Process::Primary::okToDecommision (Isolated *pIsolated) {
+bool VA::Node::Process::Primary::okToDecommission (Isolated *pIsolated) {
     return true;
 }
 
 void VA::Node::Process::Primary::enqueueDecommission (Isolated *pIsolated) {
-    m_qDecommisions.enqueue (Isolated::Reference (pIsolated));
+    m_qDecommissions.enqueue (Isolated::Reference (pIsolated));
 }
 
-void VA::Node::Process::Primary::ProcessDecommisions (uv_async_t *pHandle) {
+void VA::Node::Process::Primary::ProcessDecommissions (uv_async_t *pHandle) {
     ThisClass* const pThis (static_cast<ThisClass*>(pHandle->data));
     if (pThis)
-        pThis->processDecommisions ();
+        pThis->processDecommissions ();
 }
 
-void VA::Node::Process::Primary::processDecommisions () {
-    Isolated::Reference pDecommisionable;
-    while (m_qDecommisions.dequeue (pDecommisionable));
+void VA::Node::Process::Primary::processDecommissions () {
+    Isolated::Reference pDecommissionable;
+    while (m_qDecommissions.dequeue (pDecommissionable));
 }
 
 /*********************************
@@ -260,7 +260,7 @@ private:
 
 //  Object Management
 private:
-    virtual bool okToDecommision (Isolated *pIsolated) override;
+    virtual bool okToDecommission (Isolated *pIsolated) override;
 
 //  Callback Management
 private:
@@ -284,7 +284,7 @@ private:
  *********************************
  *********************************/
 
-bool VA::Node::Process::Secondary::okToDecommision (Isolated *pIsolated) {
+bool VA::Node::Process::Secondary::okToDecommission (Isolated *pIsolated) {
     m_pPrimary->enqueueDecommission (pIsolated);
     return false;
 }
