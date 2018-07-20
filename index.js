@@ -23,9 +23,7 @@ module.exports.v2 = function (...args) {
 
 module.exports.o = function (...args) {
     return primitive.o2(
-        s=>{
-            console.log ("OnStop: ", ...args, s);
-        }, ...args
+        s=>{}, ...args
     );
 }
 
