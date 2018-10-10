@@ -1,0 +1,17 @@
+{
+    "name": "vxanode",
+    "version": "1.0.0",
+    "description": "VisionDBMS External Adapter",
+    "main": "./build/Release/vxanode",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "install": "node-gyp rebuild"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/MichaelJCaruso/vxa-node.git"
+    },
+    "author": "Mike Caruso",
+    "license": "BSD-3-Clause",
+    "gypfile": true
+}
