@@ -13,5 +13,16 @@
     },
     "author": "Mike Caruso",
     "license": "BSD-3-Clause",
-    "gypfile": true
+    "gypfile": true,
+    "files": [
+        "binding.gyp",
+        "/*.cc",
+        "/*.h",
+        "/deps/vision/*.txt",
+        "/deps/vision/src/M_Darwin/*",
+        "/deps/vision/src/M_Linux/*",
+        "/deps/vision/src/M_Windows/*",
+        "/deps/vision/src/kernel/*.cpp",
+        "/deps/vision/src/kernel/*.[dh]"
+    ]
 }
