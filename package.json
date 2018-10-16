@@ -19,9 +19,9 @@
         "/*.cc",
         "/*.h",
         "/deps/vision/*.txt",
-        "/deps/vision/src/M_Darwin/*",
-        "/deps/vision/src/M_Linux/*",
-        "/deps/vision/src/M_Windows/*",
+        "/deps/vision/src/M_Darwin/*.h",
+        "/deps/vision/src/M_Linux/*.h",
+        "/deps/vision/src/M_Windows/*.h",
         "/deps/vision/src/kernel/*.cpp",
         "/deps/vision/src/kernel/*.[dh]"
     ]
