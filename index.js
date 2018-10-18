@@ -1,30 +1,41 @@
-const primitive = require ('./build/Release/vxanode');
+function usingExternalSessionConfig () {
+    return process.env.VcaGlobalSessionsFile
+        || process.env.VcaSessionsFile;
+}
 
-module.exports.primitive = primitive;
+function usingExternalStartupExpression () {
+    return process.env.VisionStartExpr;
+}
 
-module.exports.v1 = function (...args) {
-    var prodCount=0;
-    const prodId=setInterval(()=>{prodCount++},30);
-    const stopProdding=r=>{
-        clearInterval(prodId);
-        return r;
+const ThePrimitives = (
+    ()=>{
+        if (!usingExternalSessionConfig () && !usingExternalStartupExpression ()) {
+            process.env.VcaSessionsFile = require.resolve ('./resources/session.cfg');
+            process.env.VisionStartExpr = `"${require.resolve('./resources/node.vis')}" asFileContents evaluate`;
+            console.log (process.env.VcaSessionsFile);
+            console.log (process.env.VisionStartExpr);
+        }
+        return Promise.resolve (require ('./build/Release/vxanode'));
     }
-    return primitive.v1(...args).then (
-        response=>stopProdding(response),
-        response=>stopProdding(response)
+) ();
+
+function PrimitiveOperationPromise (f) {
+    return new Promise (
+        (resolve,reject)=>ThePrimitives.then (
+            thePrimitives=>f(thePrimitives,resolve,reject),
+            theUnexpected=>reject (theUnexpected)
+        )
     );
 }
 
-module.exports.v2 = function (...args) {
-    return new Promise (
-        (resolve,reject)=>primitive.v2(reject,resolve,...args)
+module.exports.v = function (...args) {
+    return PrimitiveOperationPromise (
+        (thePrimitives,resolve,reject)=>thePrimitives.v2(reject,resolve,...args)
     );
 }
 
 module.exports.o = function (...args) {
-    return primitive.o2(
-        s=>{}, ...args
+    return PrimitiveOperationPromise (
+        (thePrimitives,resolve,reject)=>resolve(thePrimitives.o2(s=>{console.log(s)},...args))
     );
 }
-
-module.exports.v = module.exports.v2;

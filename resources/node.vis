@@ -1,0 +1,151 @@
+################################################################################
+CoreWorkspace respondsTo: "JS". ifFalse: [
+    ToolKit createSubclass: "JS" at: CoreWorkspace;
+];
+
+################################################################################
+####  Parameter Conversion Helpers...
+####
+JS defineMethod: [ | \.id | ^self jsObject \.id];
+Double  defineMethod: [ | \.id | ^self asSelf ];
+Float   defineMethod: [ | \.id | ^self asSelf ];
+Integer defineMethod: [ | \.id | ^self asSelf ];
+String  defineMethod: [ | \.id | ^self asSelf ];
+
+################################################################################
+#  NOTE: In the following, 'Object', 'Reflect', 'keys(:)' and 'get(:at:)' are
+#  native javascript properties and functions.
+################
+
+################
+####  By default, the helper methods attached to this class operate on the
+####  current client object:
+
+JS define: "jsObject" toBePrimitive: 7;
+
+####  That can be contextually rebound to refer to a different JS object by
+####  by overriding 'jsObject' in a specialization of this class.  The following
+####  methods do that:
+
+JS defineMethod: [ | object: jsObject |
+    ^self asSelf extendBy: [ !jsObject <- ^my jsObject ]
+];
+JS defineMethod: [ | global: jsObject |
+    ^self object: jsObject \.global
+];
+JS defineMethod: [ | global |
+    ^self object: ^self jsGlobal
+];
+
+################
+####  Return the current jsObject's global object (think ^self CoreWorkspace)...
+JS defineMethod: [ | jsGlobal | ^self jsObject \.global ];
+
+################
+####  Return the current jsObject's parameter identity...
+JS defineMethod: [ | jsParam | ^self jsObject \.id ];
+
+################
+####  Array creation
+JS defineMethod: [ | newArray | ^self object: ^self jsGlobal Array ];
+JS defineMethod: [ | newArray: nElements | ^self object: (^self jsGlobal Array: nElements) ];
+JS defineMethod: [ | newArrayFrom: list |
+    !newArray <- ^self newArray: list count;
+    list numberElements do: [
+        ^my newArray set: (position - 1) asInteger to: ^self
+    ];
+    newArray
+];
+
+################
+####  Array return
+JS defineMethod: [ | getArray |
+    !self <- ^self;
+    ^self jsObject length send: [isInteger ifTrue: [^self] else: [0]]. sequence0 send: [^my self get: ^self]
+];
+
+################
+####  Object creation
+JS defineMethod: [ | newObject | ^self object: ^self jsGlobal Object ];
+
+################
+####  Property/Element Getters...
+JS defineMethod: [ | get: key |
+    ^self get: key of: ^self jsObject
+];
+JS defineMethod: [ | get: key of: jsObj |
+    jsObj \.global Reflect get: jsObj \.id at: key
+];
+
+################
+####  Property/Element Setters....
+JS defineMethod: [ | set: key to: value |
+    ^self set: key of: ^self jsObject to: value;
+    ^self
+];
+
+####
+JS defineMethod: [ | set: key toArrayFrom: list |
+   ^self set: key to: (^self newArrayFrom: list)
+];
+
+JS defineMethod: [ | set: key of: jsObj to: value |
+#>>>>>>>>>>>>>>>>
+#  This should be:
+#
+#   jsObj \.global Reflect set: jsObj \.id key: key to: value \.id
+#
+#  but, since batchvision's current adapter implementation doesn't
+#  support polymorphic (un-clustered) parameters, it must be:
+    value basicSend: [
+        ^my jsObj \.global Reflect set: ^my jsObj \.id key: ^my key to: ^self \.id
+    ]
+
+#<<<<<<<<<<<<<<<<
+];
+
+################
+####  Return a javascript array of a jsObject's keys...
+JS defineMethod: [ | getJSKeys |
+    ^self getJSKeysOf: ^self jsObject
+];
+JS defineMethod: [ | getJSKeysOf: jsObj |
+    jsObj \.global :Object keys: jsObj \.id
+];
+
+################
+####  Return a Vision list of a jsObject's keys...
+JS defineMethod: [ | getKeys |
+    ^self getKeysOf: ^self jsObject
+];
+JS defineMethod: [ | getKeysOf: jsObj |
+    !jsKeys <- ^self getJSKeysOf: jsObj;
+    jsKeys length sequence0 send: [
+        ^my get: ^self of: ^my jsKeys
+    ]
+];
+
+################
+####  Return a Vision list of a jsObject's key/value pairs...
+JS defineMethod: [ | getPropertyMap |
+    ^self getPropertyMapOf: ^self jsObject
+];
+JS defineMethod: [ | getPropertyMapOf: jsObj |
+    !self <- ^self;
+    ^self getKeysOf: jsObj. extendBy: [
+        !keyValue <- ^my self get: ^self of: ^my jsObj
+    ]
+];
+
+################
+####  Display a object's properties / array's elements...
+JS defineMethod: [ | display |
+    ^self display: ^self jsObject
+];
+JS defineMethod: [ | display: jsObj |
+    ^self getPropertyMapOf: jsObj. do: [
+        ^self print: 20;
+        keyValue printNL
+    ];
+    ^self
+];

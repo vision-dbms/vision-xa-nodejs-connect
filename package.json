@@ -18,6 +18,8 @@
         "binding.gyp",
         "/*.cc",
         "/*.h",
+        "/resources/*.vis",
+        "/resources/*.cfg",
         "/deps/vision/*.txt",
         "/deps/vision/src/M_Darwin/*.h",
         "/deps/vision/src/M_Linux/*.h",
