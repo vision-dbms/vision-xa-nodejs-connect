@@ -1,7 +1,7 @@
 {
-    "name": "vxanode",
+    "name": "connect",
     "version": "1.0.0",
-    "description": "VisionDBMS External Adapter",
+    "description": "Vision external adapter for nodejs",
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -9,7 +9,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/MichaelJCaruso/vxa-node.git"
+        "url": "https://github.com/vision-dbms/vision-xa-nodejs-connect.git"
     },
     "author": "Mike Caruso",
     "license": "BSD-3-Clause",

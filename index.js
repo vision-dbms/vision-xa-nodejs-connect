@@ -12,8 +12,6 @@ const ThePrimitives = (
         if (!usingExternalSessionConfig () && !usingExternalStartupExpression ()) {
             process.env.VcaSessionsFile = require.resolve ('./resources/session.cfg');
             process.env.VisionStartExpr = `"${require.resolve('./resources/node.vis')}" asFileContents evaluate`;
-            console.log (process.env.VcaSessionsFile);
-            console.log (process.env.VisionStartExpr);
         }
         return Promise.resolve (require ('./build/Release/vxanode'));
     }
