@@ -59,4 +59,5 @@ VA::Node::Entity::~Entity () {
  ***************************/
 
 VA::Node::Entity::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::ClassBuilder (pClass) {
+    defineConstant (".apiGeneration", static_cast<int>(VA::Node::VisionAPI_Generation));
 }

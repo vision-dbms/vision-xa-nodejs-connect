@@ -27,6 +27,26 @@ namespace VA {
     namespace Node {
         using V::VString;
 
+    /********************************
+     *----  Supported Features  ----*
+     ********************************/
+        enum VisionAPI {
+        /*****************
+         *  Entries should be added to this enumeration whenever new Vision facing
+         *  methods are added to this adapter.  To ensure the integrity of this API
+         *  versioning scheme, all new entries MUST BE ADDED IMMEDIATELY BEFORE the
+         *  'VisionAPI_Generation' entry which MUST ALWAYS BE THE LAST ENTRY in this
+         *  enumeration.  Additionally, entries MUST NEVER BE MOVED OR REMOVED after
+         *  the features they or their successors in this enumeration represent have
+         *  been deployed.
+         *****************/
+
+        /****************
+         *  Add all new feature entries immediately above this comment !!!
+         ****************/
+            VisionAPI_Generation  // MUST BE LAST IN THIS LIST
+        };
+
     /*********************************
      *----  v8 Traits and Types  ----*
      *********************************/
