@@ -1,13 +1,13 @@
 ### _A [node.js](https://nodejs.org) native add-on for the [Vision](https://github.com/vision-dbms/vision) database management system:_
 ```js
-var vx=require('@vision-dbms/connect')
-var p=vx.v ('2 + 2'). then (r=>console.log (r))
+var vc=require('@vision-dbms/connect')
+var p=vc.v ('2 + 2'). then (r=>console.log (r))
 
 >     4.00
 
 
 var myObject = {}
-var p=vx.v ('JS set: "x" to: 23.7; JS set: "y" to: "Hello, world..."',myObject)
+var p=vc.v ('JS set: "x" to: 23.7; JS set: "y" to: "Hello, world..."',myObject)
 var t=p.then (r=>console.log (myObject))
 
 > { x: 23.7, y: 'Hello, world...' }
@@ -47,3 +47,38 @@ sudo apt install uuid-dev
 ```
 
 ## Use
+
+### The Basics
+To access _@vision-dbms/connect_, load it using _require_:
+
+```js
+var vc=require('@vision-dbms/connect')
+```
+
+At its most basic, _@vision-dbms/connect_ gives you the ability to execute Vision expressions using its _v_ method:
+
+```js
+var p = vc.v ('2 + 2')
+```
+
+_v_ operates asynchronously, scheduling evaluation of its expression, returning a JavaScript _Promise_ for the output of that expression.
+
+_Promises_ are a major feature and paradigm of JavaScript programming.  They are described in great depth on the web ([here, for example](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)).  What you need to know to get started is that _Promises_ have a _then_ method that takes two functions as arguments, one to call with a successfully returned result and one to call in case of an error:
+
+
+```js
+var p = vc.v ('2 + 2').then(result=>console.log ('Success: ', result), error=>console.error('Failure: ', error))
+> Success:       4.00
+```
+
+A bit of noteworthy magic is happening here.  The _v_ method knows where to evaluate its expression courtesy of Vision's session configuration files. Found at common user specific and environment variable specified (e.g., _VcaGlobalSessionsFile_, _VcaSessionsFile_) locations, those files are used to create a directory of known servers, services, and process creation templates.  By default, _@vision-dbms/connect_ searches that session directory for an entry named _NodeEvaluator_. It also includes, for its own use in environments that do not define their own session configuration, a very basic _NodeEvaluator_ definition that expects to find a runnable _batchvision_ on the current path:
+
+<pre>
+Connection_Template Begin
+Name NodeEvaluator
+Program batchvision
+Connection_Template End
+</pre>
+
+In a bare environment, if you do nothing else except make sure that _batchvision_ can be found along with a Vision database it can use, the examples documented here should work.
+
