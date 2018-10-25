@@ -33,7 +33,7 @@ Because _[@vision-dbms/connect](https://npmjs.com/package/@vision-dbms/connect)_
 
 If the system you are using has not been used to build _Vision_, you may need to install the required development tools and, in the case of _Linux_ systems, some additional system header files. An authoritative list of the tools you need to install can be found in the documentation for _[node-gyp](https://www.npmjs.com/package/node-gyp#installation)_ (note that you do _not_ need to install _[node-gyp](https://www.npmjs.com/package/node-gyp)_, just its recommendations).
 
-For _Linux_ systems, you may also need to need to install header files for the system's _UUID_ generator.  For Red Hat based systems (RHEL, Centos, etc.), the command you most likely will need to run is:
+For _Linux_ systems, you may also need to install header files for the system's _UUID_ generator.  For Red Hat based systems (RHEL, Centos, etc.), the command you most likely will need to run is:
 
 ```bash
 sudo yum install libuuid-devel
@@ -63,7 +63,7 @@ var p = vc.v ('2 + 2')
 
 _v_ operates asynchronously, scheduling evaluation of its expression, returning a JavaScript _Promise_ for the output of that expression.
 
-_Promises_ are a major feature and paradigm of JavaScript programming.  They are described in great depth on the web ([here, for example](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)).  What you need to know to get started is that _Promises_ have a _then_ method that takes two functions as arguments, one to call with a successfully returned result and one to call in case of an error:
+_Promises_ are a major feature and paradigm of JavaScript programming.  They are described in great depth on the web ([here, for example](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)).  What you need to know to get started is that _Promises_ have a _then_ method that takes two functions as arguments, one that will be called with a successfully returned result and one that will be called in case of an error:
 
 
 ```js
@@ -71,7 +71,7 @@ var p = vc.v ('2 + 2').then(result=>console.log ('Success: ', result), error=>co
 > Success:       4.00
 ```
 
-A bit of noteworthy magic is happening here.  The _v_ method knows where to evaluate its expression courtesy of Vision's session configuration files. Found at common user specific and environment variable specified (e.g., _VcaGlobalSessionsFile_, _VcaSessionsFile_) locations, those files are used to create a directory of known servers, services, and process creation templates.  By default, _@vision-dbms/connect_ searches that session directory for an entry named _NodeEvaluator_. It also includes, for its own use in environments that do not define their own session configuration, a very basic _NodeEvaluator_ definition that expects to find a runnable _batchvision_ on the current path:
+A bit of noteworthy magic is happening here.  The _v_ method knows where to evaluate its expression courtesy of Vision's session configuration files. Found at common user specific and environment variable (e.g., _VcaGlobalSessionsFile_, _VcaSessionsFile_) specified locations, those files are used to create a directory of known servers, services, and process creation templates.  By default, _@vision-dbms/connect_ searches that session directory for an entry named _NodeEvaluator_. It also includes, for its own use in environments that do not define their own session configuration, a very basic _NodeEvaluator_ definition that expects to find a runnable _batchvision_ on the current path:
 
 <pre>
 Connection_Template Begin
