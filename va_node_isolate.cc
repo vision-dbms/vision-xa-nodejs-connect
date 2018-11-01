@@ -154,10 +154,6 @@ bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) 
  ******************************
  ******************************/
 
-VA::Node::local_resolver_t VA::Node::Isolate::NewResolver () const {
-    return resolver_t::New (context ()).ToLocalChecked ();
-}
-
 VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) const {
     return string_t::NewFromUtf8 (m_hIsolate, pString);
 }

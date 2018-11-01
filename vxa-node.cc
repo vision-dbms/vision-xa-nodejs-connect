@@ -10,7 +10,6 @@
 #include "va_node_callback.h"
 #include "va_node_export.h"
 #include "va_node_handle_scope.h"
-#include "va_node_resolver.h"
 
 #include "Vca_VcaGofer.h"
 #include "Vca_IDirectory.h"
@@ -285,173 +284,6 @@ namespace VA {
         );
         args.GetReturnValue ().Set (pServer->start ());
     }
-
-/*******************************
- *----  InternalEvaluator  ----*
- *******************************/
-
-    class InternalEvaluator final : public Vca::VRolePlayer {
-        DECLARE_CONCRETE_RTTLITE (InternalEvaluator, Vca::VRolePlayer);
-
-    //  Evaluate
-    public:
-        static void Evaluate(FunctionCallbackInfo<Value> const& args);
-
-    //  class Resolution
-    public:
-        class Resolution : public VN::Resolver::Resolution {
-            DECLARE_CONCRETE_RTTLITE (Resolution, VN::Resolver::Resolution);
-
-        //  Friends
-            friend class InternalEvaluator;
-
-        //  Construction
-        public:
-            Resolution (
-                VN::Resolver *pResolver, VE::Value iResult
-            ) : BaseClass (pResolver), m_iResult (iResult) {
-            }
-
-        //  Destruction
-        private:
-            ~Resolution () {
-            }
-
-        //  Execution
-        private:
-            void run () override {
-                Resolve (NewString (m_iResult.output ()));
-            }
-
-        //  State
-        private:
-            VE::Value const m_iResult;
-        }; // class InternalEvaluator::Resolution
-
-    //  class Rejection
-    public:
-        class Rejection : public VN::Resolver::Resolution {
-            DECLARE_CONCRETE_RTTLITE (Rejection, VN::Resolver::Resolution);
-
-        //  Friends
-            friend class InternalEvaluator;
-
-        //  Construction
-        public:
-            Rejection (
-                VN::Resolver *pResolver, Vca::IError *pInterface, VString const &rMessage
-            ) : BaseClass (pResolver), m_pInterface (pInterface), m_iMessage (rMessage) {
-            }
-
-        //  Destruction
-        private:
-            ~Rejection () {
-            }
-
-        //  Execution
-        private:
-            void run () override {
-                Reject (NewString (m_iMessage));
-            }
-
-        //  State
-        private:
-            Vca::IError::Reference m_pInterface;
-            VString const          m_iMessage;
-        }; // class InternalEvaluator::Rejection
-
-    //  Construction
-    private:
-        InternalEvaluator (VN::Isolate *pIsolate) : m_pResolver (new VN::Resolver (pIsolate)) {
-        };
-    //  Destruction
-    private:
-        ~InternalEvaluator () {
-        }
-
-    //  Access
-    public:
-        VN::Resolver::local_promise_t promise () const {
-            return m_pResolver->promise ();
-        }
-
-    //  Resolution
-    public:
-        void resolveUsing (VE::Gofer *pGofer) {
-            pGofer->supplyMembers (this, &ThisClass::onData, &ThisClass::onError);
-        }
-
-        void onData (VE::Value iResult) {
-            Resolution::Reference const pOutcome (
-                new Resolution (m_pResolver, iResult)
-            );
-            pOutcome->trigger ();
-        }
-        void onError (Vca::IError *pInterface, VString const &rMessage) {
-            Rejection::Reference const pOutcome (
-                new Rejection (m_pResolver, pInterface, rMessage)
-            );
-            pOutcome->trigger ();
-        }
-
-    //  State
-    private:
-        VN::Resolver::Reference const m_pResolver;
-    };
-
-/*************************************************************************
- *-----  Arguments:
- *
- *    arg[0]:  vision expression
- *    arg[1]:  optional client object
- *    arg[2]:  optional evaluator name
- *
- *************************************************************************/
-    void InternalEvaluator::Evaluate(FunctionCallbackInfo<Value> const& args) {
-        static const int xa_VisionExpression = 0;
-        static const int xa_ExportedObject   = 1;
-        static const int xa_EvaluatorName    = 2;
-
-        Vca::VCohortClaim cohortClaim;
-
-        VN::Isolate::Reference pIsolate;
-        VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
-
-    //  Create a resolver...
-        InternalEvaluator::Reference const pResolver (new InternalEvaluator (pIsolate));
-        args.GetReturnValue().Set (pResolver->promise ());
-
-    //  Access the Vision expression (required)...
-        VString iExpression;
-        if (args.Length () <= xa_VisionExpression || !pIsolate->UnwrapString (
-                iExpression, args[xa_VisionExpression]
-            )
-        ) {
-            pResolver->onError (0, "Missing Expression");
-            return;
-        }
-
-    //  Access the client export (optional)...
-        Vxa::export_return_t pExport;
-        if (args.Length () > xa_ExportedObject) {
-            pIsolate->GetExport (pExport, args[xa_ExportedObject]);
-        }
-
-    //  Prepare the evaluation...
-        VE::Gofer::Reference const pGofer (
-            new VE::Gofer (
-                [&]() {
-                    VString iEvaluatorName;
-                    return args.Length () > xa_EvaluatorName && pIsolate->UnwrapString (
-                            iEvaluatorName, args[xa_EvaluatorName]
-                    ) ? EvaluatorGoferFor (iEvaluatorName) : DefaultEvaluator ();
-                }(), iExpression, pExport
-            )
-        );
-
-    //  And start it:
-        pResolver->resolveUsing (pGofer);
-    }
 
 
 /*******************************
@@ -631,8 +463,6 @@ namespace VA {
  **********************************/
     void Init (VN::local_object_t exports, VN::local_object_t module) {
         NODE_SET_METHOD(exports, "v" , ExternalEvaluator::Evaluate);
-        NODE_SET_METHOD(exports, "v1", InternalEvaluator::Evaluate);
-        NODE_SET_METHOD(exports, "v2", ExternalEvaluator::Evaluate);
 
         NODE_SET_METHOD(exports, "o" , Server::Offer1);
         NODE_SET_METHOD(exports, "o1", Server::Offer1);

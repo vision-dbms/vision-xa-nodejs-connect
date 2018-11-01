@@ -147,11 +147,6 @@ namespace VA {
         typedef V8<promise_t>::maybe maybe_promise_t;
         typedef V8<promise_t>::persistent persistent_promise_t;
 
-        typedef promise_t::Resolver resolver_t;
-        typedef V8<resolver_t>::local local_resolver_t;
-        typedef V8<resolver_t>::maybe maybe_resolver_t;
-        typedef V8<resolver_t>::persistent persistent_resolver_t;
-
         typedef v8::String string_t;
         typedef V8<string_t>::local local_string_t;
         typedef V8<string_t>::maybe maybe_string_t;

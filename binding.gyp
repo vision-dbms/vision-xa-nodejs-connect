@@ -118,7 +118,6 @@
         'va_node_isolate.cc',
         'va_node_isolated.cc',
         'va_node_process.cc',
-        'va_node_resolver.cc',
         'va_node_triggerable.cc'
       ],
       'dependencies': [

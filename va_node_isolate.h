@@ -266,7 +266,6 @@ namespace VA {
 
         //  Creation Helpers
         public:
-            local_resolver_t NewResolver () const;
             local_string_t   NewString (char const *pString) const;
             local_integer_t  NewNumber (int iNumber) const {
                 return integer_t::New (handle (), iNumber);

@@ -28,7 +28,7 @@ function PrimitiveOperationPromise (f) {
 
 module.exports.v = function (...args) {
     return PrimitiveOperationPromise (
-        (thePrimitives,resolve,reject)=>thePrimitives.v2(reject,resolve,...args)
+        (thePrimitives,resolve,reject)=>thePrimitives.v(reject,resolve,...args)
     );
 }
 
