@@ -143,7 +143,7 @@ bool VA::Node::Isolate::UnwrapString (VString &rString, maybe_string_t hString) 
 }
 
 bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) const {
-    string_t::Utf8Value pString (hString);
+    string_t::Utf8Value pString (m_hIsolate, hString);
     rString.setTo (*pString);
     return true;
 }
