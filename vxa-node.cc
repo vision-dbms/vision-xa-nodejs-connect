@@ -274,7 +274,7 @@ namespace VA {
             return;
         }
         Vxa::export_return_t pExport;
-        pIsolate->GetExport (pExport, args[0]);
+        pIsolate->GetExport (pExport, args[xa_ExportedObject]);
 
     //  ... and start the server:
         Server::Reference pServer (
