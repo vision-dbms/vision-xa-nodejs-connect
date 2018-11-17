@@ -218,7 +218,8 @@ namespace VA {
         static const int xa_ExportedObject   = 0;
         static const int xa_ServerOptions    = 1;
 
-        Vca::VCohortClaim cohortClaim;
+//        Vca::VCohortClaim cohortClaim;
+        Vca::VCohortClaim cohortClaim (Vca::VCohort::Vca (),false);
 
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
@@ -253,7 +254,8 @@ namespace VA {
         static const int xa_ExportedObject   = 1;
         static const int xa_ServerOptions    = 2;
 
-        Vca::VCohortClaim cohortClaim;
+//        Vca::VCohortClaim cohortClaim;
+        Vca::VCohortClaim cohortClaim (Vca::VCohort::Vca (),false);
 
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
