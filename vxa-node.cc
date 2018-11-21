@@ -218,8 +218,7 @@ namespace VA {
         static const int xa_ExportedObject   = 0;
         static const int xa_ServerOptions    = 1;
 
-//        Vca::VCohortClaim cohortClaim;
-        Vca::VCohortClaim cohortClaim (Vca::VCohort::Vca (),false);
+        Vca::VCohortClaim cohortClaim;
 
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
@@ -233,6 +232,7 @@ namespace VA {
         pIsolate->GetExport (pExport, args[0]);
 
     //  ... and start the server:
+        Vca::VCohortClaim cohortClaim2 (Vca::VCohort::Vca (),false);
         Server::Reference pServer (
             new Server (
                 ServerContext::New (pIsolate, args, xa_ServerOptions), pExport
@@ -254,8 +254,7 @@ namespace VA {
         static const int xa_ExportedObject   = 1;
         static const int xa_ServerOptions    = 2;
 
-//        Vca::VCohortClaim cohortClaim;
-        Vca::VCohortClaim cohortClaim (Vca::VCohort::Vca (),false);
+        Vca::VCohortClaim cohortClaim;
 
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
@@ -279,6 +278,7 @@ namespace VA {
         pIsolate->GetExport (pExport, args[xa_ExportedObject]);
 
     //  ... and start the server:
+        Vca::VCohortClaim cohortClaim2 (Vca::VCohort::Vca (),false);
         Server::Reference pServer (
             new Server (
                 ServerContext::New (pIsolate, args, xa_ServerOptions), pExport, pStopCallback
