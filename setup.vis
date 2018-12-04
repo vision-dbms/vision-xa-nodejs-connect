@@ -1,0 +1,27 @@
+"./resources/node.vis" asFileContents evaluate;
+
+!schemaQuery <- "./resources/schema.vis" asFileContents;
+
+################################################################################
+####  External Object Servers
+JS defineMethod: [ | server: address | ^self object: address xo ];
+String define: "xo" toBePrimitive: 8;                        # by network address
+String define: "xd" toBePrimitive: 8 withControlValue: 1;    # by directory entry
+
+################################################################################
+####  'fetch' covers
+JS defineMethod: [ | fetchText: url with: query |
+   ^self object: (
+      ^self jsObject fetchText: url with: (
+         ^self newObject set: "expression" to: query
+      ) jsParam
+   )
+];
+
+JS defineMethod: [ | fetchJSON: url with: query |
+   ^self object: (
+      ^self jsObject fetchJSON: url with: (
+         ^self newObject set: "expression" to: query
+      ) jsParam
+   )
+]

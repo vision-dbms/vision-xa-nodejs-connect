@@ -26,5 +26,8 @@
         "/deps/vision/src/M_Windows/*.h",
         "/deps/vision/src/kernel/*.cpp",
         "/deps/vision/src/kernel/*.[dh]"
-    ]
+    ],
+    "dependencies": {
+        "node-fetch": "^2.3.0"
+    }
 }
