@@ -10,18 +10,18 @@ String define: "xd" toBePrimitive: 8 withControlValue: 1;    # by directory entr
 
 ################################################################################
 ####  'fetch' covers
-JS defineMethod: [ | fetchText: url with: query |
+JS defineMethod: [ | fetchText: query from: url |
    ^self object: (
-      ^self jsObject fetchText: url with: (
+      ^self jsObject fetchText: (
          ^self newObject set: "expression" to: query
-      ) jsParam
+      ) jsParam from: url
    )
 ];
 
-JS defineMethod: [ | fetchJSON: url with: query |
+JS defineMethod: [ | fetchJSON: query from: url |
    ^self object: (
-      ^self jsObject fetchJSON: url with: (
+      ^self jsObject fetchJSON: (
          ^self newObject set: "expression" to: query
-      ) jsParam
+      ) jsParam from: url
    )
 ]

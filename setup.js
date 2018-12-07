@@ -39,7 +39,7 @@ class PromisedResult {
 }
 
 const so = {
-    fetch (url,body) {
+    fetch (body,url) {
         return new PromiseWrapper (
             fetch (
                 url, {
@@ -51,15 +51,15 @@ const so = {
         );
     },
 
-    fetchText (url,body) {
+    fetchText (body,url) {
         return new PromisedResult (
-            this.fetch (url,body).then (result=>result.text ())
+            this.fetch (body,url).then (result=>result.text ())
         );
     },
 
-    fetchJSON (url,body) {
+    fetchJSON (body,url) {
         return new PromisedResult (
-            this.fetch (url,body).then (result=>result.json ())
+            this.fetch (body,url).then (result=>result.json ())
         );
     }
 }
