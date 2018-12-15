@@ -1,6 +1,7 @@
 "./resources/node.vis" asFileContents evaluate;
 
 !schemaQuery <- "./resources/schema.vis" asFileContents;
+!externalURL <- "https://catalog.data.gov/harvest/object/fab71ee0-1f0f-4f5f-806c-788342f56d8c";
 
 ################################################################################
 ####  External Object Servers
@@ -10,6 +11,14 @@ String define: "xd" toBePrimitive: 8 withControlValue: 1;    # by directory entr
 
 ################################################################################
 ####  'fetch' covers
+JS defineMethod: [ | fetch: query from: url |
+   ^self object: (
+      ^self jsObject fetch: (
+         ^self newObject set: "expression" to: query
+      ) jsParam from: url
+   )
+];
+
 JS defineMethod: [ | fetchText: query from: url |
    ^self object: (
       ^self jsObject fetchText: (

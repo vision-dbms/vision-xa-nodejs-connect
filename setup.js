@@ -1,10 +1,9 @@
-// const log = require('why-is-node-running') // should be your first require
-
 const vc = require ('./index');
 module.exports.vc = vc;
 
 const fetch = require ('node-fetch');
 
+/****************/
 class PromiseWrapper {
     constructor (wrappedPromise) {
         this.wrappedPromise = wrappedPromise;
@@ -22,25 +21,36 @@ class PromiseWrapper {
 module.exports.PromiseWrapper = PromiseWrapper;
 module.exports.WrappedPromise = wrappedPromise=>new PromiseWrapper(wrappedPromise);
 
+/****************/
 class PromisedResult {
-    constructor (consumedPromise) {
-        this.fulfillment = 'pending';
-        this.result;
-        consumedPromise.then (
+    constructor (promise) {
+        this.promise = promise;
+        this.status = 'pending';
+        promise.then (
             result=>{
-                this.fulfillment = 'success'
+                this.status = 'success'
                 this.result = result;
             }, rejection=>{
-                this.fulfillment = 'reject'
+                this.status = 'reject'
                 this.result = rejection;
             }
         );
     }
+    json () {
+        return this.then (result=>result.json());
+    }
+    text () {
+        return this.then (result=>result.text());
+    }
+    then (...callbacks) {
+        return new PromisedResult (this.promise.then (...callbacks));
+    }
 }
 
+/****************/
 const so = {
     fetch (body,url) {
-        return new PromiseWrapper (
+        return new PromisedResult (
             fetch (
                 url, {
                     method: 'post',
@@ -52,23 +62,16 @@ const so = {
     },
 
     fetchText (body,url) {
-        return new PromisedResult (
-            this.fetch (body,url).then (result=>result.text ())
-        );
+        return this.fetch (body,url).text ();
     },
 
     fetchJSON (body,url) {
-        return new PromisedResult (
-            this.fetch (body,url).then (result=>result.json ())
-        );
+        return this.fetch (body,url).json ();
     }
 }
 module.exports.so = so;
 
-var p = vc.v('2 + 2').then (
-    r=>{
-	console.log(r);
-	vc.o (so,'-address=2300').then (r=>module.exports.st=r)
-    }
+/****************/
+var p = vc.o (so,'-address=2300').then (
+    r=>{console.log (r); module.exports.st=r}
 );
-// var p = vc.o (so,'-address=2300').then (res=>module.exports.st=res);
