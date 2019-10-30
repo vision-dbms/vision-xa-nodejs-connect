@@ -1,6 +1,11 @@
 "./resources/node.vis" asFileContents evaluate;
+"extendnode.vis" fileExists ifTrue: ["extendnode.vis" asFileContents evaluate];
+
+!visionUrl <- "http://localhost:9300/vision/api";
 
 !schemaQuery <- "./resources/schema.vis" asFileContents;
+!holdingsQuery <- "./resources/holdings.vis" asFileContents;
+
 !externalURL <- "https://catalog.data.gov/harvest/object/fab71ee0-1f0f-4f5f-806c-788342f56d8c";
 
 ################################################################################
@@ -13,24 +18,18 @@ String define: "xd" toBePrimitive: 8 withControlValue: 1;    # by directory entr
 ####  'fetch' covers
 JS defineMethod: [ | fetch: query from: url |
    ^self object: (
-      ^self jsObject fetch: (
-         ^self newObject set: "expression" to: query
-      ) jsParam from: url
+      ^self jsObject fetch: query jsParam from: url
    )
 ];
 
 JS defineMethod: [ | fetchText: query from: url |
    ^self object: (
-      ^self jsObject fetchText: (
-         ^self newObject set: "expression" to: query
-      ) jsParam from: url
+      ^self jsObject fetchText: query jsParam from: url
    )
 ];
 
 JS defineMethod: [ | fetchJSON: query from: url |
    ^self object: (
-      ^self jsObject fetchJSON: (
-         ^self newObject set: "expression" to: query
-      ) jsParam from: url
+      ^self jsObject fetchJSON: query jsParam from: url
    )
-]
+];

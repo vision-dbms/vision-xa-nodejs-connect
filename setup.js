@@ -28,10 +28,10 @@ class PromisedResult {
         this.status = 'pending';
         promise.then (
             result=>{
-                this.status = 'success'
+                this.status = 'success';
                 this.result = result;
             }, rejection=>{
-                this.status = 'reject'
+                this.status = 'reject';
                 this.result = rejection;
             }
         );

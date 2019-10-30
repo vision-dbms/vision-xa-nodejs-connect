@@ -3,7 +3,7 @@
 #####
 
 #--  Identify class to profile
-!class <- "Security" asClass;
+!class <- JS jsObject request body classId asClass;
 !cd <- class classDescriptor ;
 
 #-- Create a list of JS objects representing each message in the class...
