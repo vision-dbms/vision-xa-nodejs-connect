@@ -1,6 +1,6 @@
 {
     "name": "@vision-dbms/connect",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Vision external adapter for nodejs",
     "main": "index.js",
     "scripts": {
