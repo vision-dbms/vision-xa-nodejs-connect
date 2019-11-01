@@ -104,13 +104,19 @@ namespace {
         }
         return false;
     }
+    bool GetUnwrappedFromMaybe (
+        bool &rUnwrapped, bool iBool
+    ) {
+        rUnwrapped = iBool;
+        return true;
+    }
 }
 
 bool VA::Node::Isolate::GetUnwrapped (
     bool &rUnwrapped, local_value_t hValue
 ) const {
     return GetUnwrappedFromMaybe (
-        rUnwrapped, hValue->BooleanValue (context ())
+        rUnwrapped, hValue->BooleanValue (ToBooleanContext ())
     );
 }
 
