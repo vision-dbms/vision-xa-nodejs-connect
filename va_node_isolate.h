@@ -146,6 +146,18 @@ namespace VA {
                 return m_hIsolate->GetCurrentContext ();
             }
 
+        //  V8 Deprecation Workarounds
+#if V8_MAJOR_VERSION >= 7 && V8_MINOR_VERSION >= 7
+        isolate_handle_t ToBooleanContext () const {
+            return isolate ();
+        }
+#else
+        local_context_t ToBooleanContext () const {
+            return context ();
+        }
+#endif
+
+
         //  Local Access
         public:
         //  ... isolate constants
@@ -204,7 +216,7 @@ namespace VA {
             }
 
             bool GetLocalFrom (V8<v8::Boolean>::local &rhLocal, local_value_t hValue) const {
-                return GetLocalFor (rhLocal, hValue->ToBoolean (context ()));
+                return GetLocalFor (rhLocal, hValue->ToBoolean (ToBooleanContext ()));
             }
             bool GetLocalFrom (V8<v8::Function>::local &rhLocal, local_value_t hValue) const {
                 if (hValue->IsFunction ()) {
