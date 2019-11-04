@@ -147,7 +147,7 @@ namespace VA {
             }
 
         //  V8 Deprecation Workarounds
-#if V8_MAJOR_VERSION >= 7 && V8_MINOR_VERSION >= 7
+#if V8_MAJOR_VERSION >= 7 && V8_MINOR_VERSION >= 4
         isolate_handle_t ToBooleanContext () const {
             return isolate ();
         }
