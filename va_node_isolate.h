@@ -49,13 +49,29 @@ namespace VA {
             typedef ClassTraits<Export>::retaining_ptr_t ExportReference;
             typedef ClassTraits<Export>::notaining_ptr_t ExportPointer;
 
+        //  class ArgSink
+        public:
+        class ArgSink : public Vxa::VAny::Client {
+            public:
+                ArgSink (
+                    local_value_t &rResult, Isolate *pIsolate
+                );
+                ~ArgSink ();
+
+            public:
+                virtual bool on (int iValue) override;
+                virtual bool on (double iValue) override;
+                virtual bool on (VString const &iValue) override;
+                virtual bool on (VCollectableObject *pObject) override;
+
+            private:
+                local_value_t& m_rResult;
+                Isolate* const m_pIsolate;
+            };
+
         //  class ArgPack
         public:
             class ArgPack {
-            //  class ArgSink
-            public:
-                class ArgSink;
-
             //  Construction
             public:
                 template <typename ...Ts> ArgPack (

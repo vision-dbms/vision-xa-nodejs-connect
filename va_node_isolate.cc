@@ -323,39 +323,44 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *****  ArgSink  *****
  *********************/
 
-class VA::Node::Isolate::ArgPack::ArgSink : public Vxa::VAny::Client {
-    public:
-        ArgSink (
-            local_value_t &rResult, Isolate *pIsolate
-        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
-        }
-        ~ArgSink () {
-        }
-    public:
-        virtual bool on (int iValue) override {
-            m_rResult = m_pIsolate->NewNumber (iValue);
-            return true;
-        }
-        virtual bool on (double iValue) override {
-            m_rResult = m_pIsolate->NewNumber (iValue);
-            return true;
-        }
-        virtual bool on (VString const &iValue) override {
-            m_rResult = m_pIsolate->NewString (iValue);
-            return true;
-        }
-        virtual bool on (VCollectableObject *pObject) override {
-            Export *pExport = dynamic_cast<Export*>(pObject);
-            if (pExport)
-                m_rResult = pExport->value ();
-            else
-                m_rResult = m_pIsolate->LocalUndefined ();
-            return true;
-        }
-    private:
-        local_value_t& m_rResult;
-        Isolate* const m_pIsolate;
-    };
+/*----------------*/
+VA::Node::Isolate::ArgSink::ArgSink (
+    local_value_t &rResult, Isolate *pIsolate
+) : m_rResult (rResult), m_pIsolate (pIsolate) {
+}
+
+/*----------------*/
+VA::Node::Isolate::ArgSink::~ArgSink () {
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (int iValue) {
+    m_rResult = m_pIsolate->NewNumber (iValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (double iValue) {
+    m_rResult = m_pIsolate->NewNumber (iValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (VString const &iValue) {
+    m_rResult = m_pIsolate->NewString (iValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (VCollectableObject *pObject) {
+    Export *pExport = dynamic_cast<Export*>(pObject);
+    if (pExport)
+        m_rResult = pExport->value ();
+    else
+        m_rResult = m_pIsolate->LocalUndefined ();
+    return true;
+}
+
 
 /*********************
  *****  ArgPack  *****

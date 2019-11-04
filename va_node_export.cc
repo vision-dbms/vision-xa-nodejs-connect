@@ -114,6 +114,7 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t rPack) {
         ) || SetResultToUndefined (rResult);
     }
 }
+
 
 /*********************
  *----  Context  ----*
@@ -151,6 +152,25 @@ void VA::Node::Export::JSToString (vxa_result_t &rResult) {
     VString iResult;
     UnwrapString (iResult, value(), false);
     rResult = iResult;
+}
+
+
+/******************************
+ *----  Structure Access  ----*
+ ******************************/
+
+void VA::Node::Export::JSAt (vxa_result_t &rResult, vxa_any_t rKey) {
+    HandleScope iHS (this);
+
+    local_object_t hObject;
+    local_value_t hKey, hValue;
+    Isolate::ArgSink iKeySink (hKey, isolate ());
+    rKey.supply (iKeySink);
+    (
+        GetLocal (hObject) && GetLocalFor (
+            hValue, hObject->Get (context (), hKey)
+        ) && SetResultToValue (rResult, hValue)
+    ) || SetResultToUndefined (rResult);
 }
 
 
@@ -359,6 +379,9 @@ void VA::Node::Export::JSIsProxy (vxa_result_t &rResult) {
  ***************************/
 
 VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::ClassBuilder (pClass) {
+    defineMethod ("at:"                         , &Export::JSAt);
+    defineMethod (".at:"                        , &Export::JSAt);
+
     defineMethod (".global"                     , &Export::JSGlobal);
 
     defineMethod (".strictEquals:"              , &Export::JSStrictEquals);

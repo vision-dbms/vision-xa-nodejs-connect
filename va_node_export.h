@@ -94,6 +94,8 @@ namespace VA {
 
             void JSToString (vxa_result_t &rResult);
 
+            void JSAt (vxa_result_t &rResult, vxa_any_t rWhat);
+
             void JSIsUndefined (vxa_result_t &rResult);
             void JSIsNull (vxa_result_t &rResult);
             void JSIsNullOrUndefined (vxa_result_t &rResult);

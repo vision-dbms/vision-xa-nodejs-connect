@@ -41,6 +41,8 @@ namespace VA {
          *  been deployed.
          *****************/
 
+             VisionAPI_AtPrimitive,
+
         /****************
          *  Add all new feature entries immediately above this comment !!!
          ****************/
