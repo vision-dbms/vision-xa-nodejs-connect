@@ -33,3 +33,14 @@ JS defineMethod: [ | fetchJSON: query from: url |
       ^self jsObject fetchJSON: query jsParam from: url
    )
 ];
+
+################################################################################
+####  'fetch' example
+
+!fs <- JS server: "localhost:2300";
+!body <- fs newObject
+   set: "expression" to: holdingsQuery.
+   set: "classId"    to: "Account".
+   set: "id"         to: "SP50";
+
+!r1 <- fs fetchJSON: body from: visionUrl
