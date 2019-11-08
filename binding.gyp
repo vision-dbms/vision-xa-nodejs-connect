@@ -28,7 +28,6 @@
           '-Wno-unused-function',
           '-Wno-extra',
           '-Wno-clobbered',
-          '-Wno-explicit-fallthrough',
         ],
         'cflags_cc!': [
           '-fno-rtti', '-fno-exceptions'

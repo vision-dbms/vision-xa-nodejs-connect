@@ -49,13 +49,25 @@ namespace VA {
             typedef ClassTraits<Export>::retaining_ptr_t ExportReference;
             typedef ClassTraits<Export>::notaining_ptr_t ExportPointer;
 
+        //  class ArgSink
+        public:
+            class ArgSink : public Vxa::VAny::Client {
+            public:
+                ArgSink (local_value_t &rResult, Isolate *pIsolate);
+                ~ArgSink ();
+            public:
+                virtual bool on (int iValue) override;
+                virtual bool on (double iValue) override;
+                virtual bool on (VString const &iValue) override;
+                virtual bool on (VCollectableObject *pObject) override;
+            private:
+                local_value_t& m_rResult;
+                Isolate* const m_pIsolate;
+            };
+
         //  class ArgPack
         public:
             class ArgPack {
-            //  class ArgSink
-            public:
-                class ArgSink;
-
             //  Construction
             public:
                 template <typename ...Ts> ArgPack (
@@ -147,16 +159,16 @@ namespace VA {
             }
 
         //  V8 Deprecation Workarounds
+        protected:
 #if V8_MAJOR_VERSION >= 7 && V8_MINOR_VERSION >= 4
-        isolate_handle_t ToBooleanContext () const {
-            return isolate ();
-        }
+            isolate_handle_t ToBooleanContext () const {
+                return isolate ();
+            }
 #else
-        local_context_t ToBooleanContext () const {
-            return context ();
-        }
+            local_context_t ToBooleanContext () const {
+                return context ();
+            }
 #endif
-
 
         //  Local Access
         public:
@@ -278,11 +290,13 @@ namespace VA {
 
         //  Creation Helpers
         public:
-            local_string_t   NewString (char const *pString) const;
-            local_integer_t  NewNumber (int iNumber) const {
+            bool NewString (local_string_t &rResult, VString const &rString) const;
+            local_string_t NewString (VString const &rString) const;
+
+            local_integer_t NewNumber (int iNumber) const {
                 return integer_t::New (handle (), iNumber);
             }
-            local_integer_t  NewNumber (unsigned int iNumber) const {
+            local_integer_t NewNumber (unsigned int iNumber) const {
                 return integer_t::NewFromUnsigned (handle (), iNumber);
             }
             local_number_t  NewNumber (double iNumber) const {
@@ -294,7 +308,7 @@ namespace VA {
 
         //  Exception Helpers
         public:
-            void ThrowTypeError (char const *pMessage) const;
+            void ThrowTypeError (VString const &rMessage) const;
 
         //  Export Access
             bool GetExport (Vxa::export_return_t &rExport, local_value_t hValue);

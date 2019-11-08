@@ -160,8 +160,41 @@ bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) 
  ******************************
  ******************************/
 
-VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) const {
-    return string_t::NewFromUtf8 (m_hIsolate, pString);
+namespace VA {
+    namespace Node {
+        namespace {
+            class VStringResource : public string_t::ExternalOneByteStringResource {
+            public:
+                VStringResource (VString const &rString) : m_iString (rString) {
+                }
+                ~VStringResource () {
+                }
+            public:
+                virtual char const *data () const override {
+                    return m_iString.content ();
+                }
+                virtual size_t length () const override {
+                    return m_iString.length ();
+                }
+            private:
+                VString const m_iString;
+            };
+        }
+    }
+}
+
+bool VA::Node::Isolate::NewString (local_string_t &rResult, VString const &rString) const {
+    return GetLocalFor (
+        rResult, string_t::NewExternalOneByte (
+            isolate (), new VStringResource (rString)
+        )
+    );
+}
+
+VA::Node::local_string_t VA::Node::Isolate::NewString (VString const &rString) const {
+    local_string_t hString;
+    NewString (hString, rString);
+    return hString;
 }
 
 /*******************************
@@ -170,8 +203,8 @@ VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) cons
  *******************************
  *******************************/
 
-void VA::Node::Isolate::ThrowTypeError (char const *pMessage) const {
-    m_hIsolate->ThrowException (v8::Exception::TypeError (NewString (pMessage)));
+void VA::Node::Isolate::ThrowTypeError (VString const &rMessage) const {
+    m_hIsolate->ThrowException (v8::Exception::TypeError (NewString (rMessage)));
 }
 
 /***************************
@@ -323,39 +356,44 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *****  ArgSink  *****
  *********************/
 
-class VA::Node::Isolate::ArgPack::ArgSink : public Vxa::VAny::Client {
-    public:
-        ArgSink (
-            local_value_t &rResult, Isolate *pIsolate
-        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
-        }
-        ~ArgSink () {
-        }
-    public:
-        virtual bool on (int iValue) override {
-            m_rResult = m_pIsolate->NewNumber (iValue);
-            return true;
-        }
-        virtual bool on (double iValue) override {
-            m_rResult = m_pIsolate->NewNumber (iValue);
-            return true;
-        }
-        virtual bool on (VString const &iValue) override {
-            m_rResult = m_pIsolate->NewString (iValue);
-            return true;
-        }
-        virtual bool on (VCollectableObject *pObject) override {
-            Export *pExport = dynamic_cast<Export*>(pObject);
-            if (pExport)
-                m_rResult = pExport->value ();
-            else
-                m_rResult = m_pIsolate->LocalUndefined ();
-            return true;
-        }
-    private:
-        local_value_t& m_rResult;
-        Isolate* const m_pIsolate;
-    };
+/*----------------*/
+VA::Node::Isolate::ArgSink::ArgSink (
+    local_value_t &rResult, Isolate *pIsolate
+) : m_rResult (rResult), m_pIsolate (pIsolate) {
+}
+
+/*----------------*/
+VA::Node::Isolate::ArgSink::~ArgSink () {
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (int iValue) {
+    m_rResult = m_pIsolate->NewNumber (iValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (double iValue) {
+    m_rResult = m_pIsolate->NewNumber (iValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (VString const &rValue) {
+    m_rResult = m_pIsolate->NewString (rValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (VCollectableObject *pObject) {
+    Export *pExport = dynamic_cast<Export*>(pObject);
+    if (pExport)
+        m_rResult = pExport->value ();
+    else
+        m_rResult = m_pIsolate->LocalUndefined ();
+    return true;
+}
+
 
 /*********************
  *****  ArgPack  *****

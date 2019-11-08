@@ -100,11 +100,11 @@ void VA::Node::Export::JSCallback (vxa_result_t &rResult, vxa_pack_t rPack) {
             << rResult.selectorComponent (0)
             << std::endl;
     */
-        local_value_t hApplicable; (
-            GetLocalFor (
-                hApplicable, hObject->Get (
-                    context (), NewString (rResult.selectorComponent (0))
-                )
+        local_string_t hSelector; local_value_t hApplicable; (
+            NewString (
+                hSelector, rResult.selectorComponent (0)
+            ) && GetLocalFor (
+                hApplicable, hObject->Get (context (), hSelector)
             ) && rResult.invokedIntensionally () ? (
                 SetResultToValue (rResult, hApplicable)
             ) : (

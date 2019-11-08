@@ -170,8 +170,11 @@ namespace VA {
 
         //  Object Creation
         public:
-            local_string_t NewString (char const *pString) const {
-                return m_pIsolate->NewString (pString);
+            bool NewString (local_string_t &rResult, VString const &rString) const {
+                return m_pIsolate->NewString (rResult, rString);
+            }
+            local_string_t NewString (VString const &rString) const {
+                return m_pIsolate->NewString (rString);
             }
             local_object_t NewObject () const {
                 return m_pIsolate->NewObject ();
