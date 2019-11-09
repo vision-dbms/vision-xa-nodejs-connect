@@ -3,7 +3,23 @@ module.exports.vc = vc;
 
 const fetch = require ('node-fetch');
 
-/****************/
+/********************************
+ *****  Global Definitions  *****
+ *                              *
+ * Maybe create an official set *
+ * of Vision global definitions *
+ * as part of the first release *
+ *                              *
+ ********************************/
+
+global.New = function New (constructable, ...constructorArgs) {
+    return new constructable (...constructorArgs);
+}
+
+/*****************************
+ *****  Promise Helpers  *****
+ *****************************/
+
 class PromiseWrapper {
     constructor (wrappedPromise) {
         this.wrappedPromise = wrappedPromise;
@@ -47,7 +63,10 @@ class PromisedResult {
     }
 }
 
-/****************/
+/***************************
+ *****  Shared Object  *****
+ ***************************/
+
 const so = {
     /*----------------*/
     fetch (body,url) {
@@ -84,7 +103,13 @@ const so = {
 }
 module.exports.so = so;
 
-/****************/
+/*********************************
+ *****  Test Initialization  *****
+ *                               *
+ *  Remove before first release  *
+ *                               *
+ *********************************/
+
 var p = vc.o (so,'-address=2300').then (
     r=>{console.log (r); module.exports.st=r}
 );

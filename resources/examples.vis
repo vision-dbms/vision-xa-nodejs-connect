@@ -1,0 +1,59 @@
+
+################################################################################
+####  'fetch' examples
+
+################
+#  Fetch Server Access
+
+!fs <- JS server: "localhost:2300";
+
+################
+#  URLs
+
+!visionUrl <- "http://localhost:9300/vision/api";
+!externalURL <- "https://catalog.data.gov/harvest/object/fab71ee0-1f0f-4f5f-806c-788342f56d8c";
+
+################
+#  Query Expressions
+
+!schemaQuery <- "./resources/schema.vis" asFileContents;
+!holdingsQuery <- "./resources/holdings.vis" asFileContents;
+
+################
+#  URL / URLSearchParams Creation
+#
+#  See the following for why we may need to care...
+#
+#    https://www.npmjs.com/package/node-fetch#post-with-form-parameters
+#
+#    https://nodejs.org/api/url.html
+#
+#    https://nodejs.org/api/url.html#url_class_urlsearchparams
+#
+
+!urlsp <- fs global get: [^self New: :URLSearchParams \.id];
+!vurl  <- fs global get: [^self New: :URL \.id withUrl: ^my visionUrl];
+
+################
+#  Holdings Query Body
+
+!body <- fs newObject
+   set: "expression" to: holdingsQuery.
+   set: "classId"    to: "Account".
+   set: "id"         to: "SP50".
+;
+
+################
+#  Holdings Query Options
+
+!options <- fs newObject
+  set: "method"  to: "post".
+  set: "headers" to: (body newObject set: "Content-Type" to: "application/json").
+  set: "body"    to: (body global get: [JSON stringify: ^my body jsParam]).
+;
+
+################
+#  Holdings Query Two Ways
+
+!r1 <- fs fetchJSON: body from: visionUrl;
+!r2 <- fs fetchJSONFrom: visionUrl withOptions: options;

@@ -1,13 +1,6 @@
 "./resources/node.vis" asFileContents evaluate;
 "extendnode.vis" fileExists ifTrue: ["extendnode.vis" asFileContents evaluate];
 
-!visionUrl <- "http://localhost:9300/vision/api";
-
-!schemaQuery <- "./resources/schema.vis" asFileContents;
-!holdingsQuery <- "./resources/holdings.vis" asFileContents;
-
-!externalURL <- "https://catalog.data.gov/harvest/object/fab71ee0-1f0f-4f5f-806c-788342f56d8c";
-
 ################################################################################
 ####  External Object Servers
 JS defineMethod: [ | server: address | ^self object: address xo ];
@@ -52,20 +45,3 @@ JS defineMethod: [ | fetchJSONFrom: url withOptions: options |
       ^self jsObject fetchJSONFrom: url withOptions: options jsParam
    )
 ];
-
-################################################################################
-####  'fetch' examples
-
-!fs <- JS server: "localhost:2300";
-!body <- fs newObject
-   set: "expression" to: holdingsQuery.
-   set: "classId"    to: "Account".
-   set: "id"         to: "SP50";
-
-!r1 <- fs fetchJSON: body from: visionUrl;
-
-!options <- fs newObject
-  set: "method"  to: "post".
-  set: "headers" to: (body newObject set: "Content-Type" to: "application/json").
-  set: "body"    to: (body global get: [JSON stringify: ^my body jsParam]).
-
