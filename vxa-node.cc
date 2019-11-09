@@ -67,7 +67,7 @@ namespace VA {
         static ServerContext *New (
             VN::Isolate *pIsolate, FunctionCallbackInfo<Value> const& args, int xFirstArg
         );
-
+    private:
         ServerContext (arg_storage_t const &rArgs);
 
     //  Destruction

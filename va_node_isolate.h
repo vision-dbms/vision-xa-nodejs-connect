@@ -205,9 +205,9 @@ namespace VA {
 
         //  ... handle -> local handle
             template <typename source_t> typename V8<source_t>::local LocalFor (
-                source_t const &rhSouce
+                source_t const &rhSource
             ) const {
-                return V8<source_t>::local::New (m_hIsolate, rhSouce);
+                return V8<source_t>::local::New (m_hIsolate, rhSource);
             }
 
         //  ... handle -> local handle (maybe)
