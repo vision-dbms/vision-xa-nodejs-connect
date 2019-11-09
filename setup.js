@@ -49,6 +49,7 @@ class PromisedResult {
 
 /****************/
 const so = {
+    /*----------------*/
     fetch (body,url) {
         return new PromisedResult (
             fetch (
@@ -60,13 +61,25 @@ const so = {
             )
         );
     },
-
     fetchText (body,url) {
         return this.fetch (body,url).text ();
     },
-
     fetchJSON (body,url) {
         return this.fetch (body,url).json ();
+    },
+
+    /*----------------*/
+    fetchFrom (url,options) {
+        console.log (url, options);
+        return new PromisedResult (
+            fetch (url,options)
+        );
+    },
+    fetchTextFrom (url,options) {
+        return this.fetchFrom (url,options).text ();
+    },
+    fetchJSONFrom (url,options) {
+        return this.fetchFrom (url,options).json ();
     }
 }
 module.exports.so = so;

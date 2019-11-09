@@ -34,8 +34,27 @@ JS defineMethod: [ | fetchJSON: query from: url |
    )
 ];
 
+################
+JS defineMethod: [ | fetchFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchFrom: url withOptions: options jsParam
+   )
+];
+
+JS defineMethod: [ | fetchTextFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchTextFrom: url withOptions: options jsParam
+   )
+];
+
+JS defineMethod: [ | fetchJSONFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchJSONFrom: url withOptions: options jsParam
+   )
+];
+
 ################################################################################
-####  'fetch' example
+####  'fetch' examples
 
 !fs <- JS server: "localhost:2300";
 !body <- fs newObject
@@ -43,4 +62,10 @@ JS defineMethod: [ | fetchJSON: query from: url |
    set: "classId"    to: "Account".
    set: "id"         to: "SP50";
 
-!r1 <- fs fetchJSON: body from: visionUrl
+!r1 <- fs fetchJSON: body from: visionUrl;
+
+!options <- fs newObject
+  set: "method"  to: "post".
+  set: "headers" to: (body newObject set: "Content-Type" to: "application/json").
+  set: "body"    to: (body global get: [JSON stringify: ^my body jsParam]).
+
