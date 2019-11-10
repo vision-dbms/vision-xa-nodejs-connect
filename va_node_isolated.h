@@ -224,6 +224,21 @@ namespace VA {
                 return m_pIsolate->MaybeSetResultToApply (rResult, hReceiver, hCallable, rPack);
             }
 
+        /*---------------------*
+         *----  Maybe New  ----*
+         *---------------------*/
+            template <typename result_t, typename constructable_t, typename... arg_ts> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, arg_ts ...args
+            ) const {
+                return m_pIsolate->MaybeSetResultToNewInstance (rResult, hConstructable, args...);
+            }
+
+            template <typename result_t, typename constructable_t, typename pack_t> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, pack_t &rPack
+            ) const {
+                return m_pIsolate->MaybeSetResultToNewInstance (rResult, hConstructable, rPack);
+            }
+
         /*-----------------------*
          *----  Maybe Value  ----*
          *-----------------------*/
@@ -259,13 +274,25 @@ namespace VA {
             template <typename result_t, typename callable_t, typename... arg_ts> bool SetResultToCall (
                 result_t &rResult, local_value_t hReceiver, callable_t hCallable, arg_ts ...args
             ) const {
-                return m_pIsolate->MaybeSetResultToCall (rResult, hReceiver, hCallable, args...);
+                return m_pIsolate->SetResultToCall (rResult, hReceiver, hCallable, args...);
             }
             template <typename result_t, typename callable_t, typename pack_t> bool SetResultToApply (
                 result_t &rResult, local_value_t hReceiver, callable_t hCallable, pack_t &rPack
             ) const {
                 return m_pIsolate->SetResultToApply (rResult, hReceiver, hCallable, rPack);
             }
+
+            template <typename result_t, typename constructable_t, typename... arg_ts> bool SetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, arg_ts ...args
+            ) {
+                return m_pIsolate->SetResultToNewInstance (rResult, hConstructable, args...);
+            }
+            template <typename result_t, typename constructable_t, typename pack_t> bool SetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, pack_t &rPack
+            ) {
+                return m_pIsolate->SetResultToNewInstance (rResult, hConstructable, rPack);
+            }
+
             template <typename result_t, typename handle_t> bool SetResultToValue (
                 result_t &rResult, handle_t hValue
             ) const {

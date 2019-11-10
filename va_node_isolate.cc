@@ -36,13 +36,28 @@
 
 /**************************
  **************************
+ *****  Call Helpers  *****
+ **************************
+ **************************/
+
+/*
+void VA::Node::Isolate::NewHelper (v8::FunctionCallbackInfo<value_t> const &rInfo) {
+}
+*/
+
+/**************************
+ **************************
  *****  Construction  *****
  **************************
  **************************/
 
 VA::Node::Isolate::Isolate (
     isolate_handle_t hIsolate
-) : m_hIsolate (hIsolate), m_hValueCache (hIsolate, object_cache_t::New (hIsolate)) {
+) : m_hIsolate (hIsolate), m_hValueCache (
+    hIsolate, object_cache_t::New (hIsolate)
+//) , m_hNewHelperTemplate (
+//    hIsolate, function_template_t::New (hIsolate, &ThisClass::NewHelper)
+) {
 }
 
 /*************************

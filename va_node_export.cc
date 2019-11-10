@@ -155,6 +155,17 @@ void VA::Node::Export::JSToString (vxa_result_t &rResult) {
 }
 
 
+/*****************
+ *----  New  ----*
+ *****************/
+
+void VA::Node::Export::JSNew (vxa_result_t &rResult, vxa_pack_t rPack) {
+    HandleScope iHS (this);
+
+    SetResultToNewInstance (rResult, value (), rPack);
+}
+
+
 /******************************
  *----  Structure Access  ----*
  ******************************/
@@ -436,6 +447,14 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::
     defineMethod (".isDataView"                 , &Export::JSIsDataView);
     defineMethod (".isSharedArrayBuffer"        , &Export::JSIsSharedArrayBuffer);
     defineMethod (".isProxy"                    , &Export::JSIsProxy);
+
+    defineMethod (".new"                        , &Export::JSNew);
+    defineMethod (".new:"                       , &Export::JSNew);
+    defineMethod (".new:and:"                   , &Export::JSNew);
+    defineMethod (".new:and:and:"               , &Export::JSNew);
+    defineMethod (".new:and:and:and:"           , &Export::JSNew);
+    defineMethod (".new:and:and:and:and:"       , &Export::JSNew);
+    defineMethod (".new:and:and:and:and:and:"   , &Export::JSNew);
 
     defineDefault (&Export::JSCallback);
 }

@@ -124,6 +124,11 @@ namespace VA {
         typedef V8<function_t>::maybe maybe_function_t;
         typedef V8<function_t>::persistent persistent_function_t;
 
+        typedef v8::FunctionTemplate function_template_t;
+        typedef V8<function_template_t>::local local_function_template_t;
+        typedef V8<function_template_t>::maybe maybe_function_template_t;
+        typedef V8<function_template_t>::persistent persistent_function_template_t;
+
         typedef v8::Integer integer_t;
         typedef V8<integer_t>::local local_integer_t;
         typedef V8<integer_t>::maybe maybe_integer_t;
@@ -138,6 +143,11 @@ namespace VA {
         typedef V8<object_t>::local local_object_t;
         typedef V8<object_t>::maybe maybe_object_t;
         typedef V8<object_t>::persistent persistent_object_t;
+
+        typedef v8::ObjectTemplate object_template_t;
+        typedef V8<object_template_t>::local local_object_template_t;
+        typedef V8<object_template_t>::maybe maybe_object_template_t;
+        typedef V8<object_template_t>::persistent persistent_object_template_t;
 
         typedef v8::Primitive primitive_t;
         typedef V8<primitive_t>::local local_primitive_t;

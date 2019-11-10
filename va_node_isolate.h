@@ -382,47 +382,83 @@ namespace VA {
          *----  Maybe Apply  ----*
          *-----------------------*/
             template <typename result_t, typename callable_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, callable_t hCallable, vxa_pack_t rPack
+                result_t &rResult,
+                local_value_t hReceiver,
+                callable_t hCallable,
+                vxa_pack_t rPack,
+                bool bConstructorCall = false
             ) {
-                return MaybeSetResultToApply (rResult, hReceiver, hCallable, ArgPack (this, rPack));
+                return MaybeSetResultToApply (
+                    rResult, hReceiver, hCallable, ArgPack (this, rPack), bConstructorCall
+                );
             }
 
             template <typename result_t, typename callable_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, callable_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                callable_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 local_value_t hLocalCallable;
                 return GetLocalFor (hLocalCallable, hCallable)
-                    && MaybeSetResultToApply (rResult, hReceiver, hLocalCallable, rArgs);
+                    && MaybeSetResultToApply (rResult, hReceiver, hLocalCallable, rArgs, bConstructorCall);
             }
 
             template <typename result_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_value_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 return MaybeSetResultToApplyOf<result_t,local_function_t> (
-                    rResult, hReceiver, hCallable, rArgs
+                    rResult, hReceiver, hCallable, rArgs, bConstructorCall
                 ) || MaybeSetResultToApplyOf<result_t,local_object_t> (
-                    rResult, hReceiver, hCallable, rArgs
+                    rResult, hReceiver, hCallable, rArgs, bConstructorCall
                 );
             }
 
             template <typename result_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, local_function_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_function_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 m_iCallCount++;
                 v8::TryCatch iCatcher (*this);
-                return MaybeSetResultToValue (
-                    rResult, hCallable->Call (context (), hReceiver, rArgs.argc (), rArgs.argv ())
+                return (
+                    bConstructorCall ? MaybeSetResultToNewInstance (
+                        rResult, hCallable, rArgs
+                    ) : MaybeSetResultToValue (
+                        rResult, hCallable->Call (context (), hReceiver, rArgs.argc (), rArgs.argv ())
+                    )
                 ) || MaybeSetResultToError (rResult, iCatcher);
+            }
+            template <typename result_t> bool MaybeSetResultToNewInstance (
+                result_t &rResult, local_function_t hCallable, ArgPack const &rArgs
+            ) {
+                local_object_t hNewInstance;
+                return GetLocalFor (
+                    hNewInstance, hCallable->NewInstance (context (), rArgs.argc (), rArgs.argv ())
+                ) && MaybeSetResultToValue (rResult, v8::Local<value_t> (hNewInstance));
             }
 
             template <typename result_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, local_object_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_object_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 m_iCallCount++;
                 v8::TryCatch iCatcher (*this);
                 return hCallable->IsCallable () && (
                     MaybeSetResultToValue (
-                        rResult, hCallable->CallAsFunction (
+                        rResult, bConstructorCall ? hCallable->CallAsConstructor (
+                            context (), rArgs.argc (), rArgs.argv ()
+                        ) : hCallable->CallAsFunction (
                             context (), hReceiver, rArgs.argc (), rArgs.argv ()
                         )
                     ) || MaybeSetResultToError (rResult, iCatcher)
@@ -430,11 +466,39 @@ namespace VA {
             }
 
             template <typename result_t, typename cast_callable_t> bool MaybeSetResultToApplyOf (
-                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_value_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 cast_callable_t hCastCallable;
                 return GetLocalFrom (hCastCallable, hCallable)
-                    && MaybeSetResultToApply (rResult, hReceiver, hCastCallable, rArgs);
+                    && MaybeSetResultToApply (rResult, hReceiver, hCastCallable, rArgs, bConstructorCall);
+            }
+
+        /*---------------------*
+         *----  Maybe New  ----*
+         *---------------------*/
+            template <typename result_t, typename constructable_t, typename... arg_ts> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, arg_ts ...args
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, ArgPack (this, args...));
+            }
+
+            template <typename result_t, typename constructable_t> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, vxa_pack_t rPack
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, ArgPack (this, rPack));
+            }
+
+            template <typename result_t, typename constructable_t> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, ArgPack const &rArgs
+            ) {
+                local_value_t hUndefined;
+                return GetLocalUndefined (hUndefined) && MaybeSetResultToApply (
+                    rResult, hUndefined, hConstructable, rArgs, true
+                );
             }
 
         /*-----------------------*
@@ -494,6 +558,20 @@ namespace VA {
                 return MaybeSetResultToApply (rResult, hReceiver, hCallable, rPack)
                     || SetResultToUndefined (rResult);
             }
+
+            template <typename result_t, typename constructable_t, typename... arg_ts> bool SetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, arg_ts ...args
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, args...)
+                    || SetResultToUndefined (rResult);
+            }
+            template <typename result_t, typename constructable_t, typename pack_t> bool SetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, pack_t &rPack
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, rPack)
+                    || SetResultToUndefined (rResult);
+            }
+
             template <typename result_t, typename handle_t> bool SetResultToValue (
                 result_t &rResult, handle_t hValue
             ) {
@@ -510,9 +588,9 @@ namespace VA {
 
         //  State
         private:
-            isolate_handle_t    const m_hIsolate;
-            persistent_object_cache_t m_hValueCache;
-            call_counter_t            m_iCallCount;
+            isolate_handle_t const         m_hIsolate;
+            persistent_object_cache_t      m_hValueCache;
+            call_counter_t                 m_iCallCount;
         };
 
     } // namespace VA::Node
