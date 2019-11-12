@@ -5,7 +5,7 @@
  *****  Components  *****
  ************************/
 
-#include "va_node_entity.h"
+#include "va_node_isolated.h"
 
 /**************************
  *****  Declarations  *****
@@ -19,14 +19,15 @@
 
 namespace VA {
     namespace Node {
-        class Callback : public Entity {
-            DECLARE_ABSTRACT_RTTLITE (Callback, Entity);
+        class Callback : public Isolated {
+            DECLARE_ABSTRACT_RTTLITE (Callback, Isolated);
 
             friend Process::Primary;
 
         //  Construction
         protected:
-            Callback ();
+            Callback (Isolated *pIsolated);
+            Callback (Isolate *pIsolate);
 
         //  Destruction
         protected:

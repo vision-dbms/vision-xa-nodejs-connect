@@ -119,6 +119,11 @@ namespace VA {
         typedef V8<context_t>::maybe maybe_context_t;
         typedef V8<context_t>::persistent persistent_context_t;
 
+        typedef v8::External external_t;
+        typedef V8<external_t>::local local_external_t;
+        typedef V8<external_t>::maybe maybe_external_t;
+        typedef V8<external_t>::persistent persistent_external_t;
+
         typedef v8::Function function_t;
         typedef V8<function_t>::local local_function_t;
         typedef V8<function_t>::maybe maybe_function_t;

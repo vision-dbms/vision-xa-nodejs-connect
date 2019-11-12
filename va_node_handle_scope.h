@@ -17,19 +17,20 @@
 
 namespace VA {
     namespace Node {
-        class Isolate;
-        class Isolated;
-
         template <typename Wrapped_T> class HandleScopeWrapper {
         //  Aliases
         public:
             typedef Wrapped_T wrapped_t;
 
+            typedef Isolated::isolate_handle_t isolate_handle_t;
+
         //  Construction
         public:
             HandleScopeWrapper (Isolated *pIsolated) : HandleScopeWrapper (pIsolated->isolate ()) {
             }
-            HandleScopeWrapper (Isolate *pIsolate) : m_iWrappedScope (pIsolate->handle ()) {
+            HandleScopeWrapper (Isolate *pIsolate) : HandleScopeWrapper (pIsolate->handle ()) {
+            }
+            HandleScopeWrapper (isolate_handle_t hIsolate) : m_iWrappedScope (hIsolate) {
             }
 
         //  Destruction

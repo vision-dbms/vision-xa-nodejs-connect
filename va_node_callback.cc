@@ -39,7 +39,10 @@
  **************************
  **************************/
 
-VA::Node::Callback::Callback () {
+VA::Node::Callback::Callback (Isolated *pIsolated) : Callback (pIsolated->isolate ()) {
+}
+
+VA::Node::Callback::Callback (Isolate *pIsolate) : BaseClass (pIsolate) {
 }
 
 /*************************

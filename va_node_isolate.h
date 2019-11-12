@@ -123,6 +123,11 @@ namespace VA {
                 VkDynamicArrayOf<local_value_t> m_aArgs;
             };
 
+        //  Task Launcher
+        public:
+            class TaskLauncher;
+            bool launchTask (Vxa::VTask *pTask);
+
         //  Construction
         private:
             Isolate (v8::Isolate *pIsolate);
@@ -228,29 +233,29 @@ namespace VA {
                 return true;
             }
 
-            bool GetLocalFrom (V8<v8::Boolean>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_boolean_t &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToBoolean (ToBooleanContext ()));
             }
-            bool GetLocalFrom (V8<v8::Function>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_function_t &rhLocal, local_value_t hValue) const {
                 if (hValue->IsFunction ()) {
                     rhLocal = local_function_t::Cast (hValue);
                     return true;
                 }
                 return false;
             }
-            bool GetLocalFrom (V8<v8::Integer>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_integer_t &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToInteger (context ()));
             }
             bool GetLocalFrom (V8<v8::Int32>::local &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToInt32 (context ()));
             }
-            bool GetLocalFrom (V8<v8::Number>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_number_t &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToNumber (context ()));
             }
-            bool GetLocalFrom (V8<v8::Object>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_object_t &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToObject (context ()));
             }
-            bool GetLocalFrom (V8<v8::String>::local &rhLocal, local_value_t hValue, bool bDetailed) const {
+            bool GetLocalFrom (local_string_t &rhLocal, local_value_t hValue, bool bDetailed) const {
                 return GetLocalFor (
                     rhLocal,
                     bDetailed ? hValue->ToDetailString (context ()) : hValue->ToString (context ())
@@ -305,6 +310,9 @@ namespace VA {
             }
             local_object_t NewObject () const {
                 return object_t::New (handle ());
+            }
+            local_external_t NewExternal (void *pData) const {
+                return external_t::New (handle (), pData);
             }
 
         //  Exception Helpers
@@ -586,11 +594,31 @@ namespace VA {
             bool SetResultToUndefined (local_value_t &rResult);
             bool SetResultToUndefined (vxa_result_t &rResult);
 
+        /****************************************
+         *----  Caching Function Factories  ----*
+         ****************************************/
+        public:
+            bool GetTaskLaunchFunction (local_function_t &rResult, v8::FunctionCallback callback) {
+                return GetCachedFunction (rResult, m_hTaskLaunchFT, callback);
+            }
+
+            bool GetCachedFunction (
+                local_function_t               &rResult,
+                persistent_function_template_t &rCached,
+                v8::FunctionCallback            callback
+            );
+            bool GetCachedFunctionTemplate (
+                local_function_template_t      &rResult,
+                persistent_function_template_t &rCached,
+                v8::FunctionCallback            callback
+            );
+
         //  State
         private:
             isolate_handle_t const         m_hIsolate;
             persistent_object_cache_t      m_hValueCache;
             call_counter_t                 m_iCallCount;
+            persistent_function_template_t m_hTaskLaunchFT;
         };
 
     } // namespace VA::Node

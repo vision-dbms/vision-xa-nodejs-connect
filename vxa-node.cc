@@ -131,7 +131,7 @@ namespace VA {
         public:
             StopCallback (
                 VN::Export *pCallback, VString const &rStateName
-            ) : m_pCallback (pCallback), m_iStateName (rStateName) {
+            ) : BaseClass (pCallback), m_pCallback (pCallback), m_iStateName (rStateName) {
                 retain (); {
                     trigger ();
                 } untain ();
@@ -329,7 +329,7 @@ namespace VA {
     public:
         Resolution (
             VN::Export *pCallback, VString const &rResult
-        ) : m_pCallback (pCallback), m_iResult (rResult) {
+        ) : BaseClass (pCallback), m_pCallback (pCallback), m_iResult (rResult) {
             retain (); {
                 trigger ();
             } untain ();

@@ -22,6 +22,10 @@ namespace VA {
         class Isolated : public Entity {
             DECLARE_ABSTRACT_RTTLITE (Isolated, Entity);
 
+        //  Aliases
+        public:
+            typedef Isolate::isolate_handle_t isolate_handle_t;
+
         //  Class Builder
         public:
             class ClassBuilder
@@ -31,6 +35,40 @@ namespace VA {
                 ClassBuilder (Vxa::VClass *pClass);
             };
             friend class ClassBuilder;
+
+        //  IsolatedCluster
+        public:
+            template <typename Var_T> class IsolatedCluster : public Vxa::VCollectableCollectionOf<Var_T> {
+                DECLARE_CONCRETE_RTTLITE (IsolatedCluster,Vxa::VCollectableCollectionOf<Var_T>);
+
+            //  Construction
+            public:
+                IsolatedCluster (
+                    Vxa::VClass *pClass, Vxa::VCardinalityHints *pTailHints, typename BaseClass::val_t pIsolated
+                ) : BaseClass (pClass, pTailHints, pIsolated), m_pIsolate (pIsolated->isolate ()) {
+                }
+
+            //  Destruction
+            private:
+                ~IsolatedCluster () {
+                }
+
+            //  Task Launcher
+            public:
+                virtual bool launchTask (Vxa::VTask *pTask) OVERRIDE {
+                    return m_pIsolate->launchTask (pTask);
+                }
+
+            //  State
+            private:
+                Isolate::Reference const m_pIsolate;
+            };
+
+        //  ClusterOf
+        public:
+            template <typename collectable_reference_t> struct ClusterOf {
+                typedef IsolatedCluster<collectable_reference_t> type;
+            };
 
         //  Construction
         protected:
@@ -97,7 +135,7 @@ namespace VA {
             Isolate *isolate () const {
                 return m_pIsolate;
             }
-            v8::Isolate *isolateHandle () const {
+            isolate_handle_t isolateHandle () const {
                 return m_pIsolate->handle ();
             }
             local_context_t context () const {
@@ -178,6 +216,9 @@ namespace VA {
             }
             local_object_t NewObject () const {
                 return m_pIsolate->NewObject ();
+            }
+            local_external_t NewExternal (void *pData) const {
+                return m_pIsolate->NewExternal (pData);
             }
 
         //  Result Return
@@ -305,10 +346,6 @@ namespace VA {
             template <typename result_t> bool SetResultToUndefined (result_t &rResult) const {
                 return m_pIsolate->SetResultToUndefined (rResult);
             }
-
-        //  Task Launcher
-        public:
-            static bool launchTask (Vxa::VTask *pTask);
 
         //  State
         private:

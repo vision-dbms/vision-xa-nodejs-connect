@@ -22,6 +22,7 @@
  *****  Supporting  *****
  ************************/
 
+#include "va_node_callback.h"
 #include "va_node_export.h"
 #include "va_node_handle_scope.h"
 
@@ -34,16 +35,86 @@
  *******************************
  *******************************/
 
-/**************************
- **************************
- *****  Call Helpers  *****
- **************************
- **************************/
+/***************************
+ ***************************
+ *****  Task Launcher  *****
+ ***************************
+ ***************************/
 
-/*
-void VA::Node::Isolate::NewHelper (v8::FunctionCallbackInfo<value_t> const &rInfo) {
+class VA::Node::Isolate::TaskLauncher final : public VA::Node::Callback {
+    DECLARE_CONCRETE_RTTLITE (TaskLauncher, Callback);
+
+//  Construction
+public:
+    TaskLauncher (Isolate *pIsolate, Vxa::VTask *pTask) : BaseClass (pIsolate), m_pTask (pTask) {
+    }
+
+//  Destruction
+private:
+    ~TaskLauncher () {
+    }
+
+//  Execution
+private:
+    virtual void run () override;
+    virtual void runWithMonitor () const;
+
+    static void LaunchTask (v8::FunctionCallbackInfo<value_t> const &rInfo);
+
+//  State
+private:
+    Vxa::VTask::Reference const m_pTask;
+};
+
+/*******************************
+ *****  Launch Initiation  *****
+ *******************************/
+
+/*****
+ *  'VA::Node::launchTask' is intended to be called from any routine running
+ *  in any thread that wishes to launch a Vxa task.  It is the only routine
+ *  in the collection of task launching utilities that can be safely called
+ *  from any thread.
+ *****/
+bool VA::Node::Isolate::launchTask (Vxa::VTask *pTask) {
+    TaskLauncher::Reference const pLauncher (new TaskLauncher (this, pTask));
+    pLauncher->trigger ();
+    return true;
 }
-*/
+
+/*****
+ *  The following routine MUST ONLY be called from the thread owning the
+ *  Isolate.  That rule is enforced by the callback scheduler.
+ *****/
+void VA::Node::Isolate::TaskLauncher::run () {
+    HandleScope iHS (this);
+
+    local_value_t hResult;
+    local_function_t hFunction;
+    node::async_context aContext = {0,0};
+
+    isolate ()->GetTaskLaunchFunction (
+        hFunction, &ThisClass::LaunchTask
+    ) && MaybeSetResultToCall (
+        hResult, aContext, NewObject (), hFunction, NewExternal (this)
+    );
+}
+
+void VA::Node::Isolate::TaskLauncher::runWithMonitor () const {
+    m_pTask->runWithMonitor ();
+}
+
+/************************************
+ *****  'MakeCallback' Handler  *****
+ ************************************/
+
+void VA::Node::Isolate::TaskLauncher::LaunchTask (v8::FunctionCallbackInfo<value_t> const &rInfo) {
+    HandleScope iHS (rInfo.GetIsolate ());
+
+    local_external_t const hExternal (local_external_t::Cast (rInfo[0]));
+    reinterpret_cast<ThisClass*>(hExternal->Value())->runWithMonitor ();
+}
+
 
 /**************************
  **************************
@@ -53,11 +124,7 @@ void VA::Node::Isolate::NewHelper (v8::FunctionCallbackInfo<value_t> const &rInf
 
 VA::Node::Isolate::Isolate (
     isolate_handle_t hIsolate
-) : m_hIsolate (hIsolate), m_hValueCache (
-    hIsolate, object_cache_t::New (hIsolate)
-//) , m_hNewHelperTemplate (
-//    hIsolate, function_template_t::New (hIsolate, &ThisClass::NewHelper)
-) {
+) : m_hIsolate (hIsolate), m_hValueCache (hIsolate, object_cache_t::New (hIsolate)) {
 }
 
 /*************************
@@ -518,6 +585,40 @@ bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
         rResult = pResult;
     } else {
         rResult = false;
+    }
+    return true;
+}
+
+
+/****************************************
+ ****************************************
+ *****  Caching Function Factories  *****
+ ****************************************
+ ****************************************/
+
+bool VA::Node::Isolate::GetCachedFunction (
+    local_function_t               &rResult,
+    persistent_function_template_t &rCached,
+    v8::FunctionCallback            callback
+) {
+    local_function_template_t hFunctionTemplate;
+    return GetCachedFunctionTemplate (
+        hFunctionTemplate, rCached, callback
+    ) && GetLocalFor (
+        rResult, hFunctionTemplate->GetFunction (context ())
+    );
+}
+
+bool VA::Node::Isolate::GetCachedFunctionTemplate (
+    local_function_template_t      &rResult,
+    persistent_function_template_t &rCached,
+    v8::FunctionCallback            callback
+) {
+    if (!rCached.IsEmpty ()) {
+        rResult = local_function_template_t::New (isolate (), rCached);
+    } else {
+        rResult = function_template_t::New (isolate (), callback);
+        rCached.Reset (isolate (), rResult);
     }
     return true;
 }
