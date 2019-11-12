@@ -31,8 +31,8 @@
 #    https://nodejs.org/api/url.html#url_class_urlsearchparams
 #
 
-!urlsp <- fs global get: [^self New: :URLSearchParams \.id];
-!vurl  <- fs global get: [^self New: :URL \.id withUrl: ^my visionUrl];
+!urlsp <- fs global get: [^self :URLSearchParams \.new];
+!vurl  <- fs global get: [^self :URL \.new: ^my visionUrl];
 
 ################
 #  Holdings Query Body
