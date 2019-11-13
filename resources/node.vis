@@ -83,6 +83,16 @@ JS defineMethod: [ | getArray |
 JS defineMethod: [ | newObject | ^self object: ^self jsGlobal Object ];
 
 ################
+####  Property Existence
+JS defineMethod: [ | has: key |
+    ^self jsGlobal Reflect has: ^self jsParam at: key. \.isTrue == 1
+];
+
+JS defineMethod: [ | hasOwnProperty: key |
+    ^self jsObject hasOwnProperty: key. \.isTrue == 1
+];
+
+################
 ####  Property/Element Getters...
 JS defineMethod: [ | get: key |
     !result <- key isBlock ifTrue: [
