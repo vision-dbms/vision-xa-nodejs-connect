@@ -89,6 +89,17 @@ namespace VA {
         private:
             virtual void scheduleCallback (Callback *pCallback) = 0;
 
+        //  Shutdown...
+        //  ... Interface
+        private:
+            static bool OnShutdown (Isolate *pIsolate) {
+                return Implementation ()->onShutdown (pIsolate);
+            }
+
+        //  ... Implementation
+        private:
+            virtual bool onShutdown (Isolate *pIsolate) = 0;
+
         private:
         //  Implementation
         public:

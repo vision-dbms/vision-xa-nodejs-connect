@@ -44,27 +44,67 @@ namespace {
         DECLARE_NUCLEAR_FAMILY (UVQueue<Request>);
 
     public:
-        UVQueue (uv_async_cb pCB, void *pData) {
+        UVQueue (uv_async_cb pCB, void *pData) : m_xState (Running) {
             uv_async_init (uv_default_loop (), &m_hTrigger, pCB);
             m_hTrigger.data = pData;
         }
         ~UVQueue () {
-            uv_close (reinterpret_cast<uv_handle_t*>(&m_hTrigger), NULL);
+            close ();
+        }
+
+        bool running () const {
+            return Running == m_xState;
+        }
+        bool stopping () const {
+            return Stopping == m_xState;
+        }
+        bool stopped () const {
+            return Stopped == m_xState;
         }
 
         bool enqueue (Request const &rRequest) {
+            if (stopped ())
+                return false;
+
             bool const bFirst = m_iQueue.enqueue (rRequest);
             uv_async_send (&m_hTrigger);
             return bFirst;
         }
         bool dequeue (Request &rRequest) {
-            return m_iQueue.dequeue (rRequest);
+            bool const bWorkToDo = m_iQueue.dequeue (rRequest);
+            if (stopping ())
+                stop ();
+            return bWorkToDo;
+        }
+
+    public:
+        void stop () {
+            switch (m_xState) {
+            case Running:
+                m_xState = Stopping;
+            //  No 'break;'
+            case Stopping:
+                if (m_iQueue.size () == 0) {
+                    close ();
+                }
+            //  No 'break;'
+            default:
+                break;
+            }
+        }
+    private:
+        void close () {
+            if (!stopped ()) {
+                m_xState = Stopped;
+                uv_close (reinterpret_cast<uv_handle_t*>(&m_hTrigger), NULL);
+            }
         }
 
     //  State
     private:
         V::VQueue<Request> m_iQueue;
         uv_async_t m_hTrigger;
+        enum {Running, Stopping, Stopped} m_xState;
     };
 }
 
@@ -103,6 +143,10 @@ public:
 //  Object Management
 private:
     virtual bool okToDecommission (Isolated *pIsolated) override;
+
+//  Shutdown
+private:
+    virtual bool onShutdown (Isolate *pIsolate) override;
 
 //  Queue Management
 public:
@@ -186,6 +230,13 @@ void VA::Node::Process::Primary::enqueueDecommission (Isolated *pIsolated) {
     m_qDecommissions.enqueue (Isolated::Reference (pIsolated));
 }
 
+
+bool VA::Node::Process::Primary::onShutdown (Isolate *pIsolate) {
+    m_qDecommissions.stop ();
+    m_qCallbacks.stop ();
+    return true;
+}
+
 void VA::Node::Process::Primary::ProcessDecommissions (uv_async_t *pHandle) {
     ThisClass* const pThis (static_cast<ThisClass*>(pHandle->data));
     if (pThis)
@@ -261,6 +312,7 @@ private:
 //  Object Management
 private:
     virtual bool okToDecommission (Isolated *pIsolated) override;
+    virtual bool onShutdown (Isolate *pIsolate) override;
 
 //  Callback Management
 private:
@@ -286,6 +338,10 @@ private:
 
 bool VA::Node::Process::Secondary::okToDecommission (Isolated *pIsolated) {
     m_pPrimary->enqueueDecommission (pIsolated);
+    return false;
+}
+
+bool VA::Node::Process::Secondary::onShutdown (Isolate *pIsolate) {
     return false;
 }
 

@@ -28,6 +28,8 @@
         "/deps/vision/src/kernel/*.[dh]"
     ],
     "dependencies": {
-        "node-fetch": "^2.3.0"
+        "node-fetch": "^2.3.0",
+        "winston": "^3.2.1",
+        "yargs": "^15.0.1"
     }
 }

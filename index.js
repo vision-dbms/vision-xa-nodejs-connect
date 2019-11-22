@@ -36,6 +36,12 @@ module.exports.v = function (...args) {
 
 module.exports.o = function (...args) {
     return PrimitiveOperationPromise (
-        (thePrimitives,resolve,reject)=>resolve(thePrimitives.o2(s=>{console.log(s)},...args))
+        (thePrimitives,resolve,reject)=>resolve(thePrimitives.o(...args))
+    );
+}
+
+module.exports.shutdown = function (...args) {
+    return PrimitiveOperationPromise (
+        (thePrimitives,resolve,reject)=>resolve(thePrimitives.shutdown(...args))
     );
 }

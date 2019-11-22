@@ -141,6 +141,8 @@ namespace VA {
             static bool GetInstance (Reference &rpInstance, v8::Isolate *pIsolate);
 
         //  Decommissioning
+        public:
+            bool onShutdown ();
         protected:
             bool onDeleteThis ();                              // ... myself
             bool okToDecommission (Isolated *pIsolated) const; // ... others

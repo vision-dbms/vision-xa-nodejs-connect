@@ -161,6 +161,10 @@ bool VA::Node::Isolate::onDeleteThis () {
     return false;
 }
 
+bool VA::Node::Isolate::onShutdown () {
+    return Process::OnShutdown (this);
+}
+
 /********************
  *----  Others  ----*
  ********************/

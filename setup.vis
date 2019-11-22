@@ -3,7 +3,11 @@
 
 ################################################################################
 ####  External Object Servers
-JS defineMethod: [ | server: address | ^self object: address xo ];
+JS defineMethod: [ | server: address | ^self serverByAddr: address ];
+
+JS defineMethod: [ | serverByAddr: addr | ^self object: addr xo ];
+JS defineMethod: [ | serverByName: name | ^self object: name xd ];
+
 String define: "xo" toBePrimitive: 8;                        # by network address
 String define: "xd" toBePrimitive: 8 withControlValue: 1;    # by directory entry
 
