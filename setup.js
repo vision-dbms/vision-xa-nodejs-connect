@@ -2,6 +2,7 @@
 
 const vc = require ('./index');
 const fetch = require ('node-fetch');
+const process = require ('process');
 
 /********************
  *****  Logger  *****
@@ -9,17 +10,17 @@ const fetch = require ('node-fetch');
 const winston = require('winston');
 
 const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  defaultMeta: { service: 'vision-fetch' },
-  transports: [
-    //
-    // - Write to all logs with level `info` and below to `combined.log`
-    // - Write all logs error (and below) to `error.log`.
-    //
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
-  ]
+    level: 'info',
+    format: winston.format.json(),
+    defaultMeta: { pid: process.pid, service: 'vision-fetch' },
+    transports: [
+        //
+        // - Write to all logs with level `info` and below to `combined.log`
+        // - Write all logs error (and below) to `error.log`.
+        //
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'combined.log' })
+    ]
 });
 
 //
@@ -97,14 +98,12 @@ class PromisedResult {
 const so = {
     /*----------------*/
     fetch (body,url) {
-        return new PromisedResult (
-            fetch (
-                url, {
-                    method: 'post',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify (body)
-                }
-            )
+        return this.fetchFrom (
+            url, {
+                method: 'post',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify (body)
+            }
         );
     },
     fetchText (body,url) {
@@ -134,7 +133,6 @@ const so = {
  *************************************/
 
 var yargs=require('yargs');
-//logger.log ({ level: 'info', yargv: yargs.argv});
 logger.log ({ level: 'info', yargv: yargs.argv});
 
 var p = vc.o (
