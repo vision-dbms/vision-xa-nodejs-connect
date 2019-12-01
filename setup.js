@@ -46,26 +46,10 @@ global.New = function New (constructable, ...constructorArgs) {
     return new constructable (...constructorArgs);
 }
 
-/*****************************
- *****  Promise Helpers  *****
- *****************************/
+/****************************
+ *****  Promise Helper  *****
+ ****************************/
 
-class PromiseWrapper {
-    constructor (wrappedPromise) {
-        this.wrappedPromise = wrappedPromise;
-        wrappedPromise.catch (rejection=>{})
-    }
-    then (resolve,reject) {
-        return reject
-            ? this.wrappedPromise.then (resolve,reject)
-            : new PromiseWrapper (this.wrappedPromise.then (resolve));
-    }
-    catch (reject) {
-        return this.wrappedPromise.catch (reject);
-    }
-}
-
-/****************/
 class PromisedResult {
     constructor (promise) {
         this.promise = promise;

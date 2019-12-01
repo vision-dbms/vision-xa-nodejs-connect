@@ -17,7 +17,7 @@ const ThePrimitives = (
     }
 ) ();
 
-function PrimitiveOperationPromise (f) {
+function PrimitiveOperationPromise (f/*(thePrimitives,resolvefn,rejectfn)*/) {
     return new Promise (
         (resolve,reject)=>ThePrimitives.then (
             thePrimitives=>f(thePrimitives,resolve,reject),
@@ -26,7 +26,7 @@ function PrimitiveOperationPromise (f) {
     );
 }
 
-module.exports.v = function (...args) {
+module.exports.evaluate = module.exports.v = function (...args) {
     return PrimitiveOperationPromise (
         (thePrimitives,resolve,reject)=>thePrimitives.v(
             msg=>reject(new Error(msg)),resolve,...args
@@ -34,7 +34,7 @@ module.exports.v = function (...args) {
     );
 }
 
-module.exports.o = function (...args) {
+module.exports.offer = module.exports.o = function (...args) {
     return PrimitiveOperationPromise (
         (thePrimitives,resolve,reject)=>resolve(thePrimitives.o(...args))
     );

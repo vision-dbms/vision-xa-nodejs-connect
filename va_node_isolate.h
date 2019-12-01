@@ -375,7 +375,7 @@ namespace VA {
                     rResult, node::MakeCallback (
                         handle (), hReceiver, hFunction, rArgs.argc (), rArgs.argv (), aContext
                     )
-                );
+                )/* || MaybeSetResultToError (rResult, iCatcher)*/;  // not done this way, should it be?
             }
 
         /*----------------------*
