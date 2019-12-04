@@ -512,24 +512,45 @@ namespace VA {
         (new ExternalEvaluator (pRejectCallback, pResolveCallback, pGofer))->discard ();
     }
 
-/**************************
- *----  Vca Shutdown  ----*
- **************************/
+/********************
+ *----  Access  ----*
+ ********************/
+
+    void IsolateCount (FunctionCallbackInfo<Value> const& args) {
+        args.GetReturnValue ().Set (
+            static_cast<uint32_t>(VA::Node::Process::IsolateCacheSize ())
+        );
+    }
+
+/**********************
+ *----  Registry  ----*
+ **********************/
+
+/*************************************************************************
+ *-----  Arguments:
+ *
+ *    None
+ *
+ *************************************************************************/
+    void ObjectRegistry (FunctionCallbackInfo<Value> const& args) {
+        VN::Isolate::Reference pIsolate;
+        VN::Isolate::GetInstance (pIsolate, args.GetIsolate ());
+
+        VN::HandleScope iHS (pIsolate);
+        VN::local_value_t hRegistry;
+        if (pIsolate->MaybeSetResultToObjectRegistry (hRegistry)) {
+            args.GetReturnValue().Set (hRegistry);
+        }
+    }
+
+/**********************
+ *----  Shutdown  ----*
+ **********************/
 
     void Shutdown (FunctionCallbackInfo<Value> const& args) {
         VN::Isolate::Reference pIsolate;
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate ());
         args.GetReturnValue ().Set (pIsolate->onShutdown ());
-    }
-
-/**************************
- *----  State Access  ----*
- **************************/
-
-    void CachedIsolateCount (FunctionCallbackInfo<Value> const& args) {
-        args.GetReturnValue ().Set (
-            static_cast<uint32_t>(VA::Node::Process::IsolateCacheSize ())
-        );
     }
 
 /**********************************
@@ -539,9 +560,11 @@ namespace VA {
         NODE_SET_METHOD(exports, "v" , ExternalEvaluator::Evaluate);
         NODE_SET_METHOD(exports, "o" , Server::Offer);
 
-        NODE_SET_METHOD(exports, "shutdown", Shutdown);
+        NODE_SET_METHOD(exports, "isolateCount", IsolateCount);
 
-        NODE_SET_METHOD(exports, "cachedIsolateCount", CachedIsolateCount);
+        NODE_SET_METHOD(exports, "registry", ObjectRegistry);
+
+        NODE_SET_METHOD(exports, "shutdown", Shutdown);
     }
 
     NODE_MODULE(NODE_GYP_MODULE_NAME, Init)

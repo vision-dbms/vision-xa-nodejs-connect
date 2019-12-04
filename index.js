@@ -26,7 +26,7 @@ function PrimitiveOperationPromise (f/*(thePrimitives,resolvefn,rejectfn)*/) {
     );
 }
 
-module.exports.evaluate = module.exports.v = function (...args) {
+function evaluate (...args) {
     return PrimitiveOperationPromise (
         (thePrimitives,resolve,reject)=>thePrimitives.v(
             msg=>reject(new Error(msg)),resolve,...args
@@ -34,14 +34,53 @@ module.exports.evaluate = module.exports.v = function (...args) {
     );
 }
 
-module.exports.offer = module.exports.o = function (...args) {
+function offer (...args) {
     return PrimitiveOperationPromise (
         (thePrimitives,resolve,reject)=>resolve(thePrimitives.o(...args))
     );
 }
 
-module.exports.shutdown = function (...args) {
+function register (...args) {
+    return new Promise (
+        (resolve,reject)=>{
+            registry ().then (
+                registryObject=>resolve(Object.assign (registryObject, ...args))
+            )
+        }
+    );
+}
+
+function registry (...args) {
+    return PrimitiveOperationPromise (
+        (thePrimitives,resolve,reject)=>resolve(thePrimitives.registry(...args))
+    );
+}
+
+function shutdown (...args) {
     return PrimitiveOperationPromise (
         (thePrimitives,resolve,reject)=>resolve(thePrimitives.shutdown(...args))
     );
 }
+
+module.exports.evaluate = module.exports.v = evaluate;
+module.exports.offer    = module.exports.o = offer;
+module.exports.register = register;
+module.exports.registry = registry;
+module.exports.shutdown = shutdown;
+
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+
+register ({
+    awaitHelper: function (awaitable,consumer) {
+        consumer.suspend ();
+        (async function () {
+            try {
+                await awaitable;
+            } catch (e) {
+            }
+            consumer.resume ();
+        })();
+        return awaitable;
+    }
+});

@@ -79,6 +79,21 @@ bool VA::Node::Export::decommission () {
  *****  JS Operations  *****
  ***************************/
 
+/*******************
+ *----  Await  ----*
+ *******************/
+
+void VA::Node::Export::JSAwait (vxa_result_t &rResult) {
+    HandleScope iHS (this);
+
+    SetResultToValue (rResult, value ());
+}
+
+void VA::Node::Export::JSAwaitTest (vxa_result_t &rResult) {
+    vxa_result_t::RemoteControl::Reference pRC;
+    rResult.getRemoteControl (pRC);
+}
+
 /**********************
  *----  Callback  ----*
  **********************/
@@ -447,6 +462,9 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::
     defineMethod (".isDataView"                 , &Export::JSIsDataView);
     defineMethod (".isSharedArrayBuffer"        , &Export::JSIsSharedArrayBuffer);
     defineMethod (".isProxy"                    , &Export::JSIsProxy);
+
+    defineMethod ("await"                       , &Export::JSAwait);
+    defineMethod ("awaitTest"                   , &Export::JSAwaitTest);
 
     defineMethod (".new"                        , &Export::JSNew);
     defineMethod (".new:"                       , &Export::JSNew);

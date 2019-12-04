@@ -44,6 +44,8 @@
 class VA::Node::Isolate::TaskLauncher final : public VA::Node::Callback {
     DECLARE_CONCRETE_RTTLITE (TaskLauncher, Callback);
 
+    friend class Isolate;
+
 //  Construction
 public:
     TaskLauncher (Isolate *pIsolate, Vxa::VTask *pTask) : BaseClass (pIsolate), m_pTask (pTask) {
@@ -93,9 +95,7 @@ void VA::Node::Isolate::TaskLauncher::run () {
     local_function_t hFunction;
     node::async_context aContext = {0,0};
 
-    isolate ()->GetTaskLaunchFunction (
-        hFunction, &ThisClass::LaunchTask
-    ) && MaybeSetResultToCall (
+    isolate ()->GetTaskLaunchFunction (hFunction) && MaybeSetResultToCall (
         hResult, aContext, NewObject (), hFunction, NewExternal (this)
     );
 }
@@ -124,7 +124,13 @@ void VA::Node::Isolate::TaskLauncher::LaunchTask (v8::FunctionCallbackInfo<value
 
 VA::Node::Isolate::Isolate (
     isolate_handle_t hIsolate
-) : m_hIsolate (hIsolate), m_hValueCache (hIsolate, object_cache_t::New (hIsolate)) {
+) : m_hIsolate (
+    hIsolate
+), m_hValueCache (
+    hIsolate, object_cache_t::New (hIsolate)
+), m_hObjectRegistry (
+    *this, NewObject ()
+) {
 }
 
 /*************************
@@ -594,35 +600,38 @@ bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
 }
 
 
-/****************************************
- ****************************************
- *****  Caching Function Factories  *****
- ****************************************
- ****************************************/
+/**********************************
+ **********************************
+ *****  Factories and Caches  *****
+ **********************************
+ **********************************/
 
-bool VA::Node::Isolate::GetCachedFunction (
-    local_function_t               &rResult,
-    persistent_function_template_t &rCached,
-    v8::FunctionCallback            callback
+bool VA::Node::Isolate::GetTaskLaunchFunction (
+    local_function_t &rResult
 ) {
     local_function_template_t hFunctionTemplate;
-    return GetCachedFunctionTemplate (
-        hFunctionTemplate, rCached, callback
-    ) && GetLocalFor (
+    return GetTaskLaunchFunctionTemplate (hFunctionTemplate) && GetLocalFor (
         rResult, hFunctionTemplate->GetFunction (context ())
     );
 }
 
-bool VA::Node::Isolate::GetCachedFunctionTemplate (
-    local_function_template_t      &rResult,
-    persistent_function_template_t &rCached,
-    v8::FunctionCallback            callback
+bool VA::Node::Isolate::SimpleFunctionTemplateFactory::New (local_function_template_t &rResult) const {
+    return isolate ()->MaybeSetResultToFunctionTemplate (rResult, m_pCallback);
+}
+
+bool VA::Node::Isolate::GetTaskLaunchFunctionTemplate (
+    local_function_template_t &rResult
 ) {
-    if (!rCached.IsEmpty ()) {
-        rResult = local_function_template_t::New (isolate (), rCached);
-    } else {
-        rResult = function_template_t::New (isolate (), callback);
-        rCached.Reset (isolate (), rResult);
-    }
+    static SimpleFunctionTemplateFactory iFTF (this, &TaskLauncher::LaunchTask);
+    return GetCached (rResult, m_hTaskLaunchFT, iFTF);
+}
+
+/*-----------------------------------*
+ *----  Maybe Function Template  ----*
+ *-----------------------------------*/
+bool VA::Node::Isolate::MaybeSetResultToFunctionTemplate (
+    local_function_template_t &rResult, v8::FunctionCallback pCallback
+) const {
+    rResult = function_template_t::New (isolate (), pCallback);
     return true;
 }

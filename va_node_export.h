@@ -86,6 +86,9 @@ namespace VA {
 
         //  JS Methods
         protected:
+            void JSAwait (vxa_result_t &rResult);
+            void JSAwaitTest (vxa_result_t &rResult);
+
             void JSCallback (vxa_result_t &rResult, vxa_pack_t rPack);
             void JSNew (vxa_result_t &rResult, vxa_pack_t rPack);
 
