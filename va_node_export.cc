@@ -89,9 +89,75 @@ void VA::Node::Export::JSAwait (vxa_result_t &rResult) {
     SetResultToValue (rResult, value ());
 }
 
+namespace VA {
+    namespace Node {
+    //****************************************************************
+    //  RemoteControl
+        class RemoteControl : public Vxa::VRolePlayer {
+            DECLARE_ABSTRACT_RTTLITE (RemoteControl, Vxa::VRolePlayer);
+
+        //  Aliases
+        public:
+            typedef Vxa::cardinality_t cardinality_t;
+
+        //  Construction
+        protected:
+            RemoteControl (vxa_result_t const &rResultBuilder) {
+            }
+
+        //  Destruction
+        protected:
+            ~RemoteControl () {
+            }
+
+        //  Access
+        public:
+            virtual cardinality_t suspendCount () const = 0;
+
+        //  Control
+        public:
+            virtual bool suspend () = 0;
+            virtual bool resume () = 0;
+        };
+
+    /*----------------*/
+        class CRC : public RemoteControl {
+            DECLARE_CONCRETE_RTTLITE (CRC, RemoteControl);
+
+        //  Construction
+        public:
+            CRC (vxa_result_t const &rResultBuilder) : BaseClass (rResultBuilder) {
+            }
+
+        //  Destruction
+        protected:
+            ~CRC () {
+            }
+
+        //  Access
+        public:
+            virtual cardinality_t suspendCount () const OVERRIDE {
+                return m_iSuspendCount;
+            }
+
+        //  Control
+        public:
+            virtual bool suspend () OVERRIDE {
+                return 0 == m_iSuspendCount++;
+            }
+            virtual bool resume () OVERRIDE {
+                return m_iSuspendCount > 0 && 0 == --m_iSuspendCount;
+            }
+
+        //  State
+        private:
+            cardinality_t m_iSuspendCount;
+        };
+    }
+}
+
 void VA::Node::Export::JSAwaitTest (vxa_result_t &rResult) {
-    vxa_result_t::RemoteControl::Reference pRC;
-    rResult.getRemoteControl (pRC);
+    RemoteControl::Reference const pRC (new CRC (rResult));
 }
 
 /**********************
