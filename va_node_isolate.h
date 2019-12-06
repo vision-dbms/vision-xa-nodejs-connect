@@ -574,12 +574,25 @@ namespace VA {
                 vxa_result_t &rResult, local_value_t hValue
             );
 
-        /*---------------------------------*
-         *----  Maybe Object Registry  ----*
-         *---------------------------------*/
-            template <typename result_t> bool MaybeSetResultToObjectRegistry (result_t &rResult) {
-                return MaybeSetResultToObject (rResult, LocalFor (m_hObjectRegistry));
+        /*--------------------------*
+         *----  Maybe Registry  ----*
+         *--------------------------*/
+            template <typename result_t> bool MaybeSetResultToRegistry (result_t &rResult) {
+                return MaybeSetResultToObject (rResult, LocalFor (m_hRegistry));
             }
+            bool MaybeSetResultToRegistry (local_object_t &rResult);
+
+            template <typename result_t> bool MaybeSetResultToRegistryValue (
+                result_t &rResult, VString const &rKey
+            ) {
+                local_value_t hValue;
+                return MaybeSetResultToRegistryValue (
+                    hValue, rKey
+                ) && MaybeSetResultToValue (
+                    rResult, hValue
+                );
+            }
+            bool MaybeSetResultToRegistryValue (local_value_t &rResult, VString const &rKey);
 
         /*--------------------------*
          *----  SetResultTo...  ----*
@@ -724,8 +737,8 @@ namespace VA {
         //  State
         private:
             isolate_handle_t const         m_hIsolate;
+            persistent_object_t            m_hRegistry;
             persistent_object_cache_t      m_hValueCache;
-            persistent_object_t            m_hObjectRegistry;
             persistent_function_template_t m_hTaskLaunchFT;
             call_counter_t                 m_iCallCount;
         };

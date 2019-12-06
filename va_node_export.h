@@ -84,6 +84,10 @@ namespace VA {
                 return MaybeSetResultToApply (rResult, hReceiver, rPack);
             }
 
+        //  ... Task
+        protected:
+            bool MaybeSetResultToTask (local_object_t &rResult, vxa_result_t const &rTaskData) const;
+            
         //  JS Methods
         protected:
             void JSAwait (vxa_result_t &rResult);

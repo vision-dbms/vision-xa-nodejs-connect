@@ -72,15 +72,15 @@ module.exports.shutdown = shutdown;
 ////////////////////////////////////////////////////////////////
 
 register ({
-    awaitHelper: function (awaitable,consumer) {
-        consumer.suspend ();
+    awaitHelper: function (task) {
+        task.suspend ();
         (async function () {
             try {
-                await awaitable;
+                await this;
             } catch (e) {
             }
-            consumer.resume ();
+            task.resume ();
         })();
-        return awaitable;
+        return this;
     }
 });

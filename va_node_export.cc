@@ -23,6 +23,8 @@
  ************************/
 
 #include "va_node_handle_scope.h"
+#include "va_node_function_template.h"
+#include "va_node_object_template.h"
 
 #include "Vxa_VCollectable.h"
 
@@ -79,15 +81,9 @@ bool VA::Node::Export::decommission () {
  *****  JS Operations  *****
  ***************************/
 
-/*******************
- *----  Await  ----*
- *******************/
-
-void VA::Node::Export::JSAwait (vxa_result_t &rResult) {
-    HandleScope iHS (this);
-
-    SetResultToValue (rResult, value ());
-}
+/************************
+ *----  Await Test  ----*
+ ************************/
 
 namespace VA {
     namespace Node {
@@ -112,7 +108,7 @@ namespace VA {
 
         //  Access
         public:
-            virtual cardinality_t suspendCount () const = 0;
+            virtual cardinality_t suspensions () const = 0;
 
         //  Control
         public:
@@ -126,7 +122,9 @@ namespace VA {
 
         //  Construction
         public:
-            CRC (vxa_result_t const &rResultBuilder) : BaseClass (rResultBuilder) {
+            CRC (
+                vxa_result_t const &rResultBuilder
+            ) : BaseClass (rResultBuilder), m_cSuspensions (0) {
             }
 
         //  Destruction
@@ -136,28 +134,87 @@ namespace VA {
 
         //  Access
         public:
-            virtual cardinality_t suspendCount () const OVERRIDE {
-                return m_iSuspendCount;
+            virtual cardinality_t suspensions () const OVERRIDE {
+                return m_cSuspensions;
             }
 
         //  Control
         public:
             virtual bool suspend () OVERRIDE {
-                return 0 == m_iSuspendCount++;
+                return 0 == m_cSuspensions++;
             }
             virtual bool resume () OVERRIDE {
-                return m_iSuspendCount > 0 && 0 == --m_iSuspendCount;
+                return m_cSuspensions > 0 && 0 == --m_cSuspensions;
+            }
+
+        //  Callbacks
+        public:
+            static void Suspend (v8::FunctionCallbackInfo<value_t> const &args) {
+                args.GetReturnValue ().Set (
+                    static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (args))->suspend ()
+                );
+            }
+            static void Resume (v8::FunctionCallbackInfo<value_t> const &args) {
+                args.GetReturnValue ().Set (
+                    static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (args))->resume ()
+                );
+            }
+            static void Suspensions (v8::FunctionCallbackInfo<value_t> const &args) {
+                args.GetReturnValue ().Set (
+                    static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (args))->suspensions ()
+                );
             }
 
         //  State
         private:
-            cardinality_t m_iSuspendCount;
+            cardinality_t m_cSuspensions;
         };
     }
 }
 
 void VA::Node::Export::JSAwaitTest (vxa_result_t &rResult) {
-    RemoteControl::Reference const pRC (new CRC (rResult));
+    ObjectTemplate::Reference pObjectTemplate (new ObjectTemplate (isolate ()));
+
+    local_object_t hObject; (
+        MaybeSetResultToTask (
+            hObject, rResult
+        ) && MaybeSetResultToObject (
+            rResult, hObject
+        )
+    ) || SetResultToUndefined (rResult);
+}
+
+/*******************
+ *----  Await  ----*
+ *******************/
+
+bool VA::Node::Export::MaybeSetResultToTask (local_object_t &rResult, vxa_result_t const &rTaskData) const {
+    ObjectTemplate::Reference const pObjectTemplate (new ObjectTemplate (isolate ()));
+
+    return pObjectTemplate->MaybeSetMemberFunction (
+        "suspend", &CRC::Suspend
+    ) && pObjectTemplate->MaybeSetMemberFunction (
+        "resume", &CRC::Resume
+    ) && pObjectTemplate->MaybeSetMemberFunction (
+        "suspensions", &CRC::Suspensions
+    ) && pObjectTemplate->MaybeGetInstance (
+        rResult, new CRC (rTaskData)
+    );
+}
+
+void VA::Node::Export::JSAwait (vxa_result_t &rResult) {
+    HandleScope iHS (this);
+
+    local_value_t hHelperResult; local_value_t hAwaitHelper; local_object_t hTask;
+    MaybeSetResultToRegistryValue (
+        hAwaitHelper, "awaitHelper"
+    ) && MaybeSetResultToTask (
+        hTask, rResult
+    ) && MaybeSetResultToCall (
+        hHelperResult, value (), hAwaitHelper, hTask
+    );
+
+    SetResultToValue (rResult, value ());
 }
 
 /**********************

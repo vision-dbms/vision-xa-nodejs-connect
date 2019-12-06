@@ -128,7 +128,7 @@ VA::Node::Isolate::Isolate (
     hIsolate
 ), m_hValueCache (
     hIsolate, object_cache_t::New (hIsolate)
-), m_hObjectRegistry (
+), m_hRegistry (
     *this, NewObject ()
 ) {
 }
@@ -361,7 +361,7 @@ bool VA::Node::Isolate::Attach (
 
     local_value_t hModelObject;
     if (GetLocalFor (hModelObject, hCache->Get (hContext, hValue)) && hModelObject->IsExternal ()) {
-        rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<v8::External>()->Value()));
+        rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<external_t>()->Value()));
 
     /*
         std::cerr
@@ -376,9 +376,7 @@ bool VA::Node::Isolate::Attach (
     } else {
         rpModelObject.setTo (new Export (this, hValue));
         Sink (
-            hCache->Set (
-                hContext, hValue, v8::External::New (m_hIsolate, rpModelObject.referent ())
-            )
+            hCache->Set (hContext, hValue, NewExternal (rpModelObject.referent ()))
         );
 
     /*
@@ -433,7 +431,7 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
         !GetLocalFor (hCacheValue, hCache->Get(hContext, hModelValue)) ||
         hCacheValue.IsEmpty ()                                         ||
         !hCacheValue->IsExternal ()                                    ||
-        hCacheValue.As<v8::External>()->Value() != pModelObject
+        hCacheValue.As<external_t>()->Value() != pModelObject
     );
 }
 
@@ -579,6 +577,28 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
         return true;
     }
     return false;
+}
+
+/****************************
+ *****  Maybe Registry  *****
+ ****************************/
+
+bool VA::Node::Isolate::MaybeSetResultToRegistry (local_object_t &rResult) {
+    rResult = LocalFor (m_hRegistry);
+    return true;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToRegistryValue (
+    local_value_t &rResult, VString const &rKey
+) {
+    local_object_t hRegistry; local_string_t hKey;
+    return MaybeSetResultToRegistry (
+        hRegistry
+    ) && NewString (
+        hKey, rKey
+    ) && GetLocalFor (
+        rResult, hRegistry->Get (context (), hKey)
+    );
 }
 
 /**********************************

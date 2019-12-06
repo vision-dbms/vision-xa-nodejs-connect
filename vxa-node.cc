@@ -538,7 +538,7 @@ namespace VA {
 
         VN::HandleScope iHS (pIsolate);
         VN::local_value_t hRegistry;
-        if (pIsolate->MaybeSetResultToObjectRegistry (hRegistry)) {
+        if (pIsolate->MaybeSetResultToRegistry (hRegistry)) {
             args.GetReturnValue().Set (hRegistry);
         }
     }
