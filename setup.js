@@ -42,10 +42,6 @@ if (process.env.NODE_ENV !== 'production') {
  *                              *
  ********************************/
 
-global.New = function New (constructable, ...constructorArgs) {
-    return new constructable (...constructorArgs);
-}
-
 /****************************
  *****  Promise Helper  *****
  ****************************/
