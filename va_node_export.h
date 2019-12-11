@@ -32,6 +32,10 @@ namespace VA {
             };
             friend class ClassBuilder;
 
+        //  Remote Control Wrapper
+        public:
+            class RemoteControlWrapper;
+
         //  Construction
         private:
             Export (Isolate *pIsolate, local_value_t hValue);
@@ -86,12 +90,11 @@ namespace VA {
 
         //  ... Task
         protected:
-            bool MaybeSetResultToTask (local_object_t &rResult, vxa_result_t const &rTaskData) const;
+            bool MaybeSetResultToRemoteControl (local_object_t &rResult, vxa_result_t &rTaskData) const;
             
         //  JS Methods
         protected:
             void JSAwait (vxa_result_t &rResult);
-            void JSAwaitTest (vxa_result_t &rResult);
 
             void JSCallback (vxa_result_t &rResult, vxa_pack_t rPack);
             void JSNew (vxa_result_t &rResult, vxa_pack_t rPack);

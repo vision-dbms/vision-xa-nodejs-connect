@@ -111,8 +111,10 @@ void VA::Node::Isolate::TaskLauncher::runWithMonitor () const {
 void VA::Node::Isolate::TaskLauncher::LaunchTask (v8::FunctionCallbackInfo<value_t> const &rInfo) {
     HandleScope iHS (rInfo.GetIsolate ());
 
-    local_external_t const hExternal (local_external_t::Cast (rInfo[0]));
-    reinterpret_cast<ThisClass*>(hExternal->Value())->runWithMonitor ();
+    Reference const pLauncher (
+        reinterpret_cast<ThisClass*>(local_external_t::Cast (rInfo[0])->Value())
+    );
+    pLauncher->runWithMonitor ();
 }
 
 

@@ -13,6 +13,7 @@ const ThePrimitives = (
             process.env.VcaSessionsFile = require.resolve ('./resources/session.cfg');
             process.env.VisionStartExpr = `"${require.resolve('./resources/node.vis')}" asFileContents evaluate`;
         }
+//        return Promise.resolve (require ('./build/Debug/vxanode'));
         return Promise.resolve (require ('./build/Release/vxanode'));
     }
 ) ();
@@ -72,15 +73,17 @@ module.exports.shutdown = shutdown;
 ////////////////////////////////////////////////////////////////
 
 register ({
-    awaitHelper: function (task) {
+    awaitHelper: function (awaited, task) {
         task.suspend ();
         (async function () {
             try {
-                await this;
+                console.log ("->> on await  ", task.suspensions (), awaited.status);
+                await awaited;
             } catch (e) {
             }
             task.resume ();
+            console.log ("->> on resume ", task.suspensions (), awaited.status, awaited);
         })();
-        return this;
+        return awaited;
     }
 });

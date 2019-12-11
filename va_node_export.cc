@@ -23,6 +23,7 @@
  ************************/
 
 #include "va_node_handle_scope.h"
+#include "va_node_import.h"
 #include "va_node_function_template.h"
 #include "va_node_object_template.h"
 
@@ -46,7 +47,6 @@
 VA::Node::Export::Export (
     Isolate *pIsolate, local_value_t hValue
 ) : BaseClass (pIsolate), m_hValue (*pIsolate, hValue) {
-//    std::cerr << "VA::Node::Export::Export: " << this << std::endl;
 }
 
 /*************************
@@ -56,7 +56,6 @@ VA::Node::Export::Export (
  *************************/
 
 VA::Node::Export::~Export () {
-//    std::cerr << "VA::Node::Export::~Export: " << this << std::endl;
 }
 
 /*****************************
@@ -66,9 +65,75 @@ VA::Node::Export::~Export () {
  *****************************/
 
 bool VA::Node::Export::decommission () {
-//    std::cerr << "VA::Node::Export::decommission: " << this << std::endl;
     return isolate ()->Detach (this) && BaseClass::decommission ();
 }
+
+/****************************************************
+ ****************************************************
+ *****  VA::Node::Export::RemoteControlWrapper  *****
+ ****************************************************
+ ****************************************************/
+
+class VA::Node::Export::RemoteControlWrapper final : public Import {
+    DECLARE_CONCRETE_RTTLITE (RemoteControlWrapper, Import);
+
+//  Aliases
+public:
+    typedef Vxa::VTask::RemoteControl import_t;
+
+//  Construction
+public:
+    RemoteControlWrapper (
+        Isolated const *pIsolated, import_t *pImport
+    ) : RemoteControlWrapper (pIsolated->isolate (), pImport) {
+    }
+    RemoteControlWrapper (
+        Isolate *pIsolate, import_t *pImport
+    ) : BaseClass (pIsolate), m_pImport (pImport) {
+    }
+
+//  Destruction
+private:
+    ~RemoteControlWrapper () {
+    }
+
+//  Access
+public:
+    import_t *import () const {
+        return m_pImport;
+    }
+
+//  Callback Support
+private:
+    static import_t *GetImport (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        return GetThis (rCallbackInfo)->import ();
+    }
+    static ThisClass *GetThis (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        return static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (rCallbackInfo));
+    }
+
+//  Callbacks
+public:
+    static void Suspend (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        rCallbackInfo.GetReturnValue ().Set (
+            GetImport (rCallbackInfo)->suspend ()
+        );
+    }
+    static void Resume (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        rCallbackInfo.GetReturnValue ().Set (
+            GetImport (rCallbackInfo)->resume ()
+        );
+    }
+    static void Suspensions (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        rCallbackInfo.GetReturnValue ().Set (
+            GetImport (rCallbackInfo)->suspendCount ()
+        );
+    }
+
+//  State
+private:
+    import_t::Reference const m_pImport;
+};
 
 
 /************************
@@ -81,137 +146,36 @@ bool VA::Node::Export::decommission () {
  *****  JS Operations  *****
  ***************************/
 
-/************************
- *----  Await Test  ----*
- ************************/
-
-namespace VA {
-    namespace Node {
-    //****************************************************************
-    //  RemoteControl
-        class RemoteControl : public Vxa::VRolePlayer {
-            DECLARE_ABSTRACT_RTTLITE (RemoteControl, Vxa::VRolePlayer);
-
-        //  Aliases
-        public:
-            typedef Vxa::cardinality_t cardinality_t;
-
-        //  Construction
-        protected:
-            RemoteControl (vxa_result_t const &rResultBuilder) {
-            }
-
-        //  Destruction
-        protected:
-            ~RemoteControl () {
-            }
-
-        //  Access
-        public:
-            virtual cardinality_t suspensions () const = 0;
-
-        //  Control
-        public:
-            virtual bool suspend () = 0;
-            virtual bool resume () = 0;
-        };
-
-    /*----------------*/
-        class CRC : public RemoteControl {
-            DECLARE_CONCRETE_RTTLITE (CRC, RemoteControl);
-
-        //  Construction
-        public:
-            CRC (
-                vxa_result_t const &rResultBuilder
-            ) : BaseClass (rResultBuilder), m_cSuspensions (0) {
-            }
-
-        //  Destruction
-        protected:
-            ~CRC () {
-            }
-
-        //  Access
-        public:
-            virtual cardinality_t suspensions () const OVERRIDE {
-                return m_cSuspensions;
-            }
-
-        //  Control
-        public:
-            virtual bool suspend () OVERRIDE {
-                return 0 == m_cSuspensions++;
-            }
-            virtual bool resume () OVERRIDE {
-                return m_cSuspensions > 0 && 0 == --m_cSuspensions;
-            }
-
-        //  Callbacks
-        public:
-            static void Suspend (v8::FunctionCallbackInfo<value_t> const &args) {
-                args.GetReturnValue ().Set (
-                    static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (args))->suspend ()
-                );
-            }
-            static void Resume (v8::FunctionCallbackInfo<value_t> const &args) {
-                args.GetReturnValue ().Set (
-                    static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (args))->resume ()
-                );
-            }
-            static void Suspensions (v8::FunctionCallbackInfo<value_t> const &args) {
-                args.GetReturnValue ().Set (
-                    static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (args))->suspensions ()
-                );
-            }
-
-        //  State
-        private:
-            cardinality_t m_cSuspensions;
-        };
-    }
-}
-
-void VA::Node::Export::JSAwaitTest (vxa_result_t &rResult) {
-    ObjectTemplate::Reference pObjectTemplate (new ObjectTemplate (isolate ()));
-
-    local_object_t hObject; (
-        MaybeSetResultToTask (
-            hObject, rResult
-        ) && MaybeSetResultToObject (
-            rResult, hObject
-        )
-    ) || SetResultToUndefined (rResult);
-}
-
 /*******************
  *----  Await  ----*
  *******************/
 
-bool VA::Node::Export::MaybeSetResultToTask (local_object_t &rResult, vxa_result_t const &rTaskData) const {
+bool VA::Node::Export::MaybeSetResultToRemoteControl (
+    local_object_t &rResult, vxa_result_t &rResultBuilder
+) const {
     ObjectTemplate::Reference const pObjectTemplate (new ObjectTemplate (isolate ()));
 
     return pObjectTemplate->MaybeSetMemberFunction (
-        "suspend", &CRC::Suspend
+        "suspend", &RemoteControlWrapper::Suspend
     ) && pObjectTemplate->MaybeSetMemberFunction (
-        "resume", &CRC::Resume
+        "resume", &RemoteControlWrapper::Resume
     ) && pObjectTemplate->MaybeSetMemberFunction (
-        "suspensions", &CRC::Suspensions
+        "suspensions", &RemoteControlWrapper::Suspensions
     ) && pObjectTemplate->MaybeGetInstance (
-        rResult, new CRC (rTaskData)
+        rResult, new RemoteControlWrapper (this, rResultBuilder.getRemoteControl ())
     );
 }
 
 void VA::Node::Export::JSAwait (vxa_result_t &rResult) {
     HandleScope iHS (this);
 
-    local_value_t hHelperResult; local_value_t hAwaitHelper; local_object_t hTask;
+    local_value_t hAwaitHelper, hHelperResult; local_object_t hRemoteControl;
     MaybeSetResultToRegistryValue (
         hAwaitHelper, "awaitHelper"
-    ) && MaybeSetResultToTask (
-        hTask, rResult
+    ) && MaybeSetResultToRemoteControl (
+        hRemoteControl, rResult
     ) && MaybeSetResultToCall (
-        hHelperResult, value (), hAwaitHelper, hTask
+        hHelperResult, value (), hAwaitHelper, value (), hRemoteControl
     );
 
     SetResultToValue (rResult, value ());
@@ -587,7 +551,6 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::
     defineMethod (".isProxy"                    , &Export::JSIsProxy);
 
     defineMethod ("await"                       , &Export::JSAwait);
-    defineMethod ("awaitTest"                   , &Export::JSAwaitTest);
 
     defineMethod (".new"                        , &Export::JSNew);
     defineMethod (".new:"                       , &Export::JSNew);
