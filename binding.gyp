@@ -115,6 +115,7 @@
         'va_node_entity.cc',
         'va_node_export.cc',
         'va_node_function_template.cc',
+        'va_node_import.cc',
         'va_node_isolate.cc',
         'va_node_isolated.cc',
         'va_node_object_template.cc',
