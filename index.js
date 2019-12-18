@@ -77,12 +77,10 @@ register ({
         task.suspend ();
         (async function () {
             try {
-                console.log ("->> on await  ", task.suspensions (), awaited.status);
                 await awaited;
             } catch (e) {
             }
             task.resume ();
-            console.log ("->> on resume ", task.suspensions (), awaited.status, awaited);
         })();
         return awaited;
     }
