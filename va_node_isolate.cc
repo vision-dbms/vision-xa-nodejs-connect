@@ -44,6 +44,8 @@
 class VA::Node::Isolate::TaskLauncher final : public VA::Node::Callback {
     DECLARE_CONCRETE_RTTLITE (TaskLauncher, Callback);
 
+    friend class Isolate;
+
 //  Construction
 public:
     TaskLauncher (Isolate *pIsolate, Vxa::VTask *pTask) : BaseClass (pIsolate), m_pTask (pTask) {
@@ -93,9 +95,7 @@ void VA::Node::Isolate::TaskLauncher::run () {
     local_function_t hFunction;
     node::async_context aContext = {0,0};
 
-    isolate ()->GetTaskLaunchFunction (
-        hFunction, &ThisClass::LaunchTask
-    ) && MaybeSetResultToCall (
+    isolate ()->GetTaskLaunchFunction (hFunction) && MaybeSetResultToCall (
         hResult, aContext, NewObject (), hFunction, NewExternal (this)
     );
 }
@@ -111,8 +111,10 @@ void VA::Node::Isolate::TaskLauncher::runWithMonitor () const {
 void VA::Node::Isolate::TaskLauncher::LaunchTask (v8::FunctionCallbackInfo<value_t> const &rInfo) {
     HandleScope iHS (rInfo.GetIsolate ());
 
-    local_external_t const hExternal (local_external_t::Cast (rInfo[0]));
-    reinterpret_cast<ThisClass*>(hExternal->Value())->runWithMonitor ();
+    Reference const pLauncher (
+        reinterpret_cast<ThisClass*>(local_external_t::Cast (rInfo[0])->Value())
+    );
+    pLauncher->runWithMonitor ();
 }
 
 
@@ -124,7 +126,13 @@ void VA::Node::Isolate::TaskLauncher::LaunchTask (v8::FunctionCallbackInfo<value
 
 VA::Node::Isolate::Isolate (
     isolate_handle_t hIsolate
-) : m_hIsolate (hIsolate), m_hValueCache (hIsolate, object_cache_t::New (hIsolate)) {
+) : m_hIsolate (
+    hIsolate
+), m_hValueCache (
+    hIsolate, object_cache_t::New (hIsolate)
+), m_hRegistry (
+    *this, NewObject ()
+) {
 }
 
 /*************************
@@ -159,6 +167,10 @@ bool VA::Node::Isolate::GetInstance (Reference &rpInstance, v8::Isolate *pIsolat
 bool VA::Node::Isolate::onDeleteThis () {
 //  return Process::Detach (this);
     return false;
+}
+
+bool VA::Node::Isolate::onShutdown () {
+    return Process::OnShutdown (this);
 }
 
 /********************
@@ -351,7 +363,7 @@ bool VA::Node::Isolate::Attach (
 
     local_value_t hModelObject;
     if (GetLocalFor (hModelObject, hCache->Get (hContext, hValue)) && hModelObject->IsExternal ()) {
-        rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<v8::External>()->Value()));
+        rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<external_t>()->Value()));
 
     /*
         std::cerr
@@ -366,9 +378,7 @@ bool VA::Node::Isolate::Attach (
     } else {
         rpModelObject.setTo (new Export (this, hValue));
         Sink (
-            hCache->Set (
-                hContext, hValue, v8::External::New (m_hIsolate, rpModelObject.referent ())
-            )
+            hCache->Set (hContext, hValue, NewExternal (rpModelObject.referent ()))
         );
 
     /*
@@ -423,7 +433,7 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
         !GetLocalFor (hCacheValue, hCache->Get(hContext, hModelValue)) ||
         hCacheValue.IsEmpty ()                                         ||
         !hCacheValue->IsExternal ()                                    ||
-        hCacheValue.As<v8::External>()->Value() != pModelObject
+        hCacheValue.As<external_t>()->Value() != pModelObject
     );
 }
 
@@ -571,6 +581,28 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
     return false;
 }
 
+/****************************
+ *****  Maybe Registry  *****
+ ****************************/
+
+bool VA::Node::Isolate::MaybeSetResultToRegistry (local_object_t &rResult) {
+    rResult = LocalFor (m_hRegistry);
+    return true;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToRegistryValue (
+    local_value_t &rResult, VString const &rKey
+) {
+    local_object_t hRegistry; local_string_t hKey;
+    return MaybeSetResultToRegistry (
+        hRegistry
+    ) && NewString (
+        hKey, rKey
+    ) && GetLocalFor (
+        rResult, hRegistry->Get (context (), hKey)
+    );
+}
+
 /**********************************
  *****  SetResultToUndefined  *****
  **********************************/
@@ -590,35 +622,38 @@ bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
 }
 
 
-/****************************************
- ****************************************
- *****  Caching Function Factories  *****
- ****************************************
- ****************************************/
+/**********************************
+ **********************************
+ *****  Factories and Caches  *****
+ **********************************
+ **********************************/
 
-bool VA::Node::Isolate::GetCachedFunction (
-    local_function_t               &rResult,
-    persistent_function_template_t &rCached,
-    v8::FunctionCallback            callback
+bool VA::Node::Isolate::GetTaskLaunchFunction (
+    local_function_t &rResult
 ) {
     local_function_template_t hFunctionTemplate;
-    return GetCachedFunctionTemplate (
-        hFunctionTemplate, rCached, callback
-    ) && GetLocalFor (
+    return GetTaskLaunchFunctionTemplate (hFunctionTemplate) && GetLocalFor (
         rResult, hFunctionTemplate->GetFunction (context ())
     );
 }
 
-bool VA::Node::Isolate::GetCachedFunctionTemplate (
-    local_function_template_t      &rResult,
-    persistent_function_template_t &rCached,
-    v8::FunctionCallback            callback
+bool VA::Node::Isolate::SimpleFunctionTemplateFactory::New (local_function_template_t &rResult) const {
+    return isolate ()->MaybeSetResultToFunctionTemplate (rResult, m_pCallback);
+}
+
+bool VA::Node::Isolate::GetTaskLaunchFunctionTemplate (
+    local_function_template_t &rResult
 ) {
-    if (!rCached.IsEmpty ()) {
-        rResult = local_function_template_t::New (isolate (), rCached);
-    } else {
-        rResult = function_template_t::New (isolate (), callback);
-        rCached.Reset (isolate (), rResult);
-    }
+    static SimpleFunctionTemplateFactory iFTF (this, &TaskLauncher::LaunchTask);
+    return GetCached (rResult, m_hTaskLaunchFT, iFTF);
+}
+
+/*-----------------------------------*
+ *----  Maybe Function Template  ----*
+ *-----------------------------------*/
+bool VA::Node::Isolate::MaybeSetResultToFunctionTemplate (
+    local_function_template_t &rResult, v8::FunctionCallback pCallback
+) const {
+    rResult = function_template_t::New (isolate (), pCallback);
     return true;
 }

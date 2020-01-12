@@ -141,6 +141,8 @@ namespace VA {
             static bool GetInstance (Reference &rpInstance, v8::Isolate *pIsolate);
 
         //  Decommissioning
+        public:
+            bool onShutdown ();
         protected:
             bool onDeleteThis ();                              // ... myself
             bool okToDecommission (Isolated *pIsolated) const; // ... others
@@ -373,7 +375,7 @@ namespace VA {
                     rResult, node::MakeCallback (
                         handle (), hReceiver, hFunction, rArgs.argc (), rArgs.argv (), aContext
                     )
-                );
+                )/* || MaybeSetResultToError (rResult, iCatcher)*/;  // not done this way, should it be?
             }
 
         /*----------------------*
@@ -534,10 +536,30 @@ namespace VA {
             bool MaybeSetResultToValue (
                 local_value_t &rResult, local_value_t hValue
             );
+            bool MaybeSetResultToInt32 (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+            bool MaybeSetResultToDouble (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+            bool MaybeSetResultToString (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+            bool MaybeSetResultToObject (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+
             bool MaybeSetResultToValue (
                 vxa_result_t &rResult, local_value_t hValue
             );
-
             bool MaybeSetResultToInt32 (
                 vxa_result_t &rResult, local_value_t hValue
             );
@@ -547,9 +569,30 @@ namespace VA {
             bool MaybeSetResultToString (
                 vxa_result_t &rResult, local_value_t hValue
             );
+
             bool MaybeSetResultToObject (
                 vxa_result_t &rResult, local_value_t hValue
             );
+
+        /*--------------------------*
+         *----  Maybe Registry  ----*
+         *--------------------------*/
+            template <typename result_t> bool MaybeSetResultToRegistry (result_t &rResult) {
+                return MaybeSetResultToObject (rResult, LocalFor (m_hRegistry));
+            }
+            bool MaybeSetResultToRegistry (local_object_t &rResult);
+
+            template <typename result_t> bool MaybeSetResultToRegistryValue (
+                result_t &rResult, VString const &rKey
+            ) {
+                local_value_t hValue;
+                return MaybeSetResultToRegistryValue (
+                    hValue, rKey
+                ) && MaybeSetResultToValue (
+                    rResult, hValue
+                );
+            }
+            bool MaybeSetResultToRegistryValue (local_value_t &rResult, VString const &rKey);
 
         /*--------------------------*
          *----  SetResultTo...  ----*
@@ -594,31 +637,110 @@ namespace VA {
             bool SetResultToUndefined (local_value_t &rResult);
             bool SetResultToUndefined (vxa_result_t &rResult);
 
-        /****************************************
-         *----  Caching Function Factories  ----*
-         ****************************************/
+        /**********************************
+         *----  Factories and Caches  ----*
+         **********************************/
         public:
-            bool GetTaskLaunchFunction (local_function_t &rResult, v8::FunctionCallback callback) {
-                return GetCachedFunction (rResult, m_hTaskLaunchFT, callback);
+            bool GetTaskLaunchFunction (local_function_t &rResult);
+            bool GetTaskLaunchFunctionTemplate (local_function_template_t &rTemplate);
+
+        /*----------------*/
+        public:
+            template <typename TemplateType> class TemplateFactory {
+                DECLARE_NUCLEAR_FAMILY (TemplateFactory<TemplateType>);
+
+            //  Aliases
+            public:
+                typedef TemplateType template_t;
+
+                typedef typename V8<template_t>::local local_template_t;
+                typedef typename V8<template_t>::maybe maybe_template_t;
+                typedef typename V8<template_t>::persistent persistent_template_t;
+
+            //  Construction/Destruction
+            public:
+                TemplateFactory (Isolate *pIsolate) : m_pIsolate (pIsolate) {
+                }
+                ~TemplateFactory () {
+                }
+
+            //  Access
+            public:
+                Isolate *isolate () const {
+                    return m_pIsolate;
+                }
+                isolate_handle_t isolateHandle () const {
+                    return m_pIsolate->isolate ();
+                }
+                local_context_t contextHandle () const {
+                    return m_pIsolate->context ();
+                }
+
+            //  Use
+            public:
+                virtual bool New (local_template_t &rResult) const = 0;
+
+            //  State
+            private:
+                Isolate::Reference const m_pIsolate;
+            };
+            typedef TemplateFactory<function_template_t> FunctionTemplateFactory;
+            typedef TemplateFactory<object_template_t> ObjectTemplateFactory;
+
+        /*----------------*/
+        public:
+            class SimpleFunctionTemplateFactory : public FunctionTemplateFactory {
+                DECLARE_FAMILY_MEMBERS (SimpleFunctionTemplateFactory,FunctionTemplateFactory);
+
+            //  Construction/Destruction
+            public:
+                SimpleFunctionTemplateFactory (
+                    Isolate *pIsolate, v8::FunctionCallback pCallback
+                ) : BaseClass (pIsolate), m_pCallback (pCallback) {
+                }
+                ~SimpleFunctionTemplateFactory () {
+                }
+
+            //  Use
+            public:
+                virtual bool New (local_function_template_t &rResult) const override;
+
+            //  State
+            private:
+                v8::FunctionCallback const m_pCallback;
+            };
+
+        /*----------------*/
+        public:
+            template <typename TemplateType> bool GetCached (
+                typename TemplateType::local_template_t      &rResult,
+                typename TemplateType::persistent_template_t &rCached,
+                TemplateType                           const &rFactory
+            ) const {
+                if (!rCached.IsEmpty ()) {
+                    rResult = TemplateType::local_template_t::New (isolate (), rCached);
+                } else {
+                    rFactory.New (rResult);
+                    rCached.Reset (isolate (), rResult);
+                }
+                return true;
             }
 
-            bool GetCachedFunction (
-                local_function_t               &rResult,
-                persistent_function_template_t &rCached,
-                v8::FunctionCallback            callback
-            );
-            bool GetCachedFunctionTemplate (
-                local_function_template_t      &rResult,
-                persistent_function_template_t &rCached,
-                v8::FunctionCallback            callback
-            );
+        /*-----------------------------------*
+         *----  Maybe Function Template  ----*
+         *-----------------------------------*/
+        public:
+            bool MaybeSetResultToFunctionTemplate (
+                local_function_template_t &rResult, v8::FunctionCallback callback
+            ) const;
 
         //  State
         private:
             isolate_handle_t const         m_hIsolate;
+            persistent_object_t            m_hRegistry;
             persistent_object_cache_t      m_hValueCache;
-            call_counter_t                 m_iCallCount;
             persistent_function_template_t m_hTaskLaunchFT;
+            call_counter_t                 m_iCallCount;
         };
 
     } // namespace VA::Node

@@ -310,6 +310,18 @@ namespace VA {
             }
 
         /****************************
+         *----  Maybe Registry  ----*
+         ****************************/
+            template <typename result_t> bool MaybeSetResultToRegistry (result_t &rResult) const {
+                return m_pIsolate->MaybeSetResultToRegistry (rResult);
+            }
+            template <typename result_t> bool MaybeSetResultToRegistryValue (
+                result_t &rResult, VString const &rKey
+            ) const {
+                return m_pIsolate->MaybeSetResultToRegistryValue (rResult, rKey);
+            }
+
+        /****************************
          *----  SetResultTo...  ----*
          ****************************/
             template <typename result_t, typename callable_t, typename... arg_ts> bool SetResultToCall (

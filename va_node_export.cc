@@ -23,6 +23,9 @@
  ************************/
 
 #include "va_node_handle_scope.h"
+#include "va_node_import.h"
+#include "va_node_function_template.h"
+#include "va_node_object_template.h"
 
 #include "Vxa_VCollectable.h"
 
@@ -44,7 +47,6 @@
 VA::Node::Export::Export (
     Isolate *pIsolate, local_value_t hValue
 ) : BaseClass (pIsolate), m_hValue (*pIsolate, hValue) {
-//    std::cerr << "VA::Node::Export::Export: " << this << std::endl;
 }
 
 /*************************
@@ -54,7 +56,6 @@ VA::Node::Export::Export (
  *************************/
 
 VA::Node::Export::~Export () {
-//    std::cerr << "VA::Node::Export::~Export: " << this << std::endl;
 }
 
 /*****************************
@@ -64,9 +65,75 @@ VA::Node::Export::~Export () {
  *****************************/
 
 bool VA::Node::Export::decommission () {
-//    std::cerr << "VA::Node::Export::decommission: " << this << std::endl;
     return isolate ()->Detach (this) && BaseClass::decommission ();
 }
+
+/****************************************************
+ ****************************************************
+ *****  VA::Node::Export::RemoteControlWrapper  *****
+ ****************************************************
+ ****************************************************/
+
+class VA::Node::Export::RemoteControlWrapper final : public Import {
+    DECLARE_CONCRETE_RTTLITE (RemoteControlWrapper, Import);
+
+//  Aliases
+public:
+    typedef Vxa::VTask::RemoteControl import_t;
+
+//  Construction
+public:
+    RemoteControlWrapper (
+        Isolated const *pIsolated, import_t *pImport
+    ) : RemoteControlWrapper (pIsolated->isolate (), pImport) {
+    }
+    RemoteControlWrapper (
+        Isolate *pIsolate, import_t *pImport
+    ) : BaseClass (pIsolate), m_pImport (pImport) {
+    }
+
+//  Destruction
+private:
+    ~RemoteControlWrapper () {
+    }
+
+//  Access
+public:
+    import_t *import () const {
+        return m_pImport;
+    }
+
+//  Callback Support
+private:
+    static import_t *GetImport (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        return GetThis (rCallbackInfo)->import ();
+    }
+    static ThisClass *GetThis (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        return static_cast<ThisClass*>(ObjectTemplate::GetObjectIFD (rCallbackInfo));
+    }
+
+//  Callbacks
+public:
+    static void Suspend (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        rCallbackInfo.GetReturnValue ().Set (
+            GetImport (rCallbackInfo)->suspend ()
+        );
+    }
+    static void Resume (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        rCallbackInfo.GetReturnValue ().Set (
+            GetImport (rCallbackInfo)->resume ()
+        );
+    }
+    static void Suspensions (v8::FunctionCallbackInfo<value_t> const &rCallbackInfo) {
+        rCallbackInfo.GetReturnValue ().Set (
+            GetImport (rCallbackInfo)->suspendCount ()
+        );
+    }
+
+//  State
+private:
+    import_t::Reference const m_pImport;
+};
 
 
 /************************
@@ -78,6 +145,41 @@ bool VA::Node::Export::decommission () {
 /***************************
  *****  JS Operations  *****
  ***************************/
+
+/*******************
+ *----  Await  ----*
+ *******************/
+
+bool VA::Node::Export::MaybeSetResultToRemoteControl (
+    local_object_t &rResult, vxa_result_t &rResultBuilder
+) const {
+    ObjectTemplate::Reference const pObjectTemplate (new ObjectTemplate (isolate ()));
+
+    return pObjectTemplate->MaybeSetMemberFunction (
+        "suspend", &RemoteControlWrapper::Suspend
+    ) && pObjectTemplate->MaybeSetMemberFunction (
+        "resume", &RemoteControlWrapper::Resume
+    ) && pObjectTemplate->MaybeSetMemberFunction (
+        "suspensions", &RemoteControlWrapper::Suspensions
+    ) && pObjectTemplate->MaybeGetInstance (
+        rResult, new RemoteControlWrapper (this, rResultBuilder.getRemoteControl ())
+    );
+}
+
+void VA::Node::Export::JSAwait (vxa_result_t &rResult) {
+    HandleScope iHS (this);
+
+    local_value_t hAwaitHelper, hHelperResult; local_object_t hRemoteControl;
+    MaybeSetResultToRegistryValue (
+        hAwaitHelper, "awaitHelper"
+    ) && MaybeSetResultToRemoteControl (
+        hRemoteControl, rResult
+    ) && MaybeSetResultToCall (
+        hHelperResult, value (), hAwaitHelper, value (), hRemoteControl
+    );
+
+    SetResultToValue (rResult, value ());
+}
 
 /**********************
  *----  Callback  ----*
@@ -447,6 +549,8 @@ VA::Node::Export::ClassBuilder::ClassBuilder (Vxa::VClass *pClass) : BaseClass::
     defineMethod (".isDataView"                 , &Export::JSIsDataView);
     defineMethod (".isSharedArrayBuffer"        , &Export::JSIsSharedArrayBuffer);
     defineMethod (".isProxy"                    , &Export::JSIsProxy);
+
+    defineMethod ("await"                       , &Export::JSAwait);
 
     defineMethod (".new"                        , &Export::JSNew);
     defineMethod (".new:"                       , &Export::JSNew);

@@ -114,9 +114,13 @@
         'va_node_callback.cc',
         'va_node_entity.cc',
         'va_node_export.cc',
+        'va_node_function_template.cc',
+        'va_node_import.cc',
         'va_node_isolate.cc',
         'va_node_isolated.cc',
+        'va_node_object_template.cc',
         'va_node_process.cc',
+        'va_node_template.cc',
         'va_node_triggerable.cc'
       ],
       'dependencies': [
@@ -514,6 +518,7 @@
       'sources': [
         '<(vision_src)/kernel/Vxa.cpp',
         '<(vision_src)/kernel/Vxa_ICaller.cpp',
+        '<(vision_src)/kernel/Vxa_ICaller2.cpp',
         '<(vision_src)/kernel/Vxa_ICollection.cpp',
         '<(vision_src)/kernel/Vxa_ISingleton.cpp',
         '<(vision_src)/kernel/Vxa_IVSNFTaskHolder.cpp',

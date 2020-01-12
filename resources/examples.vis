@@ -1,17 +1,17 @@
-
 ################################################################################
 ####  'fetch' examples
 
 ################
 #  Fetch Server Access
 
-!fs <- JS server: "localhost:2300";
+# !fs <- JS server: "localhost:2300";
+!fs <- JS serverByName: "NodeFetch";
 
 ################
 #  URLs
 
-!visionUrl <- "http://localhost:9300/vision/api";
-!externalURL <- "https://catalog.data.gov/harvest/object/fab71ee0-1f0f-4f5f-806c-788342f56d8c";
+!visionUrl <- "http://localhost:9300/vision/api" printNL;
+!externalURL <- "https://catalog.data.gov/harvest/object/fab71ee0-1f0f-4f5f-806c-788342f56d8c" printNL;
 
 ################
 #  Query Expressions
@@ -53,7 +53,20 @@
 ;
 
 ################
-#  Holdings Query Two Ways
+#  Holdings Query Three Ways
 
-!r1 <- fs fetchJSON: body from: visionUrl;
-!r2 <- fs fetchJSONFrom: visionUrl withOptions: options;
+!r1b <- [ fs fetchJSON: body from: visionUrl. do: [^self get: [await status]. printNL] ] printNL;
+!r2b <- [ fs fetchJSONFrom: visionUrl withOptions: options. do: [^self get: [await status]. printNL] ] printNL;
+!r3b <- [ fs fetchFrom: visionUrl withOptions: options. do: [^self get: [await status]. printNL] ] printNL;
+
+!rbs <- r1b,r2b,r3b;
+
+################
+#  breakIt
+^self defineMethod: [ | breakIt |
+    10,10 do: [^my r2 get: [ result holdings ]. get: ^self. display];
+];
+
+^self defineMethod: [ | breakItNot |
+    10,10 do: [^my r2 get: [ ^self result holdings ]. get: ^self. display];
+];

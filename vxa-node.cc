@@ -122,73 +122,149 @@ namespace VA {
     class Server final : public Vca::VServerApplication {
         DECLARE_CONCRETE_RTTLITE (Server, VServerApplication);
 
-    //  StopCallback
+    /****************
+     *  StateSnapshot
+     ****************/
     public:
-        class StopCallback final : public VN::Callback {
-            DECLARE_CONCRETE_RTTLITE (StopCallback, VN::Callback);
+        class StateSnapshot {
+        // Ctor/Dtor
+        public:
+            StateSnapshot (
+                Server *pServer
+            ) : m_pServer (
+                pServer
+            ), m_iRunStateName (
+                pServer->runStateName ()
+            ), m_iActivityCount (
+                m_pServer->activityCount ()
+            ), m_iActiveOfferCount (
+                m_pServer->activeOfferCount ()
+            ), m_iPassiveOfferCount (
+                m_pServer->passiveOfferCount ()
+            ), m_iListenerCount (
+                m_pServer->listenerCount ()
+            ) {
+            }
+            ~StateSnapshot () {
+            }
+
+        //  Access
+        public:
+            Server *server () const {
+                return m_pServer;
+            }
+            VString const &runStateName () const {
+                return m_iRunStateName;
+            }
+
+            Vca::count_t activityCount () const {
+                return m_iActivityCount;
+            }
+            Vca::count_t activeOfferCount () const {
+                return m_iActiveOfferCount;
+            }
+            Vca::count_t passiveOfferCount () const {
+                return m_iPassiveOfferCount;
+            }
+            Vca::count_t listenerCount () const {
+                return m_iListenerCount;
+            }
+
+        //  Passthrough
+        public:
+            void invokeStateCallback () const {
+                m_pServer->invokeStateCallback (*this);
+            }
+
+        //  State
+        private:
+            Server::Reference const m_pServer;
+            VString           const m_iRunStateName;
+            Vca::count_t      const m_iActivityCount;
+            Vca::count_t      const m_iActiveOfferCount;
+            Vca::count_t      const m_iPassiveOfferCount;
+            Vca::count_t      const m_iListenerCount;
+        };
+
+    /****************
+     *  StateCallback
+     ****************/
+    public:
+        class StateCallback final : public VN::Callback {
+            DECLARE_CONCRETE_RTTLITE (StateCallback, VN::Callback);
 
         //  Construction
         public:
-            StopCallback (
-                VN::Export *pCallback, VString const &rStateName
-            ) : BaseClass (pCallback), m_pCallback (pCallback), m_iStateName (rStateName) {
+            StateCallback (
+                Server *pServer
+            ) : BaseClass (pServer->stateCallback()), m_iStateSnapshot (pServer) {
                 retain (); {
                     trigger ();
                 } untain ();
             }
         private:
-            ~StopCallback () {
+            ~StateCallback () {
             }
 
         //  Execution
         private:
             void run () override {
-                VN::HandleScope iHS (m_pCallback);
-                VN::local_value_t hResult;
-                node::async_context aContext = {0,0};
-                m_pCallback->Call (hResult, aContext, m_pCallback->NewObject (), m_iStateName);
+                m_iStateSnapshot.invokeStateCallback ();
             }
 
         //  State
         private:
-            VN::Export::Reference const m_pCallback;
-            VString               const m_iStateName;
+            StateSnapshot const m_iStateSnapshot;
         };
+        friend class StateCallback;
+
+    /****************
+     *  Server
+     ****************/
 
     //  Offer
     public:
-        static void Offer1(FunctionCallbackInfo<Value> const& args);
-        static void Offer2(FunctionCallbackInfo<Value> const& args);
+        static void Offer(FunctionCallbackInfo<Value> const& args);
 
     //  Construction
     private:
         Server (
             ServerContext *pContext,
             Vxa::export_return_t const &rExport,
-            VN::Export *pStopCallback = 0
+            VN::Export *pStateCallback = 0
         );
 
     //  Destruction
     private:
         ~Server ();
 
+    //  Access
+    private:
+        VN::Export *stateCallback () const {
+            return m_pStateCallback;
+        }
+
     //  Control
     private:
         virtual bool start_() override;
-        virtual bool stop_(bool bHardStop) override;
+
+        virtual void onRunStateChange_(RunState xOldState, RunState xNewState) override;
+
+        void scheduleStateCallback ();
+        void invokeStateCallback (StateSnapshot const &rSnapshot) const;
 
     //  State
     private:
         ServerContext::Reference const m_pServerContext;
-        VN::Export::Reference    const m_pStopCallback;
+        VN::Export::Reference    const m_pStateCallback;
     };
 
 /****************/
     Server::Server (
-        ServerContext *pContext, Vxa::export_return_t const &rExport, VN::Export *pStopCallback
+        ServerContext *pContext, Vxa::export_return_t const &rExport, VN::Export *pStateCallback
     ) : BaseClass (pContext->applicationContext ()), m_pServerContext (
         pContext
-    ), m_pStopCallback (pStopCallback) {
+    ), m_pStateCallback (pStateCallback) {
         aggregate (rExport);
     }
 
@@ -200,45 +276,31 @@ namespace VA {
     bool Server::start_() {
         return BaseClass::start_() && offerSelf () && isStarting ();
     }
-    bool Server::stop_(bool bHardStop) {
-        BaseClass::stop_(bHardStop);
-        if (m_pStopCallback)
-            (new StopCallback (m_pStopCallback, runStateName ()))->discard ();
-        return isStopping (bHardStop);
+
+    void Server::onRunStateChange_(RunState xOldState, RunState xNewState) {
+        BaseClass::onRunStateChange_(xOldState, xNewState);
+        scheduleStateCallback ();
     }
 
-/*************************************************************************
- *-----  Arguments:
- *
- *    arg[0]:  offered object
- *    arg[1+]: server command options
- *
- *************************************************************************/
-    void Server::Offer1(FunctionCallbackInfo<Value> const& args) {
-        static const int xa_ExportedObject   = 0;
-        static const int xa_ServerOptions    = 1;
-
-        Vca::VCohortClaim cohortClaim;
-
-        VN::Isolate::Reference pIsolate;
-        VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
-
-    //  Access the server export...
-        if (args.Length () <= xa_ExportedObject) {
-            pIsolate->ThrowTypeError ("Missing Object");
-            return;
+    void Server::scheduleStateCallback () {
+        if (m_pStateCallback) {
+            StateCallback::Reference const pStateCB (
+                new StateCallback (this)
+            );
         }
-        Vxa::export_return_t pExport;
-        pIsolate->GetExport (pExport, args[0]);
-
-    //  ... and start the server:
-        Vca::VCohortClaim cohortClaim2 (Vca::VCohort::Vca (),false);
-        Server::Reference pServer (
-            new Server (
-                ServerContext::New (pIsolate, args, xa_ServerOptions), pExport
-            )
+    }
+    void Server::invokeStateCallback (StateSnapshot const &rSnapshot) const {
+        VN::HandleScope iHS (m_pStateCallback);
+        VN::local_value_t hResult;
+        node::async_context aContext = {0,0};
+        m_pStateCallback->Call (
+            hResult, aContext, m_pStateCallback->NewObject (),
+            rSnapshot.runStateName (),
+            rSnapshot.activityCount (),
+            rSnapshot.activeOfferCount (),
+            rSnapshot.passiveOfferCount (),
+            rSnapshot.listenerCount ()
         );
-        args.GetReturnValue ().Set (pServer->start ());
     }
 
 /*************************************************************************
@@ -249,8 +311,8 @@ namespace VA {
  *    arg[2+]: server command options
  *
  *************************************************************************/
-    void Server::Offer2(FunctionCallbackInfo<Value> const& args) {
-        static const int xa_StopCallback     = 0;
+    void Server::Offer(FunctionCallbackInfo<Value> const& args) {
+        static const int xa_StateCallback    = 0;
         static const int xa_ExportedObject   = 1;
         static const int xa_ServerOptions    = 2;
 
@@ -260,12 +322,12 @@ namespace VA {
         VN::Isolate::GetInstance (pIsolate, args.GetIsolate());
 
     //  Access the onStop callback (required) ...
-        VN::Export::Reference pStopCallback;
-        if (args.Length () <= xa_StopCallback || !pIsolate->Attach (
-                pStopCallback, args[xa_StopCallback]
+        VN::Export::Reference pStateCallback;
+        if (args.Length () <= xa_StateCallback || !pIsolate->Attach (
+                pStateCallback, args[xa_StateCallback]
             )
         ) {
-            pIsolate->ThrowTypeError ("Missing Stop Callback");
+            pIsolate->ThrowTypeError ("Missing State Callback");
             return;
         }
 
@@ -281,7 +343,7 @@ namespace VA {
         Vca::VCohortClaim cohortClaim2 (Vca::VCohort::Vca (),false);
         Server::Reference pServer (
             new Server (
-                ServerContext::New (pIsolate, args, xa_ServerOptions), pExport, pStopCallback
+                ServerContext::New (pIsolate, args, xa_ServerOptions), pExport, pStateCallback
             )
         );
         args.GetReturnValue ().Set (pServer->start ());
@@ -450,14 +512,45 @@ namespace VA {
         (new ExternalEvaluator (pRejectCallback, pResolveCallback, pGofer))->discard ();
     }
 
-/**************************
- *----  State Access  ----*
- **************************/
+/********************
+ *----  Access  ----*
+ ********************/
 
-    void CachedIsolateCount (const FunctionCallbackInfo<Value>& args) {
+    void IsolateCount (FunctionCallbackInfo<Value> const& args) {
         args.GetReturnValue ().Set (
             static_cast<uint32_t>(VA::Node::Process::IsolateCacheSize ())
         );
+    }
+
+/**********************
+ *----  Registry  ----*
+ **********************/
+
+/*************************************************************************
+ *-----  Arguments:
+ *
+ *    None
+ *
+ *************************************************************************/
+    void ObjectRegistry (FunctionCallbackInfo<Value> const& args) {
+        VN::Isolate::Reference pIsolate;
+        VN::Isolate::GetInstance (pIsolate, args.GetIsolate ());
+
+        VN::HandleScope iHS (pIsolate);
+        VN::local_value_t hRegistry;
+        if (pIsolate->MaybeSetResultToRegistry (hRegistry)) {
+            args.GetReturnValue().Set (hRegistry);
+        }
+    }
+
+/**********************
+ *----  Shutdown  ----*
+ **********************/
+
+    void Shutdown (FunctionCallbackInfo<Value> const& args) {
+        VN::Isolate::Reference pIsolate;
+        VN::Isolate::GetInstance (pIsolate, args.GetIsolate ());
+        args.GetReturnValue ().Set (pIsolate->onShutdown ());
     }
 
 /**********************************
@@ -465,11 +558,13 @@ namespace VA {
  **********************************/
     void Init (VN::local_object_t exports, VN::local_object_t module) {
         NODE_SET_METHOD(exports, "v" , ExternalEvaluator::Evaluate);
+        NODE_SET_METHOD(exports, "o" , Server::Offer);
 
-        NODE_SET_METHOD(exports, "o" , Server::Offer1);
-        NODE_SET_METHOD(exports, "o1", Server::Offer1);
-        NODE_SET_METHOD(exports, "o2", Server::Offer2);
-        NODE_SET_METHOD(exports, "cachedIsolateCount", CachedIsolateCount);
+        NODE_SET_METHOD(exports, "isolateCount", IsolateCount);
+
+        NODE_SET_METHOD(exports, "registry", ObjectRegistry);
+
+        NODE_SET_METHOD(exports, "shutdown", Shutdown);
     }
 
     NODE_MODULE(NODE_GYP_MODULE_NAME, Init)
