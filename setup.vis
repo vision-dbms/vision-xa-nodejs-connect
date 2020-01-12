@@ -1,0 +1,51 @@
+"./resources/node.vis" asFileContents evaluate;
+"extendnode.vis" fileExists ifTrue: ["extendnode.vis" asFileContents evaluate];
+
+################################################################################
+####  External Object Servers
+JS defineMethod: [ | server: address | ^self serverByAddr: address ];
+
+JS defineMethod: [ | serverByAddr: addr | ^self object: addr xo ];
+JS defineMethod: [ | serverByName: name | ^self object: name xd ];
+
+String define: "xo" toBePrimitive: 8;                        # by network address
+String define: "xd" toBePrimitive: 8 withControlValue: 1;    # by directory entry
+
+################################################################################
+####  'fetch' covers
+JS defineMethod: [ | fetch: query from: url |
+   ^self object: (
+      ^self jsObject fetch: query jsParam from: url
+   )
+];
+
+JS defineMethod: [ | fetchText: query from: url |
+   ^self object: (
+      ^self jsObject fetchText: query jsParam from: url
+   )
+];
+
+JS defineMethod: [ | fetchJSON: query from: url |
+   ^self object: (
+      ^self jsObject fetchJSON: query jsParam from: url
+   )
+];
+
+################
+JS defineMethod: [ | fetchFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchFrom: url withOptions: options jsParam
+   )
+];
+
+JS defineMethod: [ | fetchTextFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchTextFrom: url withOptions: options jsParam
+   )
+];
+
+JS defineMethod: [ | fetchJSONFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchJSONFrom: url withOptions: options jsParam
+   )
+];

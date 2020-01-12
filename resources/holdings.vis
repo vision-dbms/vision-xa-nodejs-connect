@@ -1,0 +1,61 @@
+###  Get Holdings
+#      Inputs:
+#         id            : Security id
+#         classId       : Security or Account
+#         date          : Date to access
+#      Outputs:
+#         id            : security or account id
+#         name          : security or account name
+#         count         : number of holdings
+#         date          : input date
+#         holdings      : array of holdings
+#                     {account,security,date,weight,tmv,currency}
+###
+
+!id <- JS jsObject request body id;
+!classId <- JS jsObject request body classId;
+!date <- ^date; # JS jsObject request body date asInteger asDate else: ^date ;
+
+#=====  Temporary code until we federate
+!db <- "/fast/db/Msci/current/NDF";
+!vdb <- db fileExists ifTrue: [db openDatabase] ifFalse: [^global];
+
+# these core class methods will move
+# # somewhere along with all the JS startup
+# # this stuff is for stuffing away in a
+# # better deeper package ... later
+# #
+".id" locateInDictionaryOf: vdb String isNA. ifTrue: [
+ vdb do: [# localizing
+ Double  defineMethod: [ | \.id | ^self asSelf ];
+ Float   defineMethod: [ | \.id | ^self asSelf ];
+ Integer defineMethod: [ | \.id | ^self asSelf ];
+ String  defineMethod: [ | \.id | ^self asSelf ];
+ ]
+];
+#===== End of temporary code
+
+ #-- works for Account or Security ;
+ !class <- classId evaluateIn: vdb ;
+ !object <- id as: class ;
+
+!list <- date evaluate: [
+   object holdings send: [
+      GlobalWorkspace JS newObject
+        set: "account" to: account id .
+        set: "security" to: security id .
+        set: "date" to: date asInteger .
+        set: "weight" to: percentOfPort .
+        set: "tmv" to: totalMarketValue .
+        set: "currency" to: currency .
+      ]
+] ;
+
+!bundle <- JS newObject
+   set: "id" to: object id .
+   set: "name" to: object name .
+   set: "count" to: list count .
+   set: "date" to: date asString .
+  set: "holdings" to: (JS newArrayFrom: list) .
+ ;
+JS jsObject returnJSON: bundle jsParam

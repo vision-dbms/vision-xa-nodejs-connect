@@ -1,6 +1,19 @@
 ################################################################################
 CoreWorkspace respondsTo: "JS". ifFalse: [
     ToolKit createSubclass: "JS" at: CoreWorkspace;
+    ################
+    ####  Because:
+    ####    1) the 'JS' object just created serves as the non-default
+    ####       client context object received from 'node' queries that
+    ####       that supply such objects
+    ####    2) new 'JS' objects accessed or created from an existing
+    ####       JS object are ALWAYS created as extensions of JS,
+    ####
+    ####  the JS object just created MUST NOT be marked 'default' (for
+    ####  example, if it were, asking for the 'first: n' of a list of
+    ####  valid JS objects would always return an empty list):
+    ####
+    JS :defaultFlag <- FALSE;
 ];
 
 ################################################################################
@@ -11,6 +24,8 @@ Double  defineMethod: [ | \.id | ^self asSelf ];
 Float   defineMethod: [ | \.id | ^self asSelf ];
 Integer defineMethod: [ | \.id | ^self asSelf ];
 String  defineMethod: [ | \.id | ^self asSelf ];
+
+Object define: "__hasExternalImplementation" toBePrimitive: 506;
 
 ################################################################################
 #  NOTE: In the following, 'Object', 'Reflect', 'keys(:)' and 'get(:at:)' are
@@ -28,10 +43,9 @@ JS define: "jsObject" toBePrimitive: 7;
 ####  methods do that:
 
 JS defineMethod: [ | object: jsObject |
-    ^self asSelf extendBy: [ !jsObject <- ^my jsObject ]
-];
-JS defineMethod: [ | global: jsObject |
-    ^self object: jsObject \.global
+    jsObject __hasExternalImplementation ifTrue: [
+        ^self asSelf extendBy: [ !jsObject <- ^my jsObject ]
+    ].else: [jsObject]
 ];
 JS defineMethod: [ | global |
     ^self object: ^self jsGlobal
@@ -69,12 +83,24 @@ JS defineMethod: [ | getArray |
 JS defineMethod: [ | newObject | ^self object: ^self jsGlobal Object ];
 
 ################
+####  Property Existence
+JS defineMethod: [ | has: key |
+    ^self jsGlobal Reflect has: ^self jsParam at: key. \.isTrue == 1
+];
+
+JS defineMethod: [ | hasOwnProperty: key |
+    ^self jsObject hasOwnProperty: key. \.isTrue == 1
+];
+
+################
 ####  Property/Element Getters...
 JS defineMethod: [ | get: key |
-    ^self get: key of: ^self jsObject
-];
-JS defineMethod: [ | get: key of: jsObj |
-    jsObj \.global Reflect get: jsObj \.id at: key
+    !result <- key isBlock ifTrue: [
+        ^self jsObject send: key
+    ]. else: [
+        ^self jsGlobal Reflect get: ^self jsParam at: key
+    ];
+    ^self object: result
 ];
 
 ################
@@ -105,45 +131,30 @@ JS defineMethod: [ | set: key of: jsObj to: value |
 ];
 
 ################
-####  Return a javascript array of a jsObject's keys...
-JS defineMethod: [ | getJSKeys |
-    ^self getJSKeysOf: ^self jsObject
-];
-JS defineMethod: [ | getJSKeysOf: jsObj |
-    jsObj \.global :Object keys: jsObj \.id
+####  Return a Vision list of a JS object's keys...
+JS defineMethod: [ | getKeys |
+    ^self getJSKeys getArray
 ];
 
 ################
-####  Return a Vision list of a jsObject's keys...
-JS defineMethod: [ | getKeys |
-    ^self getKeysOf: ^self jsObject
-];
-JS defineMethod: [ | getKeysOf: jsObj |
-    !jsKeys <- ^self getJSKeysOf: jsObj;
-    jsKeys length sequence0 send: [
-        ^my get: ^self of: ^my jsKeys
-    ]
+####  Return a javascript array of a JS object's keys...
+JS defineMethod: [ | getJSKeys |
+    ^self object: (^self jsGlobal :Object keys: ^self jsParam)
 ];
 
 ################
 ####  Return a Vision list of a jsObject's key/value pairs...
 JS defineMethod: [ | getPropertyMap |
-    ^self getPropertyMapOf: ^self jsObject
-];
-JS defineMethod: [ | getPropertyMapOf: jsObj |
     !self <- ^self;
-    ^self getKeysOf: jsObj. extendBy: [
-        !keyValue <- ^my self get: ^self of: ^my jsObj
+    ^self getKeys extendBy: [
+        !keyValue <- ^my self get: ^self
     ]
 ];
 
 ################
 ####  Display a object's properties / array's elements...
 JS defineMethod: [ | display |
-    ^self display: ^self jsObject
-];
-JS defineMethod: [ | display: jsObj |
-    ^self getPropertyMapOf: jsObj. do: [
+    ^self getPropertyMap do: [
         ^self print: 20;
         keyValue printNL
     ];

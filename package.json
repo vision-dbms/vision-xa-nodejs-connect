@@ -1,6 +1,6 @@
 {
     "name": "@vision-dbms/connect",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Vision external adapter for nodejs",
     "main": "index.js",
     "scripts": {
@@ -26,5 +26,10 @@
         "/deps/vision/src/M_Windows/*.h",
         "/deps/vision/src/kernel/*.cpp",
         "/deps/vision/src/kernel/*.[dh]"
-    ]
+    ],
+    "dependencies": {
+        "node-fetch": "^2.3.0",
+        "winston": "^3.2.1",
+        "yargs": "^15.0.1"
+    }
 }

@@ -71,45 +71,6 @@ bool VA::Node::Isolated::decommission () {
 
 /***************************
  ***************************
- *****  Task Launcher  *****
- ***************************
- ***************************/
-
-namespace {
-    class TaskLauncher final : public VA::Node::Callback {
-        DECLARE_CONCRETE_RTTLITE (TaskLauncher, Callback);
-
-    //  Construction
-    public:
-        TaskLauncher (Vxa::VTask *pTask) : m_pTask (pTask) {
-        }
-    //  Destruction
-    private:
-        ~TaskLauncher () {
-        }
-
-    //  Execution
-    private:
-        virtual void run () override {
-            m_pTask->runWithMonitor ();
-        }
-
-
-    //  State
-    private:
-        Vxa::VTask::Reference const m_pTask;
-    };
-}
-
-bool VA::Node::Isolated::launchTask (Vxa::VTask *pTask) {
-    TaskLauncher::Reference const pLauncher (new TaskLauncher (pTask));
-    pLauncher->trigger ();
-    return true;
-}
-
-
-/***************************
- ***************************
  *****  Class Builder  *****
  ***************************
  ***************************/

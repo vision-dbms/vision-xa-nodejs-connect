@@ -49,13 +49,26 @@ namespace VA {
             typedef ClassTraits<Export>::retaining_ptr_t ExportReference;
             typedef ClassTraits<Export>::notaining_ptr_t ExportPointer;
 
+        //  class ArgSink
+        public:
+            class ArgSink : public Vxa::VAny::Client {
+            public:
+                ArgSink (local_value_t &rResult, Isolate *pIsolate);
+                ~ArgSink ();
+            public:
+                virtual bool on (int iValue) override;
+                virtual bool on (double iValue) override;
+                virtual bool on (VString const &iValue) override;
+                virtual bool on (VCollectableObject *pObject) override;
+
+            private:
+                local_value_t& m_rResult;
+                Isolate* const m_pIsolate;
+            };
+
         //  class ArgPack
         public:
             class ArgPack {
-            //  class ArgSink
-            public:
-                class ArgSink;
-
             //  Construction
             public:
                 template <typename ...Ts> ArgPack (
@@ -110,6 +123,11 @@ namespace VA {
                 VkDynamicArrayOf<local_value_t> m_aArgs;
             };
 
+        //  Task Launcher
+        public:
+            class TaskLauncher;
+            bool launchTask (Vxa::VTask *pTask);
+
         //  Construction
         private:
             Isolate (v8::Isolate *pIsolate);
@@ -123,6 +141,8 @@ namespace VA {
             static bool GetInstance (Reference &rpInstance, v8::Isolate *pIsolate);
 
         //  Decommissioning
+        public:
+            bool onShutdown ();
         protected:
             bool onDeleteThis ();                              // ... myself
             bool okToDecommission (Isolated *pIsolated) const; // ... others
@@ -145,6 +165,18 @@ namespace VA {
             local_context_t context () const {
                 return m_hIsolate->GetCurrentContext ();
             }
+
+        //  V8 Deprecation Workarounds
+        protected:
+#if V8_MAJOR_VERSION >= 7 && V8_MINOR_VERSION >= 4
+            isolate_handle_t ToBooleanContext () const {
+                return isolate ();
+            }
+#else
+            local_context_t ToBooleanContext () const {
+                return context ();
+            }
+#endif
 
         //  Local Access
         public:
@@ -180,9 +212,9 @@ namespace VA {
 
         //  ... handle -> local handle
             template <typename source_t> typename V8<source_t>::local LocalFor (
-                source_t const &rhSouce
+                source_t const &rhSource
             ) const {
-                return V8<source_t>::local::New (m_hIsolate, rhSouce);
+                return V8<source_t>::local::New (m_hIsolate, rhSource);
             }
 
         //  ... handle -> local handle (maybe)
@@ -203,29 +235,29 @@ namespace VA {
                 return true;
             }
 
-            bool GetLocalFrom (V8<v8::Boolean>::local &rhLocal, local_value_t hValue) const {
-                return GetLocalFor (rhLocal, hValue->ToBoolean (context ()));
+            bool GetLocalFrom (local_boolean_t &rhLocal, local_value_t hValue) const {
+                return GetLocalFor (rhLocal, hValue->ToBoolean (ToBooleanContext ()));
             }
-            bool GetLocalFrom (V8<v8::Function>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_function_t &rhLocal, local_value_t hValue) const {
                 if (hValue->IsFunction ()) {
                     rhLocal = local_function_t::Cast (hValue);
                     return true;
                 }
                 return false;
             }
-            bool GetLocalFrom (V8<v8::Integer>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_integer_t &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToInteger (context ()));
             }
             bool GetLocalFrom (V8<v8::Int32>::local &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToInt32 (context ()));
             }
-            bool GetLocalFrom (V8<v8::Number>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_number_t &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToNumber (context ()));
             }
-            bool GetLocalFrom (V8<v8::Object>::local &rhLocal, local_value_t hValue) const {
+            bool GetLocalFrom (local_object_t &rhLocal, local_value_t hValue) const {
                 return GetLocalFor (rhLocal, hValue->ToObject (context ()));
             }
-            bool GetLocalFrom (V8<v8::String>::local &rhLocal, local_value_t hValue, bool bDetailed) const {
+            bool GetLocalFrom (local_string_t &rhLocal, local_value_t hValue, bool bDetailed) const {
                 return GetLocalFor (
                     rhLocal,
                     bDetailed ? hValue->ToDetailString (context ()) : hValue->ToString (context ())
@@ -266,11 +298,13 @@ namespace VA {
 
         //  Creation Helpers
         public:
-            local_string_t   NewString (char const *pString) const;
-            local_integer_t  NewNumber (int iNumber) const {
+            bool NewString (local_string_t &rResult, VString const &rString) const;
+            local_string_t NewString (VString const &rString) const;
+
+            local_integer_t NewNumber (int iNumber) const {
                 return integer_t::New (handle (), iNumber);
             }
-            local_integer_t  NewNumber (unsigned int iNumber) const {
+            local_integer_t NewNumber (unsigned int iNumber) const {
                 return integer_t::NewFromUnsigned (handle (), iNumber);
             }
             local_number_t  NewNumber (double iNumber) const {
@@ -279,10 +313,13 @@ namespace VA {
             local_object_t NewObject () const {
                 return object_t::New (handle ());
             }
+            local_external_t NewExternal (void *pData) const {
+                return external_t::New (handle (), pData);
+            }
 
         //  Exception Helpers
         public:
-            void ThrowTypeError (char const *pMessage) const;
+            void ThrowTypeError (VString const &rMessage) const;
 
         //  Export Access
             bool GetExport (Vxa::export_return_t &rExport, local_value_t hValue);
@@ -338,7 +375,7 @@ namespace VA {
                     rResult, node::MakeCallback (
                         handle (), hReceiver, hFunction, rArgs.argc (), rArgs.argv (), aContext
                     )
-                );
+                )/* || MaybeSetResultToError (rResult, iCatcher)*/;  // not done this way, should it be?
             }
 
         /*----------------------*
@@ -355,47 +392,83 @@ namespace VA {
          *----  Maybe Apply  ----*
          *-----------------------*/
             template <typename result_t, typename callable_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, callable_t hCallable, vxa_pack_t rPack
+                result_t &rResult,
+                local_value_t hReceiver,
+                callable_t hCallable,
+                vxa_pack_t rPack,
+                bool bConstructorCall = false
             ) {
-                return MaybeSetResultToApply (rResult, hReceiver, hCallable, ArgPack (this, rPack));
+                return MaybeSetResultToApply (
+                    rResult, hReceiver, hCallable, ArgPack (this, rPack), bConstructorCall
+                );
             }
 
             template <typename result_t, typename callable_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, callable_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                callable_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 local_value_t hLocalCallable;
                 return GetLocalFor (hLocalCallable, hCallable)
-                    && MaybeSetResultToApply (rResult, hReceiver, hLocalCallable, rArgs);
+                    && MaybeSetResultToApply (rResult, hReceiver, hLocalCallable, rArgs, bConstructorCall);
             }
 
             template <typename result_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_value_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 return MaybeSetResultToApplyOf<result_t,local_function_t> (
-                    rResult, hReceiver, hCallable, rArgs
+                    rResult, hReceiver, hCallable, rArgs, bConstructorCall
                 ) || MaybeSetResultToApplyOf<result_t,local_object_t> (
-                    rResult, hReceiver, hCallable, rArgs
+                    rResult, hReceiver, hCallable, rArgs, bConstructorCall
                 );
             }
 
             template <typename result_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, local_function_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_function_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 m_iCallCount++;
                 v8::TryCatch iCatcher (*this);
-                return MaybeSetResultToValue (
-                    rResult, hCallable->Call (context (), hReceiver, rArgs.argc (), rArgs.argv ())
+                return (
+                    bConstructorCall ? MaybeSetResultToNewInstance (
+                        rResult, hCallable, rArgs
+                    ) : MaybeSetResultToValue (
+                        rResult, hCallable->Call (context (), hReceiver, rArgs.argc (), rArgs.argv ())
+                    )
                 ) || MaybeSetResultToError (rResult, iCatcher);
+            }
+            template <typename result_t> bool MaybeSetResultToNewInstance (
+                result_t &rResult, local_function_t hCallable, ArgPack const &rArgs
+            ) {
+                local_object_t hNewInstance;
+                return GetLocalFor (
+                    hNewInstance, hCallable->NewInstance (context (), rArgs.argc (), rArgs.argv ())
+                ) && MaybeSetResultToValue (rResult, v8::Local<value_t> (hNewInstance));
             }
 
             template <typename result_t> bool MaybeSetResultToApply (
-                result_t &rResult, local_value_t hReceiver, local_object_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_object_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 m_iCallCount++;
                 v8::TryCatch iCatcher (*this);
                 return hCallable->IsCallable () && (
                     MaybeSetResultToValue (
-                        rResult, hCallable->CallAsFunction (
+                        rResult, bConstructorCall ? hCallable->CallAsConstructor (
+                            context (), rArgs.argc (), rArgs.argv ()
+                        ) : hCallable->CallAsFunction (
                             context (), hReceiver, rArgs.argc (), rArgs.argv ()
                         )
                     ) || MaybeSetResultToError (rResult, iCatcher)
@@ -403,11 +476,39 @@ namespace VA {
             }
 
             template <typename result_t, typename cast_callable_t> bool MaybeSetResultToApplyOf (
-                result_t &rResult, local_value_t hReceiver, local_value_t hCallable, ArgPack const &rArgs
+                result_t &rResult,
+                local_value_t hReceiver,
+                local_value_t hCallable,
+                ArgPack const &rArgs,
+                bool bConstructorCall = false
             ) {
                 cast_callable_t hCastCallable;
                 return GetLocalFrom (hCastCallable, hCallable)
-                    && MaybeSetResultToApply (rResult, hReceiver, hCastCallable, rArgs);
+                    && MaybeSetResultToApply (rResult, hReceiver, hCastCallable, rArgs, bConstructorCall);
+            }
+
+        /*---------------------*
+         *----  Maybe New  ----*
+         *---------------------*/
+            template <typename result_t, typename constructable_t, typename... arg_ts> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, arg_ts ...args
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, ArgPack (this, args...));
+            }
+
+            template <typename result_t, typename constructable_t> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, vxa_pack_t rPack
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, ArgPack (this, rPack));
+            }
+
+            template <typename result_t, typename constructable_t> bool MaybeSetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, ArgPack const &rArgs
+            ) {
+                local_value_t hUndefined;
+                return GetLocalUndefined (hUndefined) && MaybeSetResultToApply (
+                    rResult, hUndefined, hConstructable, rArgs, true
+                );
             }
 
         /*-----------------------*
@@ -435,10 +536,30 @@ namespace VA {
             bool MaybeSetResultToValue (
                 local_value_t &rResult, local_value_t hValue
             );
+            bool MaybeSetResultToInt32 (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+            bool MaybeSetResultToDouble (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+            bool MaybeSetResultToString (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+            bool MaybeSetResultToObject (
+                local_value_t &rResult, local_value_t hValue
+            ) {
+                return MaybeSetResultToValue (rResult, hValue);
+            }
+
             bool MaybeSetResultToValue (
                 vxa_result_t &rResult, local_value_t hValue
             );
-
             bool MaybeSetResultToInt32 (
                 vxa_result_t &rResult, local_value_t hValue
             );
@@ -448,9 +569,30 @@ namespace VA {
             bool MaybeSetResultToString (
                 vxa_result_t &rResult, local_value_t hValue
             );
+
             bool MaybeSetResultToObject (
                 vxa_result_t &rResult, local_value_t hValue
             );
+
+        /*--------------------------*
+         *----  Maybe Registry  ----*
+         *--------------------------*/
+            template <typename result_t> bool MaybeSetResultToRegistry (result_t &rResult) {
+                return MaybeSetResultToObject (rResult, LocalFor (m_hRegistry));
+            }
+            bool MaybeSetResultToRegistry (local_object_t &rResult);
+
+            template <typename result_t> bool MaybeSetResultToRegistryValue (
+                result_t &rResult, VString const &rKey
+            ) {
+                local_value_t hValue;
+                return MaybeSetResultToRegistryValue (
+                    hValue, rKey
+                ) && MaybeSetResultToValue (
+                    rResult, hValue
+                );
+            }
+            bool MaybeSetResultToRegistryValue (local_value_t &rResult, VString const &rKey);
 
         /*--------------------------*
          *----  SetResultTo...  ----*
@@ -467,6 +609,20 @@ namespace VA {
                 return MaybeSetResultToApply (rResult, hReceiver, hCallable, rPack)
                     || SetResultToUndefined (rResult);
             }
+
+            template <typename result_t, typename constructable_t, typename... arg_ts> bool SetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, arg_ts ...args
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, args...)
+                    || SetResultToUndefined (rResult);
+            }
+            template <typename result_t, typename constructable_t, typename pack_t> bool SetResultToNewInstance (
+                result_t &rResult, constructable_t hConstructable, pack_t &rPack
+            ) {
+                return MaybeSetResultToNewInstance (rResult, hConstructable, rPack)
+                    || SetResultToUndefined (rResult);
+            }
+
             template <typename result_t, typename handle_t> bool SetResultToValue (
                 result_t &rResult, handle_t hValue
             ) {
@@ -481,11 +637,110 @@ namespace VA {
             bool SetResultToUndefined (local_value_t &rResult);
             bool SetResultToUndefined (vxa_result_t &rResult);
 
+        /**********************************
+         *----  Factories and Caches  ----*
+         **********************************/
+        public:
+            bool GetTaskLaunchFunction (local_function_t &rResult);
+            bool GetTaskLaunchFunctionTemplate (local_function_template_t &rTemplate);
+
+        /*----------------*/
+        public:
+            template <typename TemplateType> class TemplateFactory {
+                DECLARE_NUCLEAR_FAMILY (TemplateFactory<TemplateType>);
+
+            //  Aliases
+            public:
+                typedef TemplateType template_t;
+
+                typedef typename V8<template_t>::local local_template_t;
+                typedef typename V8<template_t>::maybe maybe_template_t;
+                typedef typename V8<template_t>::persistent persistent_template_t;
+
+            //  Construction/Destruction
+            public:
+                TemplateFactory (Isolate *pIsolate) : m_pIsolate (pIsolate) {
+                }
+                ~TemplateFactory () {
+                }
+
+            //  Access
+            public:
+                Isolate *isolate () const {
+                    return m_pIsolate;
+                }
+                isolate_handle_t isolateHandle () const {
+                    return m_pIsolate->isolate ();
+                }
+                local_context_t contextHandle () const {
+                    return m_pIsolate->context ();
+                }
+
+            //  Use
+            public:
+                virtual bool New (local_template_t &rResult) const = 0;
+
+            //  State
+            private:
+                Isolate::Reference const m_pIsolate;
+            };
+            typedef TemplateFactory<function_template_t> FunctionTemplateFactory;
+            typedef TemplateFactory<object_template_t> ObjectTemplateFactory;
+
+        /*----------------*/
+        public:
+            class SimpleFunctionTemplateFactory : public FunctionTemplateFactory {
+                DECLARE_FAMILY_MEMBERS (SimpleFunctionTemplateFactory,FunctionTemplateFactory);
+
+            //  Construction/Destruction
+            public:
+                SimpleFunctionTemplateFactory (
+                    Isolate *pIsolate, v8::FunctionCallback pCallback
+                ) : BaseClass (pIsolate), m_pCallback (pCallback) {
+                }
+                ~SimpleFunctionTemplateFactory () {
+                }
+
+            //  Use
+            public:
+                virtual bool New (local_function_template_t &rResult) const override;
+
+            //  State
+            private:
+                v8::FunctionCallback const m_pCallback;
+            };
+
+        /*----------------*/
+        public:
+            template <typename TemplateType> bool GetCached (
+                typename TemplateType::local_template_t      &rResult,
+                typename TemplateType::persistent_template_t &rCached,
+                TemplateType                           const &rFactory
+            ) const {
+                if (!rCached.IsEmpty ()) {
+                    rResult = TemplateType::local_template_t::New (isolate (), rCached);
+                } else {
+                    rFactory.New (rResult);
+                    rCached.Reset (isolate (), rResult);
+                }
+                return true;
+            }
+
+        /*-----------------------------------*
+         *----  Maybe Function Template  ----*
+         *-----------------------------------*/
+        public:
+            bool MaybeSetResultToFunctionTemplate (
+                local_function_template_t &rResult, v8::FunctionCallback callback
+            ) const;
+
         //  State
         private:
-            isolate_handle_t    const m_hIsolate;
-            persistent_object_cache_t m_hValueCache;
-            call_counter_t            m_iCallCount;
+            isolate_handle_t const         m_hIsolate;
+            persistent_object_t            m_hRegistry;
+            persistent_object_cache_t      m_hValueCache;
+            persistent_function_template_t m_hTaskLaunchFT;
+            call_counter_t                 m_iCallCount;
         };
 
     } // namespace VA::Node

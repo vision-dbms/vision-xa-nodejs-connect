@@ -236,6 +236,10 @@ static char const *const g_pNullDeviceName = "NUL:";
 
 static char const *const g_pNullDeviceName = "/dev/null";
 
+namespace {
+    bool const VcaEnableBlockingSockets = V::GetEnvironmentBoolean ("VcaEnableBlockingSockets");
+}
+
 #endif
 
 
@@ -7214,8 +7218,10 @@ namespace Vca {
 	    SocketDevice (
 		VReferenceable *pContainer, Manager *pManager, Handle &rhSocket
 	    ) : BaseClass (pContainer, pManager, rhSocket) {
+		if (!VcaEnableBlockingSockets) makeNonblocking();
 	    }
 	    SocketDevice (VReferenceable *pContainer, ThisClass &rOther) : BaseClass (pContainer, rOther) {
+		if (!VcaEnableBlockingSockets) makeNonblocking();
 	    }
 
 	//  Destruction
@@ -7922,10 +7928,9 @@ bool Vca::OS::DeviceManager::supply (
  ***************************/
 
 /********************************************************************************
- * Note: Blocking socket descriptors created using Linux's socketpair ()
- *       has problems (hangs) when writing large chunks of date. To avoid it
- *       we have written this local getSocketPair () which is called with AF_INET
- *       family, to create connected pair of INET domain sockets
+ * Note: Blocking sockets created using Linux's socketpair () hang when handed
+ *       large chunks of data. To avoid that, we substitue AF_INET connected
+ *       socket pairs on Linux.
  ********************************************************************************/
 
 int Vca::OS::DeviceManager::getSocketPair (int sockets[2]) {

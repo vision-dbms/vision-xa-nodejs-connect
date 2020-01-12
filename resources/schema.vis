@@ -1,0 +1,26 @@
+#####
+#  Show the messages associated with the Security class...
+#####
+
+#--  Identify class to profile
+!class <- JS jsObject request body classId asClass;
+!cd <- class classDescriptor ;
+
+#-- Create a list of JS objects representing each message in the class...
+!messageObjects <- class getMessages
+  send: [ GlobalWorkspace JS newObject
+             set: "message" to: code .
+             set: "returnType" to: returnObjectType whatAmI.
+             set: "messageType" to: type code .
+        ] ;
+
+#-- And a result object with that list and some basic properties that describe the class...
+!resultObject <- GlobalWorkspace JS newObject
+ set: "class" to: cd name .
+ set: "description" to: cd description .
+ set: "parent" to: cd parent whatAmI.
+ set: "messages" toArrayFrom: messageObjects.
+;
+
+#-- and return the array as the web query's JSON result...
+JS jsObject returnJSON: resultObject jsParam;

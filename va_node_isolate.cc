@@ -22,6 +22,7 @@
  *****  Supporting  *****
  ************************/
 
+#include "va_node_callback.h"
 #include "va_node_export.h"
 #include "va_node_handle_scope.h"
 
@@ -34,6 +35,89 @@
  *******************************
  *******************************/
 
+/***************************
+ ***************************
+ *****  Task Launcher  *****
+ ***************************
+ ***************************/
+
+class VA::Node::Isolate::TaskLauncher final : public VA::Node::Callback {
+    DECLARE_CONCRETE_RTTLITE (TaskLauncher, Callback);
+
+    friend class Isolate;
+
+//  Construction
+public:
+    TaskLauncher (Isolate *pIsolate, Vxa::VTask *pTask) : BaseClass (pIsolate), m_pTask (pTask) {
+    }
+
+//  Destruction
+private:
+    ~TaskLauncher () {
+    }
+
+//  Execution
+private:
+    virtual void run () override;
+    virtual void runWithMonitor () const;
+
+    static void LaunchTask (v8::FunctionCallbackInfo<value_t> const &rInfo);
+
+//  State
+private:
+    Vxa::VTask::Reference const m_pTask;
+};
+
+/*******************************
+ *****  Launch Initiation  *****
+ *******************************/
+
+/*****
+ *  'VA::Node::launchTask' is intended to be called from any routine running
+ *  in any thread that wishes to launch a Vxa task.  It is the only routine
+ *  in the collection of task launching utilities that can be safely called
+ *  from any thread.
+ *****/
+bool VA::Node::Isolate::launchTask (Vxa::VTask *pTask) {
+    TaskLauncher::Reference const pLauncher (new TaskLauncher (this, pTask));
+    pLauncher->trigger ();
+    return true;
+}
+
+/*****
+ *  The following routine MUST ONLY be called from the thread owning the
+ *  Isolate.  That rule is enforced by the callback scheduler.
+ *****/
+void VA::Node::Isolate::TaskLauncher::run () {
+    HandleScope iHS (this);
+
+    local_value_t hResult;
+    local_function_t hFunction;
+    node::async_context aContext = {0,0};
+
+    isolate ()->GetTaskLaunchFunction (hFunction) && MaybeSetResultToCall (
+        hResult, aContext, NewObject (), hFunction, NewExternal (this)
+    );
+}
+
+void VA::Node::Isolate::TaskLauncher::runWithMonitor () const {
+    m_pTask->runWithMonitor ();
+}
+
+/************************************
+ *****  'MakeCallback' Handler  *****
+ ************************************/
+
+void VA::Node::Isolate::TaskLauncher::LaunchTask (v8::FunctionCallbackInfo<value_t> const &rInfo) {
+    HandleScope iHS (rInfo.GetIsolate ());
+
+    Reference const pLauncher (
+        reinterpret_cast<ThisClass*>(local_external_t::Cast (rInfo[0])->Value())
+    );
+    pLauncher->runWithMonitor ();
+}
+
+
 /**************************
  **************************
  *****  Construction  *****
@@ -42,7 +126,13 @@
 
 VA::Node::Isolate::Isolate (
     isolate_handle_t hIsolate
-) : m_hIsolate (hIsolate), m_hValueCache (hIsolate, object_cache_t::New (hIsolate)) {
+) : m_hIsolate (
+    hIsolate
+), m_hValueCache (
+    hIsolate, object_cache_t::New (hIsolate)
+), m_hRegistry (
+    *this, NewObject ()
+) {
 }
 
 /*************************
@@ -79,6 +169,10 @@ bool VA::Node::Isolate::onDeleteThis () {
     return false;
 }
 
+bool VA::Node::Isolate::onShutdown () {
+    return Process::OnShutdown (this);
+}
+
 /********************
  *----  Others  ----*
  ********************/
@@ -104,13 +198,19 @@ namespace {
         }
         return false;
     }
+    bool GetUnwrappedFromMaybe (
+        bool &rUnwrapped, bool iBool
+    ) {
+        rUnwrapped = iBool;
+        return true;
+    }
 }
 
 bool VA::Node::Isolate::GetUnwrapped (
     bool &rUnwrapped, local_value_t hValue
 ) const {
     return GetUnwrappedFromMaybe (
-        rUnwrapped, hValue->BooleanValue (context ())
+        rUnwrapped, hValue->BooleanValue (ToBooleanContext ())
     );
 }
 
@@ -154,8 +254,41 @@ bool VA::Node::Isolate::UnwrapString (VString &rString, local_string_t hString) 
  ******************************
  ******************************/
 
-VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) const {
-    return string_t::NewFromUtf8 (m_hIsolate, pString);
+namespace VA {
+    namespace Node {
+        namespace {
+            class VStringResource : public string_t::ExternalOneByteStringResource {
+            public:
+                VStringResource (VString const &rString) : m_iString (rString) {
+                }
+                ~VStringResource () {
+                }
+            public:
+                virtual char const *data () const override {
+                    return m_iString.content ();
+                }
+                virtual size_t length () const override {
+                    return m_iString.length ();
+                }
+            private:
+                VString const m_iString;
+            };
+        }
+    }
+}
+
+bool VA::Node::Isolate::NewString (local_string_t &rResult, VString const &rString) const {
+    return GetLocalFor (
+        rResult, string_t::NewExternalOneByte (
+            isolate (), new VStringResource (rString)
+        )
+    );
+}
+
+VA::Node::local_string_t VA::Node::Isolate::NewString (VString const &rString) const {
+    local_string_t hString;
+    NewString (hString, rString);
+    return hString;
 }
 
 /*******************************
@@ -164,8 +297,8 @@ VA::Node::local_string_t VA::Node::Isolate::NewString (char const *pString) cons
  *******************************
  *******************************/
 
-void VA::Node::Isolate::ThrowTypeError (char const *pMessage) const {
-    m_hIsolate->ThrowException (v8::Exception::TypeError (NewString (pMessage)));
+void VA::Node::Isolate::ThrowTypeError (VString const &rMessage) const {
+    m_hIsolate->ThrowException (v8::Exception::TypeError (NewString (rMessage)));
 }
 
 /***************************
@@ -230,7 +363,7 @@ bool VA::Node::Isolate::Attach (
 
     local_value_t hModelObject;
     if (GetLocalFor (hModelObject, hCache->Get (hContext, hValue)) && hModelObject->IsExternal ()) {
-        rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<v8::External>()->Value()));
+        rpModelObject.setTo (reinterpret_cast<Export*>(hModelObject.As<external_t>()->Value()));
 
     /*
         std::cerr
@@ -245,9 +378,7 @@ bool VA::Node::Isolate::Attach (
     } else {
         rpModelObject.setTo (new Export (this, hValue));
         Sink (
-            hCache->Set (
-                hContext, hValue, v8::External::New (m_hIsolate, rpModelObject.referent ())
-            )
+            hCache->Set (hContext, hValue, NewExternal (rpModelObject.referent ()))
         );
 
     /*
@@ -302,7 +433,7 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
         !GetLocalFor (hCacheValue, hCache->Get(hContext, hModelValue)) ||
         hCacheValue.IsEmpty ()                                         ||
         !hCacheValue->IsExternal ()                                    ||
-        hCacheValue.As<v8::External>()->Value() != pModelObject
+        hCacheValue.As<external_t>()->Value() != pModelObject
     );
 }
 
@@ -317,39 +448,44 @@ bool VA::Node::Isolate::Detach (Export *pModelObject) {
  *****  ArgSink  *****
  *********************/
 
-class VA::Node::Isolate::ArgPack::ArgSink : public Vxa::VAny::Client {
-    public:
-        ArgSink (
-            local_value_t &rResult, Isolate *pIsolate
-        ) : m_rResult (rResult), m_pIsolate (pIsolate) {
-        }
-        ~ArgSink () {
-        }
-    public:
-        virtual bool on (int iValue) override {
-            m_rResult = m_pIsolate->NewNumber (iValue);
-            return true;
-        }
-        virtual bool on (double iValue) override {
-            m_rResult = m_pIsolate->NewNumber (iValue);
-            return true;
-        }
-        virtual bool on (VString const &iValue) override {
-            m_rResult = m_pIsolate->NewString (iValue);
-            return true;
-        }
-        virtual bool on (VCollectableObject *pObject) override {
-            Export *pExport = dynamic_cast<Export*>(pObject);
-            if (pExport)
-                m_rResult = pExport->value ();
-            else
-                m_rResult = m_pIsolate->LocalUndefined ();
-            return true;
-        }
-    private:
-        local_value_t& m_rResult;
-        Isolate* const m_pIsolate;
-    };
+/*----------------*/
+VA::Node::Isolate::ArgSink::ArgSink (
+    local_value_t &rResult, Isolate *pIsolate
+) : m_rResult (rResult), m_pIsolate (pIsolate) {
+}
+
+/*----------------*/
+VA::Node::Isolate::ArgSink::~ArgSink () {
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (int iValue) {
+    m_rResult = m_pIsolate->NewNumber (iValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (double iValue) {
+    m_rResult = m_pIsolate->NewNumber (iValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (VString const &rValue) {
+    m_rResult = m_pIsolate->NewString (rValue);
+    return true;
+}
+
+/*----------------*/
+bool VA::Node::Isolate::ArgSink::on (VCollectableObject *pObject) {
+    Export *pExport = dynamic_cast<Export*>(pObject);
+    if (pExport)
+        m_rResult = pExport->value ();
+    else
+        m_rResult = m_pIsolate->LocalUndefined ();
+    return true;
+}
+
 
 /*********************
  *****  ArgPack  *****
@@ -445,6 +581,28 @@ bool VA::Node::Isolate::MaybeSetResultToObject (
     return false;
 }
 
+/****************************
+ *****  Maybe Registry  *****
+ ****************************/
+
+bool VA::Node::Isolate::MaybeSetResultToRegistry (local_object_t &rResult) {
+    rResult = LocalFor (m_hRegistry);
+    return true;
+}
+
+bool VA::Node::Isolate::MaybeSetResultToRegistryValue (
+    local_value_t &rResult, VString const &rKey
+) {
+    local_object_t hRegistry; local_string_t hKey;
+    return MaybeSetResultToRegistry (
+        hRegistry
+    ) && NewString (
+        hKey, rKey
+    ) && GetLocalFor (
+        rResult, hRegistry->Get (context (), hKey)
+    );
+}
+
 /**********************************
  *****  SetResultToUndefined  *****
  **********************************/
@@ -460,5 +618,42 @@ bool VA::Node::Isolate::SetResultToUndefined (vxa_result_t &rResult) {
     } else {
         rResult = false;
     }
+    return true;
+}
+
+
+/**********************************
+ **********************************
+ *****  Factories and Caches  *****
+ **********************************
+ **********************************/
+
+bool VA::Node::Isolate::GetTaskLaunchFunction (
+    local_function_t &rResult
+) {
+    local_function_template_t hFunctionTemplate;
+    return GetTaskLaunchFunctionTemplate (hFunctionTemplate) && GetLocalFor (
+        rResult, hFunctionTemplate->GetFunction (context ())
+    );
+}
+
+bool VA::Node::Isolate::SimpleFunctionTemplateFactory::New (local_function_template_t &rResult) const {
+    return isolate ()->MaybeSetResultToFunctionTemplate (rResult, m_pCallback);
+}
+
+bool VA::Node::Isolate::GetTaskLaunchFunctionTemplate (
+    local_function_template_t &rResult
+) {
+    static SimpleFunctionTemplateFactory iFTF (this, &TaskLauncher::LaunchTask);
+    return GetCached (rResult, m_hTaskLaunchFT, iFTF);
+}
+
+/*-----------------------------------*
+ *----  Maybe Function Template  ----*
+ *-----------------------------------*/
+bool VA::Node::Isolate::MaybeSetResultToFunctionTemplate (
+    local_function_template_t &rResult, v8::FunctionCallback pCallback
+) const {
+    rResult = function_template_t::New (isolate (), pCallback);
     return true;
 }
