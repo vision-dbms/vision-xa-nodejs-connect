@@ -1,0 +1,245 @@
+#####
+#  Latest version of node.vis used by the bridge replacement project underway
+#   This version should ultimately replace the one in this repo
+#
+#  The Vision class protocol uses naming conventions and style written by Mike, which means
+#    we don't change anything until we understand the why and the how.
+#####
+
+
+################################################################################
+CoreWorkspace respondsTo: "JS". ifFalse: [
+    ToolKit createSubclass: "JS" at: CoreWorkspace;
+    ################
+    ####  Because:
+    ####    1) the 'JS' object just created serves as the non-default
+    ####       client context object received from 'node' queries that
+    ####       that supply such objects
+    ####    2) new 'JS' objects accessed or created from an existing
+    ####       JS object are ALWAYS created as extensions of JS,
+    ####
+    ####  the JS object just created MUST NOT be marked 'default' (for
+    ####  example, if it were, asking for the 'first: n' of a list of
+    ####  valid JS objects would always return an empty list):
+    ####
+    JS :defaultFlag <- FALSE;
+];
+
+################################################################################
+####  Parameter Conversion Helpers...
+####
+JS defineMethod: [ | \.id | ^self jsObject \.id];
+Double  defineMethod: [ | \.id | ^self asSelf ];
+Float   defineMethod: [ | \.id | ^self asSelf ];
+Integer defineMethod: [ | \.id | ^self asSelf ];
+String  defineMethod: [ | \.id | ^self asSelf ];
+#--??? NA      defineMethod: [ | \.id | "visionNA" ] ;  #-- from 'vserver' project
+
+Object define: "__hasExternalImplementation" toBePrimitive: 506;
+
+################################################################################
+#  NOTE: In the following, 'Object', 'Reflect', 'keys(:)' and 'get(:at:)' are
+#  native javascript properties and functions.
+################
+
+################
+####  By default, the helper methods attached to this class operate on the
+####  current client object:
+
+JS define: "jsObject" toBePrimitive: 7;
+
+####  That can be contextually rebound to refer to a different JS object by
+####  by overriding 'jsObject' in a specialization of this class.  The following
+####  methods do that:
+
+JS defineMethod: [ | object: jsObject |
+    jsObject __hasExternalImplementation ifTrue: [
+        jsObject \.isNull == 0 ifTrue: [ ### ... Isn't a JS Null
+            ^self asSelf extendBy: [ !jsObject <- ^my jsObject ]
+        ]
+    ] ifFalse: [jsObject]
+];
+
+
+JS defineMethod: [ | global: jsObject |   #-- from 'vserver' project
+    ^self object: jsObject \.global
+];
+
+JS defineMethod: [ | global |
+    ^self object: ^self jsGlobal
+];
+
+
+################
+####  Return the current jsObject's global object (think ^self CoreWorkspace)...
+JS defineMethod: [ | jsGlobal | ^self jsObject \.global ];
+
+################
+####  Return the current jsObject's parameter identity...
+JS defineMethod: [ | jsParam | ^self jsObject \.id ];
+
+################
+####  Array creation
+JS defineMethod: [ | newArray | ^self object: ^self jsGlobal Array ];
+JS defineMethod: [ | newArray: nElements | ^self object: (^self jsGlobal Array: nElements) ];
+JS defineMethod: [ | newArrayFrom: list |
+    !newArray <- ^self newArray: list count;
+    list numberElements do: [
+        ^my newArray set: (position - 1) asInteger to: ^self
+    ];
+    newArray
+];
+
+################
+####  Array return
+JS defineMethod: [ | getArray |
+    !self <- ^self;
+    ^self jsObject length send: [isInteger ifTrue: [^self] else: [0]]. sequence0 send: [^my self get: ^self]
+];
+
+################
+####  Object creation
+JS defineMethod: [ | newObject | ^self object: ^self jsGlobal Object ];
+
+################
+####  Property Existence
+JS defineMethod: [ | has: key |
+    ^self jsGlobal Reflect has: ^self jsParam at: key. \.isTrue == 1
+];
+
+JS defineMethod: [ | hasOwnProperty: key |
+    ^self jsObject hasOwnProperty: key. \.isTrue == 1
+];
+
+################
+####  Property/Element Getters...
+JS defineMethod: [ | get: key |
+    !result <- key isBlock ifTrue: [
+        ^self jsObject send: key
+    ]. else: [
+        ^self jsGlobal Reflect get: ^self jsParam at: key
+    ];
+    ^self object: result
+];
+
+JS defineMethod: [ | get: key of: jsObj |      #-- from 'vserver' project
+    jsObj \.global Reflect get: jsObj \.id at: key
+];
+
+################
+####  Property/Element Setters....
+JS defineMethod: [ | set: key to: value |
+    ^self set: key of: ^self jsObject to: value;
+    ^self
+];
+
+####
+JS defineMethod: [ | set: key toArrayFrom: list |
+   ^self set: key to: (^self newArrayFrom: list)
+];
+
+JS defineMethod: [ | set: key of: jsObj to: value |
+#>>>>>>>>>>>>>>>>
+#  This should be:
+#
+#   jsObj \.global Reflect set: jsObj \.id key: key to: value \.id
+#
+#  but, since batchvision's current adapter implementation doesn't
+#  support polymorphic (un-clustered) parameters, it must be:
+    value basicSend: [
+        ^my jsObj \.global Reflect set: ^my jsObj \.id key: ^my key to: ^self \.id
+    ]
+
+#<<<<<<<<<<<<<<<<
+];
+
+################
+####  Return a Vision list of a JS object's keys...
+JS defineMethod: [ | getKeys |
+    ^self getJSKeys getArray
+];
+
+################
+####  Return a javascript array of a JS object's keys...
+JS defineMethod: [ | getJSKeys |
+    ^self object: (^self jsGlobal :Object keys: ^self jsParam)
+];
+
+################
+####  Return a Vision list of a jsObject's key/value pairs...
+JS defineMethod: [ | getPropertyMap |
+    !self <- ^self;
+    ^self getKeys extendBy: [
+        !keyValue <- ^my self get: ^self
+    ]
+];
+
+################
+####  Display a object's properties / array's elements...
+JS defineMethod: [ | display |
+    ^self getPropertyMap do: [
+        ^self print: 20;
+        keyValue printNL
+    ];
+    ^self
+];
+
+################################################################################
+####  External Object Servers
+JS defineMethod: [ | server: address | ^self serverByAddr: address ];
+
+JS defineMethod: [ | serverByAddr: addr | ^self object: addr xo ];
+JS defineMethod: [ | serverByName: name | ^self object: name xd ];
+
+String define: "xo" toBePrimitive: 8;                        # by network address
+String define: "xd" toBePrimitive: 8 withControlValue: 1;    # by directory entry
+
+################################################################################
+####  'fetch' covers
+
+JS defineMethod: [ | fetch: query from: url |
+   ^self object: (
+      ^self jsObject fetch: query jsParam from: url
+   )
+];
+
+JS defineMethod: [ | fetchText: query from: url |
+   ^self object: (
+      ^self jsObject fetchText: query jsParam
+                     from: (url concat: "&pretty&")
+   )
+];
+
+JS defineMethod: [ | fetchJSON: query from: url |
+   ^self object: (
+      ^self jsObject fetchJSON: query jsParam from: url
+   )
+];
+
+
+JS defineMethod: [ | fetchTextFrom: url |
+^self fetchTextFrom: url withOptions: ^self newObject .
+] ;
+
+JS defineMethod: [ | fetchJSONFrom: url |
+^self fetchJSONFrom: url withOptions: ^self newObject .
+] ;
+
+JS defineMethod: [ | fetchFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchFrom: url withOptions: options jsParam
+   ) . get: [ await ]
+];
+
+JS defineMethod: [ | fetchTextFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchTextFrom: (url concat: "&pretty&")
+                     withOptions: options jsParam
+   ) .  get: [ await ]
+];
+
+JS defineMethod: [ | fetchJSONFrom: url withOptions: options |
+   ^self object: (
+      ^self jsObject fetchJSONFrom: url withOptions: options jsParam
+   ) . get: [ await ]
+];
