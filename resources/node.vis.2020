@@ -1,10 +1,10 @@
-#####
-#  Latest version of node.vis used by the bridge replacement project underway
-#   This version should ultimately replace the one in this repo
+###########
+#  This is the active node.vis file we are using as we harden the bridge replacement project using the vision-xa-nodejs-connect module
 #
-#  The Vision class protocol uses naming conventions and style written by Mike, which means
-#    we don't change anything until we understand the why and the how.
-#####
+#  Ultimately needs to replace the one in this rep
+#
+#  The code is in Vision but the naming conventions and style are Mike's so we don't touch the details until we understand them better.
+##########
 
 
 ################################################################################
