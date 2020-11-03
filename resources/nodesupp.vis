@@ -1,0 +1,123 @@
+#--------------------
+#  Establish a connection
+#---------------------
+!jsConnect <- JS serverByName: "Node_Fetch"  ;
+
+#--------------------
+#  these needed for federation databases
+#--------------------
+JS defineMethod: [ | \.id | ^self jsObject \.id];
+Double  globalDefineMethod: [ | \.id | ^self asSelf ];
+Float   globalDefineMethod: [ | \.id | ^self asSelf ];
+Integer globalDefineMethod: [ | \.id | ^self asSelf ];
+String  globalDefineMethod: [ | \.id | ^self asSelf ];
+NA globalDefineMethod: [ | \.id | "visionNA" ] ;
+
+SecurityMap CoreWorkspace do: [
+Double  defineMethod: [ | \.id | ^self asSelf ];
+Float   defineMethod: [ | \.id | ^self asSelf ];
+Integer defineMethod: [ | \.id | ^self asSelf ];
+String  defineMethod: [ | \.id | ^self asSelf ];
+NA      defineMethod: [ | \.id | "--NA--" ] ;
+] ;
+
+#--------------------
+#  add JSON pretty print
+#--------------------
+
+JS defineMethod: [ | pprint |
+^self pprint: 4
+] ;
+
+JS defineMethod: [ | pprint: n |
+!obj <- ^self ;
+obj global
+   get: [ JSON stringify: ^my obj jsParam with: 0 and: ^my n ] . printNL
+] ;
+
+
+
+#--------------------
+#  Supplemental JS methods to simplify JSON extraction
+#
+# q = '''
+#  JS getArrayFrom: [ Security getMessages
+#                        extendBy: [ !mess <- code ;
+#                                    !returnType <- returnObjectType whatAmI ;
+#                                    !messageType <- type code ;
+#                                  ]
+#                   ]
+#              for: "mess, returnType, messageType"
+# '''
+#
+# print json.dumps(runvisionJSON({'expression' : q}), indent=1)
+#--------------------
+
+JS defineMethod: [ | createArrayFrom: expression for: items |
+  ^self createArrayFrom: expression for: items over: ^date
+] ;
+
+JS defineMethod: [ | createArrayFrom: expression for: items over: dates |
+!connect <- ^self jsObject isNA
+    ifTrue: [ ^self serverByName: "Node_Fetch"  ]
+   ifFalse: [ ^self ] ;
+
+!itemList <- items isString
+  ifTrue: [ :items <- items breakOn: "," . send: [ stripBoundingBlanks ] . nonDefaults ] .
+  elseIf: [ items isCollection ] then: [ items ] .
+    else: [ items asList ] ;
+
+!blocks <-
+  itemList extendBy:
+     [ !item <- ^self asString ;
+       !block <- isBlock ifTrue: [ ^self ] else: [ asBlock ] ;
+     ] ;
+
+!dateList <- dates isDate
+   ifTrue: [ dates asList ] .
+   elseIf: [ dates isDateRange ] then: [ dates asDateList ] .
+   elseIf: [ dates isCollection ] then: [ dates ] .
+   else: [ dates asList ] . send: [ asDate else: ^date ] . select: [ isDate ] ;
+
+!dataObjects <- dateList collectListElementsFrom:
+   [ !connect <- ^my connect ;
+     !blocks <- ^my blocks ;
+     ^self evaluate:
+       [ !list <- ^my expression isBlock
+           ifTrue: [ ^my expression value ] else: [ ^my expression ] .
+           send: [ !obj <- ^my connect newObject
+                      set: "id" to: asString .
+                      set: "date" to: ^date asInteger  ;
+                   ^my blocks
+                   do: [ !val <- ^my send: block ;
+                         ^my obj set: item to: val ;
+                       ] ;
+                   obj
+                  ]
+       ]
+   ] ;
+
+!jsObj <- connect newObject
+    set: "rowCount" to: dataObjects count .
+    set: "colCount" to: blocks count increment increment .
+    set: "items" to: (connect newArrayFrom: ("id", "date" append: itemList )) .
+    set: "dates" to: (connect newArrayFrom: (dateList send: [ asInteger ] )) .
+    set: "array" to: (connect newArrayFrom: dataObjects) ;
+#    set: "items" toArrayFrom: itemList .
+#    set: "dates" toArrayFrom: (dateList send: [ asInteger ] ) .
+#    set: "array" toArrayFrom: dataObjects ;
+jsObj
+] ;
+
+JS defineMethod: [ | getArrayFrom: expression for: items over: dates |
+!object <- ^self createArrayFrom: expression for: items over: dates ;
+GlobalWorkspace JS jsObject returnJSON: (object jsParam)
+] ;
+
+JS defineMethod: [ | getArrayFrom: expression for: items  |
+!object <- ^self createArrayFrom: expression for: items ;
+GlobalWorkspace JS jsObject returnJSON: (object jsParam)
+] ;
+
+#JS createArrayFrom: [ Currency masterList ] for: "code,name" . display ;
+
